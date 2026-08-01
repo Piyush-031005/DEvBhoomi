@@ -61,142 +61,193 @@ const particlesMat = new THREE.PointsMaterial({
 });
 const starsMesh = new THREE.Points(particlesGeom, particlesMat);
 worldGroup.add(starsMesh);
-// --- Act 2: Cinematic 2D Mountain Base ---
+// --- Act 2 & 3: Particle Mountain & Bird Transition ---
 const textureLoader = new THREE.TextureLoader();
+let mountainParticles;
+let birdParticles;
+const birdIndices = []; // Store which particles become birds
 
-// Create material synchronously so GSAP can target it immediately
-const terrainMat = new THREE.ShaderMaterial({
-    uniforms: {
-        uTexture: { value: null },
-        uOpacity: { value: 0.0 }
-    },
-    vertexShader: `
-        varying vec2 vUv;
-        void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-    `,
-    fragmentShader: `
-        uniform sampler2D uTexture;
-        uniform float uOpacity;
-        varying vec2 vUv;
-        void main() {
-            vec4 color = texture2D(uTexture, vUv);
-            // Calculate luminance
-            float lum = dot(color.rgb, vec3(0.299, 0.587, 0.114));
-            // Boost alpha slightly to keep dark grey mountain parts opaque
-            float alpha = smoothstep(0.01, 0.1, lum); 
-            gl_FragColor = vec4(color.rgb, alpha * uOpacity);
-        }
-    `,
-    transparent: true,
-    depthWrite: false
-});
-
-// We need a dummy geometry until the texture loads to know aspect ratio
-let terrainGeom = new THREE.PlaneGeometry(120 * 2, 120); 
-let terrainMesh = new THREE.Mesh(terrainGeom, terrainMat);
-terrainMesh.position.set(0, -10, -30);
-worldGroup.add(terrainMesh);
+// We need a dummy object for GSAP to target before the async load finishes
+const animState = {
+    mountainOpacity: 0,
+    birdFlight: 0
+};
 
 textureLoader.load('/mountain.png', (mountainTex) => {
-    terrainMat.uniforms.uTexture.value = mountainTex;
-    terrainMat.needsUpdate = true;
+    const img = mountainTex.image;
+    const canvas = document.createElement('canvas');
     
-    // Recreate geometry with correct aspect
-    const aspect = mountainTex.image.width / mountainTex.image.height;
-    const terrainHeight = 120;
-    const terrainWidth = terrainHeight * aspect;
-    terrainMesh.geometry.dispose();
-    terrainMesh.geometry = new THREE.PlaneGeometry(terrainWidth, terrainHeight);
-});
-
-// --- Act 3: The Poetic Bird Detachment ---
-const birdParticlesCount = 60;
-const birdGeom = new THREE.BufferGeometry();
-const birdStartPos = new Float32Array(birdParticlesCount * 3);
-const birdTargetPos = new Float32Array(birdParticlesCount * 3);
-const birdOffsets = new Float32Array(birdParticlesCount);
-
-for(let i=0; i<birdParticlesCount; i++) {
-    // Start along the ridge line (approximate)
-    birdStartPos[i*3] = (Math.random() - 0.5) * 60; // Spread across X
-    birdStartPos[i*3+1] = -5 + Math.random() * 10; // Near peaks Y
-    birdStartPos[i*3+2] = -30 + Math.random() * 2; // Z depth near mountain
+    // Downscale for particle grid to avoid crashing (e.g., max 500 width)
+    const maxWidth = 400; 
+    const scale = maxWidth / img.width;
+    canvas.width = maxWidth;
+    canvas.height = Math.floor(img.height * scale);
     
-    // Target position (fly up and towards camera)
-    birdTargetPos[i*3] = birdStartPos[i*3] * 1.5; // Scatter X
-    birdTargetPos[i*3+1] = 20 + Math.random() * 30; // Fly high up Y
-    birdTargetPos[i*3+2] = -10 + Math.random() * 20; // Fly forward Z
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
     
-    birdOffsets[i] = Math.random() * Math.PI * 2; // Random phase
-}
-
-birdGeom.setAttribute('position', new THREE.BufferAttribute(birdStartPos, 3));
-birdGeom.setAttribute('aStartPos', new THREE.BufferAttribute(birdStartPos, 3));
-birdGeom.setAttribute('aTargetPos', new THREE.BufferAttribute(birdTargetPos, 3));
-birdGeom.setAttribute('aOffset', new THREE.BufferAttribute(birdOffsets, 1));
-
-const birdMat = new THREE.ShaderMaterial({
-    uniforms: {
-        uTime: { value: 0 },
-        uFlightProgress: { value: 0.0 } // 0 = at mountain, 1 = flown away
-    },
-    vertexShader: `
-        uniform float uTime;
-        uniform float uFlightProgress;
-        attribute vec3 aStartPos;
-        attribute vec3 aTargetPos;
-        attribute float aOffset;
-        varying float vAlpha;
+    const positions = [];
+    const colors = [];
+    
+    // We want the mountain to be full screen width.
+    // At z=-30, camera fov=60, visible width is roughly 60+ units on a 16:9 screen.
+    const mountainWidth = 80; 
+    const mountainHeight = mountainWidth * (canvas.height / canvas.width);
+    
+    const potentialBirdIndices = []; // Store indices of top-edge particles
+    
+    let particleIndex = 0;
+    
+    // Iterate through pixels
+    for(let y = 0; y < canvas.height; y++) {
+        let foundEdgeInColumn = false; // To find the top-most visible pixel in each column
         
-        void main() {
-            // Non-linear interpolation for dramatic lift-off
-            float easeProgress = pow(uFlightProgress, 1.5);
-            vec3 localPos = mix(aStartPos, aTargetPos, easeProgress);
+        for(let x = 0; x < canvas.width; x++) {
+            const index = (y * canvas.width + x) * 4;
+            const r = imgData[index];
+            const g = imgData[index+1];
+            const b = imgData[index+2];
             
-            // Flapping motion and drift
-            if (uFlightProgress > 0.0) {
-                float flap = sin(uTime * 20.0 + aOffset) * 0.5;
-                localPos.y += flap * uFlightProgress;
+            // Luminance
+            const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+            
+            // Only create particle if it's bright enough
+            if (lum > 20) {
+                // Map x, y to 3D space
+                const posX = (x / canvas.width - 0.5) * mountainWidth;
+                // Flip Y (canvas Y goes down, 3D Y goes up)
+                const posY = -(y / canvas.height - 0.5) * mountainHeight - 5; 
+                const posZ = -30;
                 
-                float driftX = sin(uTime * 2.0 + aOffset) * 2.0;
-                localPos.x += driftX * uFlightProgress;
+                positions.push(posX, posY, posZ);
+                colors.push(r / 255, g / 255, b / 255);
+                
+                // If it's the first bright pixel from the top in this column, it's an edge
+                if (!foundEdgeInColumn && y < canvas.height * 0.5) { // Only upper half
+                    potentialBirdIndices.push(particleIndex);
+                    foundEdgeInColumn = true;
+                }
+                
+                particleIndex++;
             }
-            
-            vec4 mvPosition = modelViewMatrix * vec4(localPos, 1.0);
-            gl_Position = projectionMatrix * mvPosition;
-            
-            // Size gets bigger as they fly forward
-            gl_PointSize = (15.0 * (1.0 + uFlightProgress)) / -mvPosition.z;
-            
-            // Fade in at start, fade out at end
-            vAlpha = smoothstep(0.0, 0.1, uFlightProgress) * (1.0 - smoothstep(0.8, 1.0, uFlightProgress));
         }
-    `,
-    fragmentShader: `
-        varying float vAlpha;
-        void main() {
-            // Draw a soft glowing bird/streak shape
-            vec2 uv = gl_PointCoord - vec2(0.5);
-            // Squish Y to make it look like a winged streak (motion blur)
-            uv.y *= 2.5; 
-            float dist = length(uv);
+    }
+    
+    // --- Create Mountain ---
+    const mountainGeom = new THREE.BufferGeometry();
+    mountainGeom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    mountainGeom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    
+    const mountainMat = new THREE.PointsMaterial({
+        size: 0.1, // Small particles
+        vertexColors: true,
+        transparent: true,
+        opacity: 0, // Starts at 0
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+    });
+    
+    mountainParticles = new THREE.Points(mountainGeom, mountainMat);
+    worldGroup.add(mountainParticles);
+    
+    // --- Create Birds (Detaching from Mountain) ---
+    // Select 15 random edge particles to become birds
+    const numBirds = 15;
+    for(let i=0; i<numBirds; i++) {
+        if(potentialBirdIndices.length === 0) break;
+        const randIdx = Math.floor(Math.random() * potentialBirdIndices.length);
+        birdIndices.push(potentialBirdIndices[randIdx]);
+        potentialBirdIndices.splice(randIdx, 1); // Remove so we don't pick twice
+    }
+    
+    const birdStartPos = new Float32Array(numBirds * 3);
+    const birdTargetPos = new Float32Array(numBirds * 3);
+    const birdOffsets = new Float32Array(numBirds);
+    
+    for(let i=0; i<numBirds; i++) {
+        const pIdx = birdIndices[i];
+        
+        // Start position is exact position of that mountain particle
+        birdStartPos[i*3] = positions[pIdx*3];
+        birdStartPos[i*3+1] = positions[pIdx*3+1];
+        birdStartPos[i*3+2] = positions[pIdx*3+2];
+        
+        // Target position (fly up into bird silhouette)
+        // Let's just make them fly up and scatter slightly towards camera
+        birdTargetPos[i*3] = birdStartPos[i*3] * 1.5;
+        birdTargetPos[i*3+1] = birdStartPos[i*3+1] + 15 + Math.random() * 5; 
+        birdTargetPos[i*3+2] = birdStartPos[i*3+2] + 10 + Math.random() * 5;
+        
+        birdOffsets[i] = Math.random() * Math.PI * 2;
+    }
+    
+    const birdGeom = new THREE.BufferGeometry();
+    birdGeom.setAttribute('position', new THREE.BufferAttribute(birdStartPos, 3));
+    birdGeom.setAttribute('aStartPos', new THREE.BufferAttribute(birdStartPos, 3));
+    birdGeom.setAttribute('aTargetPos', new THREE.BufferAttribute(birdTargetPos, 3));
+    birdGeom.setAttribute('aOffset', new THREE.BufferAttribute(birdOffsets, 1));
+    
+    const birdMatShader = new THREE.ShaderMaterial({
+        uniforms: {
+            uTime: { value: 0 },
+            uFlightProgress: { value: 0.0 }
+        },
+        vertexShader: `
+            uniform float uTime;
+            uniform float uFlightProgress;
+            attribute vec3 aStartPos;
+            attribute vec3 aTargetPos;
+            attribute float aOffset;
+            varying float vAlpha;
             
-            float alpha = smoothstep(0.5, 0.1, dist);
-            if (alpha < 0.01) discard;
-            
-            gl_FragColor = vec4(1.0, 1.0, 1.0, alpha * vAlpha); 
-        }
-    `,
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending
+            void main() {
+                float easeProgress = pow(uFlightProgress, 1.5);
+                vec3 localPos = mix(aStartPos, aTargetPos, easeProgress);
+                
+                // Flapping motion and drift
+                if (uFlightProgress > 0.0) {
+                    float flap = sin(uTime * 20.0 + aOffset) * 0.5;
+                    localPos.y += flap * uFlightProgress;
+                    float driftX = sin(uTime * 2.0 + aOffset) * 2.0;
+                    localPos.x += driftX * uFlightProgress;
+                }
+                
+                vec4 mvPosition = modelViewMatrix * vec4(localPos, 1.0);
+                gl_Position = projectionMatrix * mvPosition;
+                
+                gl_PointSize = (10.0 * (1.0 + uFlightProgress * 2.0)) / -mvPosition.z;
+                
+                // Hide when progress is 0, fade in as they fly
+                vAlpha = smoothstep(0.01, 0.1, uFlightProgress) * (1.0 - smoothstep(0.8, 1.0, uFlightProgress));
+            }
+        `,
+        fragmentShader: `
+            varying float vAlpha;
+            void main() {
+                // V-shaped bird silhouette
+                vec2 uv = gl_PointCoord - vec2(0.5);
+                // Simple V shape using abs(x) and y
+                float vShape = abs(uv.x) * 2.0 - uv.y;
+                // Softness
+                float alpha = 1.0 - smoothstep(0.0, 0.2, abs(vShape - 0.2));
+                // Add a small body circle
+                float body = 1.0 - smoothstep(0.0, 0.1, length(uv - vec2(0.0, -0.1)));
+                
+                alpha = max(alpha, body);
+                if (alpha < 0.01) discard;
+                
+                gl_FragColor = vec4(1.0, 1.0, 1.0, alpha * vAlpha); 
+            }
+        `,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+    });
+    
+    birdParticles = new THREE.Points(birdGeom, birdMatShader);
+    worldGroup.add(birdParticles);
 });
-
-const birdSystem = new THREE.Points(birdGeom, birdMat);
-worldGroup.add(birdSystem);
 
 // No spline or trail needed for the scattered bird flight
 
@@ -304,7 +355,15 @@ function animate() {
     // Constant subtle motion
     starsMesh.rotation.y = elapsedTime * 0.01;
     
-    if (birdMat) birdMat.uniforms.uTime.value = elapsedTime;
+    if (mountainParticles && mountainParticles.material) {
+        mountainParticles.material.opacity = animState.mountainOpacity;
+    }
+    
+    if (birdParticles && birdParticles.material) {
+        birdParticles.material.uniforms.uTime.value = elapsedTime;
+        birdParticles.material.uniforms.uFlightProgress.value = animState.birdFlight;
+    }
+    
     if (smokeMat) smokeMat.uniforms.uTime.value = elapsedTime;
     
     renderer.render(scene, camera);
@@ -333,8 +392,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Act 1 to 2: The Himalaya Reveal
-    masterTl.to(terrainMat.uniforms.uOpacity, {
-        value: 1, // Fade in mountain from black
+    masterTl.to(animState, {
+        mountainOpacity: 1, // Fade in mountain from black
         duration: 2.5,
         ease: "power2.inOut"
     }, 0)
@@ -347,16 +406,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 1.5)
     
     // Act 3: The Poetic Bird Flight
-    .to(birdMat.uniforms.uFlightProgress, {
-        value: 1.0,
+    .to(animState, {
+        birdFlight: 1.0,
         duration: 4,
         ease: "power1.inOut"
     }, 3)
 
     // Act 4: Transition to Smoking Man
-    .to(terrainMat.uniforms.uOpacity, { value: 0, duration: 1 }, 6) // Fade out mountain
+    .to(animState, { mountainOpacity: 0, duration: 1 }, 6) // Fade out mountain
     .to("#devbhoomi-title", { opacity: 0, duration: 0.5 }, 6)
-    .add(() => { if (terrainMesh) terrainMesh.visible = false; }, 7)
+    .add(() => { if (mountainParticles) mountainParticles.visible = false; }, 7)
+    .add(() => { if (birdParticles) birdParticles.visible = false; }, 7)
     .add(() => { if(smokeMesh) smokeMesh.visible = true; }, 6)
     .fromTo(smokeMat ? smokeMat.uniforms.uOpacity : {value:0}, {value:0}, {
         value: 1,
