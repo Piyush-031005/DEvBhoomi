@@ -64,7 +64,7 @@ html.lenis { height: auto; }
   justify-content: center;
   padding: 10vw;
   pointer-events: none;
-  z-index: 10; /* ON TOP of WebGL Canvas */
+  z-index: -2; /* BEHIND WebGL Canvas */
 }
 
 .center-content {
@@ -83,14 +83,13 @@ html.lenis { height: auto; }
 }
 
 .hero-title {
-  font-family: var(--f-hero);
-  font-size: clamp(4rem, 15vw, 20rem);
+  font-family: 'Yatra One', cursive;
+  font-size: clamp(4rem, 15vw, 15rem);
   font-weight: 400;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
+  color: #ffffff; /* Override text-gold */
   opacity: 0;
-  transform: translateY(20px); /* Subtle rise */
-  text-shadow: 0 0 20px rgba(255,255,255,0.3); /* Glow effect from video */
+  transform: translateY(20px);
+  text-shadow: 0 0 30px rgba(255,255,255,0.8), 0 0 60px rgba(255,255,255,0.4);
 }
 
 .editorial-container {
