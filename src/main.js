@@ -77,8 +77,8 @@ textureLoader.load('/mountain.png', (mountainTex) => {
     const img = mountainTex.image;
     const canvas = document.createElement('canvas');
     
-    // Massive resolution for ultra dense mountain (double density)
-    const maxWidth = 800; 
+    // Massive resolution for ultra dense mountain (double density again to 80%)
+    const maxWidth = 1000; 
     const scale = maxWidth / img.width;
     canvas.width = maxWidth;
     canvas.height = Math.floor(img.height * scale);
@@ -108,8 +108,8 @@ textureLoader.load('/mountain.png', (mountainTex) => {
             // Luminance
             const lum = 0.299 * r + 0.587 * g + 0.114 * b;
             
-            // If bright enough, create a particle
-            if (lum > 8) {
+            // If bright enough, create a particle (lowered threshold for more density)
+            if (lum > 5) {
                 // PosX and PosY
                 const posX = (x / canvas.width - 0.5) * mountainWidth;
                 // Center the mountain. A slight downward shift (-2) puts the peaks right in the middle
