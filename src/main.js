@@ -63,26 +63,53 @@ const starsMesh = new THREE.Points(particlesGeom, particlesMat);
 worldGroup.add(starsMesh);
 // --- Act 2: Cinematic 2D Mountain Base ---
 const textureLoader = new THREE.TextureLoader();
-let terrainMesh;
-let terrainMat;
+
+// Create material synchronously so GSAP can target it immediately
+const terrainMat = new THREE.ShaderMaterial({
+    uniforms: {
+        uTexture: { value: null },
+        uOpacity: { value: 0.0 }
+    },
+    vertexShader: `
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    `,
+    fragmentShader: `
+        uniform sampler2D uTexture;
+        uniform float uOpacity;
+        varying vec2 vUv;
+        void main() {
+            vec4 color = texture2D(uTexture, vUv);
+            // Calculate luminance
+            float lum = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+            // Boost alpha slightly to keep dark grey mountain parts opaque
+            float alpha = smoothstep(0.01, 0.1, lum); 
+            gl_FragColor = vec4(color.rgb, alpha * uOpacity);
+        }
+    `,
+    transparent: true,
+    depthWrite: false
+});
+
+// We need a dummy geometry until the texture loads to know aspect ratio
+let terrainGeom = new THREE.PlaneGeometry(120 * 2, 120); 
+let terrainMesh = new THREE.Mesh(terrainGeom, terrainMat);
+terrainMesh.position.set(0, -10, -30);
+worldGroup.add(terrainMesh);
 
 textureLoader.load('/mountain.png', (mountainTex) => {
-    // A flat plane to display the photo directly
+    terrainMat.uniforms.uTexture.value = mountainTex;
+    terrainMat.needsUpdate = true;
+    
+    // Recreate geometry with correct aspect
     const aspect = mountainTex.image.width / mountainTex.image.height;
     const terrainHeight = 120;
     const terrainWidth = terrainHeight * aspect;
-    
-    const terrainGeom = new THREE.PlaneGeometry(terrainWidth, terrainHeight);
-    terrainMat = new THREE.MeshBasicMaterial({
-        map: mountainTex,
-        transparent: true,
-        blending: THREE.AdditiveBlending, // Black becomes transparent, white is solid!
-        opacity: 0 // Fade in via GSAP
-    });
-    
-    terrainMesh = new THREE.Mesh(terrainGeom, terrainMat);
-    terrainMesh.position.set(0, -10, -30); // Push back a bit, lower it
-    worldGroup.add(terrainMesh);
+    terrainMesh.geometry.dispose();
+    terrainMesh.geometry = new THREE.PlaneGeometry(terrainWidth, terrainHeight);
 });
 
 // --- Act 3: The Poetic Bird Detachment ---
@@ -306,8 +333,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Act 1 to 2: The Himalaya Reveal
-    masterTl.to(terrainMat, {
-        opacity: 1, // Fade in mountain from black
+    masterTl.to(terrainMat.uniforms.uOpacity, {
+        value: 1, // Fade in mountain from black
         duration: 2.5,
         ease: "power2.inOut"
     }, 0)
@@ -327,7 +354,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3)
 
     // Act 4: Transition to Smoking Man
-    .to(terrainMat, { opacity: 0, duration: 1 }, 6) // Fade out mountain
+    .to(terrainMat.uniforms.uOpacity, { value: 0, duration: 1 }, 6) // Fade out mountain
     .to("#devbhoomi-title", { opacity: 0, duration: 0.5 }, 6)
     .add(() => { if (terrainMesh) terrainMesh.visible = false; }, 7)
     .add(() => { if(smokeMesh) smokeMesh.visible = true; }, 6)
