@@ -1,0 +1,24 @@
+{
+  "name": "uttrakhand-(devbhoomi)",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@studio-freight/lenis": "^1.0.42",
+    "autoprefixer": "^10.5.4",
+    "gsap": "^3.15.0",
+    "postcss": "^8.5.25",
+    "tailwindcss": "^4.3.3",
+    "three": "^0.185.1",
+    "vite": "^8.2.0"
+  }
+}

@@ -1,0 +1,116 @@
+:root {
+  --c-obsidian: #0a0a0a;
+  --c-polar: #ffffff;
+  --c-gold: #cfb53b;
+  --c-red: #7d1119; /* From user's palette */
+  --c-fog: #717b8b; /* From user's palette */
+
+  --f-editorial: 'Inter', sans-serif;
+  --f-hero: 'Playfair Display', serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--c-obsidian);
+  color: var(--c-polar);
+  font-family: var(--f-editorial);
+  overflow-x: hidden;
+}
+
+/* Utilities */
+.text-polar { color: var(--c-polar); }
+.text-gold { color: var(--c-gold); }
+.text-red { color: var(--c-red); }
+.text-fog { color: var(--c-fog); }
+.text-center { text-align: center; }
+
+/* Lenis */
+html.lenis { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: hidden; }
+.lenis.lenis-scrolling iframe { pointer-events: none; }
+
+/* Canvas */
+#canvas-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Acts structure */
+.act-section {
+  position: relative;
+  width: 100vw;
+  /* Heights defined inline based on scroll duration */
+}
+
+.typography-wrapper {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10vw;
+  pointer-events: none;
+  z-index: 10; /* ON TOP of WebGL Canvas */
+}
+
+.center-content {
+  align-items: center;
+  text-align: center;
+  padding: 0;
+}
+
+.act-title {
+  font-family: var(--f-editorial);
+  font-size: clamp(3rem, 6vw, 6rem);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  opacity: 0; /* GSAP will animate */
+}
+
+.hero-title {
+  font-family: var(--f-hero);
+  font-size: clamp(4rem, 15vw, 20rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(20px); /* Subtle rise */
+  text-shadow: 0 0 20px rgba(255,255,255,0.3); /* Glow effect from video */
+}
+
+.editorial-container {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 5vw 10vw;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.editorial-title {
+  font-family: var(--f-editorial);
+  font-size: clamp(2rem, 4vw, 5rem);
+  font-weight: 600;
+  line-height: 1.1;
+  text-align: right;
+  max-width: 50vw;
+}
