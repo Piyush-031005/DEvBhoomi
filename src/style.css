@@ -84,12 +84,12 @@ html.lenis { height: auto; }
 
 .hero-title {
   font-family: 'Yatra One', cursive;
-  font-size: clamp(4rem, 15vw, 15rem);
+  font-size: clamp(3rem, 10vw, 10rem);
   font-weight: 400;
   color: #ffffff; /* Override text-gold */
   opacity: 0;
   transform: translateY(300px); /* Start very low behind the mountain */
-  text-shadow: 0 0 30px rgba(255,255,255,0.8), 0 0 60px rgba(255,255,255,0.4);
+  text-shadow: none;
 }
 
 .editorial-container {
