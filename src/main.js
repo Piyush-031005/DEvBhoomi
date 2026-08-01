@@ -28,10 +28,10 @@ requestAnimationFrame(raf);
 const canvasContainer = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
 // Scene background is transparent to show HTML behind it
-scene.fog = new THREE.FogExp2('#0a0a0a', 0.005); // Very light fog
+scene.fog = new THREE.FogExp2('#0a0a0a', 0.008); // Subtle atmosphere
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 0, 30); // Start far back for Act 1
+camera.position.set(0, 0, 20); // Close to the mountain
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -90,9 +90,10 @@ textureLoader.load('/mountain.png', (mountainTex) => {
     const positions = [];
     const colors = [];
     
-    // We want the mountain to be full screen width.
-    // At z=-30, camera fov=60, visible width is roughly 60+ units on a 16:9 screen.
-    const mountainWidth = 80; 
+    // Camera at z=20, mountain at z=0, distance=20
+    // Visible width = 2 * 20 * tan(30°) = 23 units
+    // We want to OVERFILL the screen so no edges are visible
+    const mountainWidth = 35; 
     const mountainHeight = mountainWidth * (canvas.height / canvas.width);
     
     const potentialBirdIndices = []; // Store indices of top-edge particles
@@ -117,8 +118,9 @@ textureLoader.load('/mountain.png', (mountainTex) => {
                 // Map x, y to 3D space
                 const posX = (x / canvas.width - 0.5) * mountainWidth;
                 // Flip Y (canvas Y goes down, 3D Y goes up)
-                const posY = -(y / canvas.height - 0.5) * mountainHeight - 5; 
-                const posZ = -30;
+                // Push mountain DOWN so peaks are in the center/upper area
+                const posY = -(y / canvas.height - 0.5) * mountainHeight - 4; 
+                const posZ = 0;
                 
                 positions.push(posX, posY, posZ);
                 colors.push(r / 255, g / 255, b / 255);
@@ -140,12 +142,13 @@ textureLoader.load('/mountain.png', (mountainTex) => {
     mountainGeom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     
     const mountainMat = new THREE.PointsMaterial({
-        size: 0.22, // Large enough to overlap and create a solid mountain
+        size: 0.08, // Tight particles at close range
         vertexColors: true,
         transparent: true,
         opacity: 0, // Starts at 0
         depthWrite: false,
-        blending: THREE.NormalBlending // Normal blending so they occlude what's behind them
+        sizeAttenuation: true,
+        blending: THREE.NormalBlending
     });
     
     mountainParticles = new THREE.Points(mountainGeom, mountainMat);
@@ -173,11 +176,10 @@ textureLoader.load('/mountain.png', (mountainTex) => {
         birdStartPos[i*3+1] = positions[pIdx*3+1];
         birdStartPos[i*3+2] = positions[pIdx*3+2];
         
-        // Target position (fly up into bird silhouette)
-        // Let's just make them fly up and scatter slightly towards camera
-        birdTargetPos[i*3] = birdStartPos[i*3] * 1.5;
-        birdTargetPos[i*3+1] = birdStartPos[i*3+1] + 15 + Math.random() * 5; 
-        birdTargetPos[i*3+2] = birdStartPos[i*3+2] + 10 + Math.random() * 5;
+        // Target position: fly UP and TOWARDS camera so they get bigger
+        birdTargetPos[i*3] = birdStartPos[i*3] + (Math.random() - 0.5) * 8;
+        birdTargetPos[i*3+1] = birdStartPos[i*3+1] + 8 + Math.random() * 4; 
+        birdTargetPos[i*3+2] = birdStartPos[i*3+2] + 15 + Math.random() * 5; // Fly TOWARDS camera (positive Z)
         
         birdOffsets[i] = Math.random() * Math.PI * 2;
     }
@@ -216,7 +218,7 @@ textureLoader.load('/mountain.png', (mountainTex) => {
                 vec4 mvPosition = modelViewMatrix * vec4(localPos, 1.0);
                 gl_Position = projectionMatrix * mvPosition;
                 
-                gl_PointSize = (25.0 * (1.0 + uFlightProgress * 2.0)) / -mvPosition.z;
+                gl_PointSize = max(3.0, (80.0 * (1.0 + uFlightProgress * 3.0)) / -mvPosition.z);
                 
                 // Hide when progress is 0, fade in as they fly
                 vAlpha = smoothstep(0.01, 0.1, uFlightProgress) * (1.0 - smoothstep(0.8, 1.0, uFlightProgress));
@@ -374,7 +376,7 @@ animate();
 document.addEventListener("DOMContentLoaded", () => {
     
     // Start perfectly at ground level looking at the horizon
-    camera.position.set(0, 0, 50); 
+    camera.position.set(0, 2, 20); 
     camera.rotation.x = 0;
     
     const masterTl = gsap.timeline({
