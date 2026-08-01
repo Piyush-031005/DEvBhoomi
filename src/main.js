@@ -92,8 +92,9 @@ textureLoader.load('/mountain.png', (mountainTex) => {
     const colors = [];
     const offsets = [];
     
-    // Mountain overfills screen edges
-    const mountainWidth = 100; 
+    // Mountain width slightly wider than 16:9 screen at z=20 (which is ~41 units)
+    // 50 ensures it covers left and right edges completely.
+    const mountainWidth = 55; 
     const mountainHeight = mountainWidth * (canvas.height / canvas.width);
     
     // Iterate through pixels
@@ -111,10 +112,8 @@ textureLoader.load('/mountain.png', (mountainTex) => {
             if (lum > 8) {
                 // PosX and PosY
                 const posX = (x / canvas.width - 0.5) * mountainWidth;
-                // Move mountain up so peaks are more than half of the screen
-                // y=0 is top of image, y=height is bottom. 
-                // We want top of image to be high up (positive Y).
-                const posY = -(y / canvas.height - 0.5) * mountainHeight + 8; 
+                // Center the mountain. A slight downward shift (-2) puts the peaks right in the middle
+                const posY = -(y / canvas.height - 0.5) * mountainHeight - 2; 
                 const posZ = 0;
                 
                 positions.push(posX, posY, posZ);
@@ -179,7 +178,7 @@ textureLoader.load('/mountain.png', (mountainTex) => {
                 gl_Position = projectionMatrix * mvPosition;
                 
                 // Base size for mountain, gets MASSIVE as they fly towards camera
-                float baseSize = 3.0; // Small dot for mountain
+                float baseSize = 8.0; // Large dot for mountain so they overlap completely
                 float birdSize = 120.0; // Huge bird size
                 float currentSize = mix(baseSize, birdSize, uFlightProgress);
                 
