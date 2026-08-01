@@ -78,7 +78,7 @@ textureLoader.load('/mountain.png', (mountainTex) => {
     const canvas = document.createElement('canvas');
     
     // Massive resolution for ultra dense mountain (double density again to 80%)
-    const maxWidth = 1000; 
+    const maxWidth = 1200; 
     const scale = maxWidth / img.width;
     canvas.width = maxWidth;
     canvas.height = Math.floor(img.height * scale);
@@ -112,8 +112,8 @@ textureLoader.load('/mountain.png', (mountainTex) => {
             if (lum > 5) {
                 // PosX and PosY
                 const posX = (x / canvas.width - 0.5) * mountainWidth;
-                // Center the mountain. A slight downward shift (-2) puts the peaks right in the middle
-                const posY = -(y / canvas.height - 0.5) * mountainHeight - 2; 
+                // Center the mountain. A slight upward shift (+5) pushes the peaks well above the halfway mark
+                const posY = -(y / canvas.height - 0.5) * mountainHeight + 5; 
                 const posZ = 0;
                 
                 positions.push(posX, posY, posZ);
@@ -178,7 +178,7 @@ textureLoader.load('/mountain.png', (mountainTex) => {
                 gl_Position = projectionMatrix * mvPosition;
                 
                 // Base size for mountain, gets MASSIVE as they fly towards camera
-                float baseSize = 8.0; // Large dot for mountain so they overlap completely
+                float baseSize = 2.0; // Tiny dot for fine noise polar white mountain look
                 float birdSize = 120.0; // Huge bird size
                 float currentSize = mix(baseSize, birdSize, uFlightProgress);
                 
