@@ -28,7 +28,7 @@ requestAnimationFrame(raf);
 const canvasContainer = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
 // Scene background is transparent to show HTML behind it
-scene.fog = new THREE.FogExp2('#0a0a0a', 0.02); // Fog
+scene.fog = new THREE.FogExp2('#0a0a0a', 0.005); // Very light fog
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 0, 30); // Start far back for Act 1
@@ -77,8 +77,8 @@ textureLoader.load('/mountain.png', (mountainTex) => {
     const img = mountainTex.image;
     const canvas = document.createElement('canvas');
     
-    // Downscale for particle grid to avoid crashing (e.g., max 500 width)
-    const maxWidth = 400; 
+    // Higher resolution for denser mountain
+    const maxWidth = 500; 
     const scale = maxWidth / img.width;
     canvas.width = maxWidth;
     canvas.height = Math.floor(img.height * scale);
@@ -113,7 +113,7 @@ textureLoader.load('/mountain.png', (mountainTex) => {
             const lum = 0.299 * r + 0.587 * g + 0.114 * b;
             
             // Only create particle if it's bright enough
-            if (lum > 20) {
+            if (lum > 8) {
                 // Map x, y to 3D space
                 const posX = (x / canvas.width - 0.5) * mountainWidth;
                 // Flip Y (canvas Y goes down, 3D Y goes up)
@@ -140,20 +140,20 @@ textureLoader.load('/mountain.png', (mountainTex) => {
     mountainGeom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     
     const mountainMat = new THREE.PointsMaterial({
-        size: 0.1, // Small particles
+        size: 0.22, // Large enough to overlap and create a solid mountain
         vertexColors: true,
         transparent: true,
         opacity: 0, // Starts at 0
         depthWrite: false,
-        blending: THREE.AdditiveBlending
+        blending: THREE.NormalBlending // Normal blending so they occlude what's behind them
     });
     
     mountainParticles = new THREE.Points(mountainGeom, mountainMat);
     worldGroup.add(mountainParticles);
     
     // --- Create Birds (Detaching from Mountain) ---
-    // Select 15 random edge particles to become birds
-    const numBirds = 15;
+    // Select 35 random edge particles to become birds
+    const numBirds = 35;
     for(let i=0; i<numBirds; i++) {
         if(potentialBirdIndices.length === 0) break;
         const randIdx = Math.floor(Math.random() * potentialBirdIndices.length);
@@ -216,7 +216,7 @@ textureLoader.load('/mountain.png', (mountainTex) => {
                 vec4 mvPosition = modelViewMatrix * vec4(localPos, 1.0);
                 gl_Position = projectionMatrix * mvPosition;
                 
-                gl_PointSize = (10.0 * (1.0 + uFlightProgress * 2.0)) / -mvPosition.z;
+                gl_PointSize = (25.0 * (1.0 + uFlightProgress * 2.0)) / -mvPosition.z;
                 
                 // Hide when progress is 0, fade in as they fly
                 vAlpha = smoothstep(0.01, 0.1, uFlightProgress) * (1.0 - smoothstep(0.8, 1.0, uFlightProgress));
@@ -374,7 +374,7 @@ animate();
 document.addEventListener("DOMContentLoaded", () => {
     
     // Start perfectly at ground level looking at the horizon
-    camera.position.set(0, 0, 80); 
+    camera.position.set(0, 0, 50); 
     camera.rotation.x = 0;
     
     const masterTl = gsap.timeline({
@@ -392,50 +392,51 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Act 1 to 2: The Himalaya Reveal
+    // Speed up initial animations drastically!
     masterTl.to(animState, {
         mountainOpacity: 1, // Fade in mountain from black
-        duration: 2.5,
+        duration: 0.5, // Used to be 2.5
         ease: "power2.inOut"
     }, 0)
     // Act 2 to 3: Devbhoomi Text
     .to("#devbhoomi-title", {
         opacity: 1,
         y: "0px", // Subtle rise to center
-        duration: 2.5,
+        duration: 0.5,
         ease: "power2.out"
-    }, 1.5)
+    }, 0.2) // Triggers almost immediately
     
     // Act 3: The Poetic Bird Flight
     .to(animState, {
         birdFlight: 1.0,
-        duration: 4,
+        duration: 1.5, // Used to be 4
         ease: "power1.inOut"
-    }, 3)
+    }, 0.6) // Trigger soon after text appears
 
     // Act 4: Transition to Smoking Man
-    .to(animState, { mountainOpacity: 0, duration: 1 }, 6) // Fade out mountain
-    .to("#devbhoomi-title", { opacity: 0, duration: 0.5 }, 6)
-    .add(() => { if (mountainParticles) mountainParticles.visible = false; }, 7)
-    .add(() => { if (birdParticles) birdParticles.visible = false; }, 7)
-    .add(() => { if(smokeMesh) smokeMesh.visible = true; }, 6)
+    .to(animState, { mountainOpacity: 0, duration: 0.8 }, 2.5) // Fade out mountain
+    .to("#devbhoomi-title", { opacity: 0, duration: 0.5 }, 2.5)
+    .add(() => { if (mountainParticles) mountainParticles.visible = false; }, 3.5)
+    .add(() => { if (birdParticles) birdParticles.visible = false; }, 3.5)
+    .add(() => { if(smokeMesh) smokeMesh.visible = true; }, 2.8)
     .fromTo(smokeMat ? smokeMat.uniforms.uOpacity : {value:0}, {value:0}, {
         value: 1,
         duration: 1
-    }, 6.5);
+    }, 3);
 
-    // Act 4 to 5: Macro Zoom (Smoking Man Magic)
+    // Act 5: Macro Zoom (Smoking Man Magic)
     masterTl.to(camera.position, {
         z: 18,
         y: 0,
         duration: 2,
-    }, 8);
+    }, 4);
 
-    // Act 5 to 6: Portrait Closeups (End of Experience)
+    // Act 6: Portrait Closeups (End of Experience)
     masterTl.to(camera.position, {
         z: 22,
         x: 2,
         duration: 2,
         ease: "power2.inOut"
-    }, 10);
+    }, 6);
 
 });
