@@ -229,10 +229,10 @@ textureLoader.load('/mountain.png', (mountainTex) => {
 
 // No spline or trail needed for the scattered bird flight
 
-// --- Act 5: The Pahadi Woman — Demon Slayer Breathing-Style Flow ---
+// --- Act 5: The Himalayan Elder — Cinematic Silk/Smoke Flow ---
 let elderBgMesh, elderParticles;
 
-textureLoader.load('/woman.jpeg', (texture) => {
+textureLoader.load('/smoking-man.jpeg', (texture) => {
     const imgAspect = texture.image.width / texture.image.height;
 
     // Background image plane — full screen feel
