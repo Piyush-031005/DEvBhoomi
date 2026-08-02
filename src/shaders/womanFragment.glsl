@@ -1,23 +1,37 @@
-uniform sampler2D uTexture;
-varying vec2 vUv;
-varying float vProgress;
+uniform float uOpacity;
+varying vec3 vColor;
+varying float vAge;
+varying float vAlpha;
+varying float vType;
 
 void main() {
-    vec4 texColor = texture2D(uTexture, vUv);
-    
-    // Add golden glow as it explodes
-    vec3 goldColor = vec3(0.81, 0.71, 0.23);
-    
-    // Mix original color with glowing gold based on progress
-    vec3 finalColor = mix(texColor.rgb, goldColor, vProgress * 0.8);
-    
-    // Make particles fade out at the very end
-    float alpha = mix(1.0, 0.0, clamp((vProgress - 0.5) * 2.0, 0.0, 1.0));
-    alpha *= texColor.a; // respect original image alpha
-    
-    // Add circular particle shape
-    float dist = length(gl_PointCoord - vec2(0.5));
-    if (dist > 0.5) discard;
-    
-    gl_FragColor = vec4(finalColor, alpha);
+    vec2 uv = gl_PointCoord - vec2(0.5);
+    float dist = length(uv);
+    float alpha = 0.0;
+
+    if (vType < 0.5) {
+        // --- RIBBON: thin luminous thread ---
+        float lineAlpha = 1.0 - smoothstep(0.0, 0.12, abs(uv.y));
+        lineAlpha *= (1.0 - smoothstep(0.1, 0.5, abs(uv.x)));
+        alpha = lineAlpha * 1.4; // boost for additive glow
+    } else if (vType < 1.5) {
+        // --- FLOWER: 6-petal anime bloom ---
+        float angle = atan(uv.y, uv.x);
+        float petal = cos(angle * 6.0) * 0.18 + 0.32;
+        alpha = 1.0 - smoothstep(petal - 0.04, petal + 0.06, dist);
+        // Bright glowing core
+        alpha += (1.0 - smoothstep(0.0, 0.12, dist)) * 0.7;
+    } else {
+        // --- STAR: 4-point sparkle ---
+        float a = atan(uv.y, uv.x);
+        float starShape = cos(a * 4.0) * 0.2 + 0.25;
+        alpha = 1.0 - smoothstep(starShape - 0.03, starShape + 0.05, dist);
+        // Core bright dot
+        alpha += (1.0 - smoothstep(0.0, 0.08, dist)) * 0.9;
+    }
+
+    if (alpha < 0.01) discard;
+
+    // Bloom glow: scale up rgb with additive blending for anime glowing look
+    gl_FragColor = vec4(vColor * 1.3, alpha * vAlpha * uOpacity);
 }
