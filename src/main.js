@@ -1,4 +1,4 @@
-﻿import './style.css';
+import './style.css';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -229,51 +229,74 @@ textureLoader.load('/mountain.png', (mountainTex) => {
 
 // No spline or trail needed for the scattered bird flight
 
-// --- Act 5: The Pahadi Woman â€” Anime Glowing Particle Flow ---
+// --- Act 5: The Pahadi Woman — Demon Slayer Breathing-Style Flow ---
 let elderBgMesh, elderParticles;
 
 textureLoader.load('/woman.jpeg', (texture) => {
     const imgAspect = texture.image.width / texture.image.height;
 
-    // Background image plane â€” full screen feel
+    // Background image plane — full screen feel
     const bgGeom = new THREE.PlaneGeometry(30 * imgAspect, 30);
-    const bgMat = new THREE.MeshBasicMaterial({ 
-        map: texture,
-        transparent: true,
-        opacity: 0
-    });
-    elderBgMesh = new THREE.Mesh(bgGeom, bgMat);
+    const bgMat  = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0 });
+    elderBgMesh  = new THREE.Mesh(bgGeom, bgMat);
     elderBgMesh.position.set(0, 0, 10);
     elderBgMesh.visible = false;
     worldGroup.add(elderBgMesh);
-    
-    // 80,000 particles â€” three types: 0=ribbon, 1=flower, 2=star
-    const pCount = 80000;
-    const pGeom = new THREE.BufferGeometry();
-    const pPositions = new Float32Array(pCount * 3);
-    const pOffsets   = new Float32Array(pCount);
+
+    // ── Demon Slayer Particle System ────────────────────────────────
+    // Strategy: pack particles densely along parametric bezier ribbons
+    // Result:   thin, continuous glowing lines — exactly like Water Breathing
+    const NUM_PATHS    = 120;   // number of distinct ribbon strands
+    const PTS_PER_PATH = 500;   // particles along each ribbon → solid line
+    const FLOWERS      = 2000;  // flower accent particles
+    const STARS        = 1000;  // sparkle accent particles
+    const pCount       = NUM_PATHS * PTS_PER_PATH + FLOWERS + STARS;
+
+    const pPositions = new Float32Array(pCount * 3); // dummy (real pos calculated in vertex shader)
+    const pPathIds   = new Float32Array(pCount);
+    const pTs        = new Float32Array(pCount);
     const pRandoms   = new Float32Array(pCount);
-    const pTypes     = new Float32Array(pCount);
+    const pLayers    = new Float32Array(pCount);     // 0=flow, 1=flower, 2=star
 
-    for (let i = 0; i < pCount; i++) {
-        // Spread start positions across lower half of image
-        pPositions[i * 3]     = (Math.random() - 0.5) * 14;  // X: spread across width
-        pPositions[i * 3 + 1] = -10 + Math.random() * 4;     // Y: start from bottom
-        pPositions[i * 3 + 2] = -1 + Math.random() * 2;      // Z: slight depth variation (behind bg)
+    let idx = 0;
 
-        pOffsets[i]  = Math.random();                         // stagger so they don't all start at once
-        pRandoms[i]  = Math.random();                         // color/speed variation
-
-        // 50% ribbons, 35% flowers, 15% stars  
-        const r = Math.random();
-        pTypes[i] = r < 0.5 ? 0.0 : (r < 0.85 ? 1.0 : 2.0);
+    // Main ribbon flow particles
+    for (let p = 0; p < NUM_PATHS; p++) {
+        const pathId = p / NUM_PATHS;
+        for (let s = 0; s < PTS_PER_PATH; s++) {
+            pPathIds[idx]  = pathId;
+            pTs[idx]       = s / PTS_PER_PATH;   // evenly spaced along ribbon
+            pRandoms[idx]  = Math.random();
+            pLayers[idx]   = 0.0;
+            idx++;
+        }
     }
-    
+
+    // Flower accent particles
+    for (let f = 0; f < FLOWERS; f++) {
+        pPathIds[idx]  = Math.random();
+        pTs[idx]       = Math.random();
+        pRandoms[idx]  = Math.random();
+        pLayers[idx]   = 1.0;
+        idx++;
+    }
+
+    // Star/sparkle accent particles
+    for (let s = 0; s < STARS; s++) {
+        pPathIds[idx]  = Math.random();
+        pTs[idx]       = Math.random();
+        pRandoms[idx]  = Math.random();
+        pLayers[idx]   = 2.0;
+        idx++;
+    }
+
+    const pGeom = new THREE.BufferGeometry();
     pGeom.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
-    pGeom.setAttribute('aOffset',  new THREE.BufferAttribute(pOffsets,   1));
+    pGeom.setAttribute('aPathId',  new THREE.BufferAttribute(pPathIds,   1));
+    pGeom.setAttribute('aT',       new THREE.BufferAttribute(pTs,        1));
     pGeom.setAttribute('aRandom',  new THREE.BufferAttribute(pRandoms,   1));
-    pGeom.setAttribute('aType',    new THREE.BufferAttribute(pTypes,     1));
-    
+    pGeom.setAttribute('aLayer',   new THREE.BufferAttribute(pLayers,    1));
+
     const pMat = new THREE.ShaderMaterial({
         uniforms: {
             uTime:      { value: 0 },
@@ -286,9 +309,8 @@ textureLoader.load('/woman.jpeg', (texture) => {
         depthWrite:  false,
         blending:    THREE.AdditiveBlending
     });
-    
+
     elderParticles = new THREE.Points(pGeom, pMat);
-    // Place particles slightly in front of BG so they overlap the image edges
     elderParticles.position.set(0, 0, 10.5);
     elderParticles.visible = false;
     worldGroup.add(elderParticles);
