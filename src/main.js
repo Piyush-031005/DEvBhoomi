@@ -70,7 +70,9 @@ const birdIndices = []; // Store which particles become birds
 // We need a dummy object for GSAP to target before the async load finishes
 const animState = {
     mountainOpacity: 0,
-    birdFlight: 0
+    birdFlight: 0,
+    elderOpacity: 0,
+    elderEvolution: 0
 };
 
 textureLoader.load('/mountain.png', (mountainTex) => {
@@ -486,6 +488,13 @@ function animate() {
     
     if (elderParticles && elderParticles.material) {
         elderParticles.material.uniforms.uTime.value = elapsedTime;
+        elderParticles.material.uniforms.uOpacity.value = animState.elderOpacity;
+        elderParticles.material.uniforms.uEvolution.value = animState.elderEvolution;
+        elderParticles.visible = (animState.elderOpacity > 0.01);
+    }
+    if (elderBgMesh) {
+        elderBgMesh.material.opacity = animState.elderOpacity;
+        elderBgMesh.visible = (animState.elderOpacity > 0.01);
     }
     
     renderer.render(scene, camera);
@@ -537,27 +546,20 @@ document.addEventListener("DOMContentLoaded", () => {
     // Mountain turns into birds completely, wait until they pass, then fade out title
     .to("#devbhoomi-title", { opacity: 0, duration: 0.5 }, 2.0)
     .add(() => { if (mountainParticles) mountainParticles.visible = false; }, 3.0)
-    .add(() => { 
-        if(elderBgMesh) elderBgMesh.visible = true; 
-        if(elderParticles) elderParticles.visible = true; 
-    }, 2.8)
-    .to(elderBgMesh ? elderBgMesh.material : {opacity:0}, {
-        opacity: 1,
-        duration: 1
+    .to(animState, {
+        elderOpacity: 1,
+        duration: 1,
+        ease: "power2.inOut"
     }, 3)
-    .fromTo(elderParticles && elderParticles.material ? elderParticles.material.uniforms.uOpacity : {value:0}, {value:0}, {
-        value: 1,
-        duration: 1
-    }, 3);
 
     // Act 5: Macro Zoom (Smoking Man Magic & Particle Evolution)
-    masterTl.to(camera.position, {
+    .to(camera.position, {
         z: 18,
         y: 0,
         duration: 2,
     }, 4)
-    .to(elderParticles && elderParticles.material ? elderParticles.material.uniforms.uEvolution : {value:0}, {
-        value: 1.0, // Evolve from smoke -> ribbons -> birds -> flowers
+    .to(animState, {
+        elderEvolution: 1.0, // Evolve from smoke -> ribbons -> birds -> flowers
         duration: 3,
         ease: "power1.inOut"
     }, 4);
