@@ -229,234 +229,32 @@ textureLoader.load('/mountain.png', (mountainTex) => {
 
 // No spline or trail needed for the scattered bird flight
 
-// --- Act 5: Culture (The Himalayan Elder - Advanced Particle Flow) ---
-let elderBgMesh, elderParticles;
+// --- Act 5: Culture (The Himalayan Elder - Video Transition) ---
+let elderVideoMesh;
+const elderVideo = document.createElement('video');
+elderVideo.src = '/video/scene2.mp4';
+elderVideo.crossOrigin = 'anonymous';
+elderVideo.loop = true;
+elderVideo.muted = true; // Required for autoplay
+elderVideo.playsInline = true;
 
-textureLoader.load('/smoking-man.jpeg', (texture) => {
-    const aspect = texture.image.width / texture.image.height;
-    // Base image plane
-    const bgGeom = new THREE.PlaneGeometry(25 * aspect, 25);
-    const bgMat = new THREE.MeshBasicMaterial({ 
-        map: texture,
-        transparent: true,
-        opacity: 0
-    });
-    elderBgMesh = new THREE.Mesh(bgGeom, bgMat);
-    elderBgMesh.position.set(0, 0, 10);
-    elderBgMesh.visible = false;
-    worldGroup.add(elderBgMesh);
-    
-    // Advanced Particle Flow (150,000 particles)
-    const pCount = 150000;
-    const pGeom = new THREE.BufferGeometry();
-    const pPositions = new Float32Array(pCount * 3);
-    const pOffsets = new Float32Array(pCount);
-    const pRandoms = new Float32Array(pCount);
-    
-    // Cigarette tip approximate world position relative to plane
-    // Plane is 25 * aspect wide, 25 high. 
-    // Cigarette is around lower-left center.
-    const startX = -2.0;
-    const startY = -3.0;
-    
-    for(let i=0; i<pCount; i++) {
-        pPositions[i*3] = startX;
-        pPositions[i*3+1] = startY;
-        pPositions[i*3+2] = 0;
-        
-        pOffsets[i] = Math.random() * 100.0; // Random time offset
-        pRandoms[i] = Math.random(); // Random seed for color/behavior
-    }
-    
-    pGeom.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
-    pGeom.setAttribute('aOffset', new THREE.BufferAttribute(pOffsets, 1));
-    pGeom.setAttribute('aRandom', new THREE.BufferAttribute(pRandoms, 1));
-    
-    const pMat = new THREE.ShaderMaterial({
-        uniforms: {
-            uTime: { value: 0 },
-            uEvolution: { value: 0.0 }, // 0 = smoke, 1 = birds/flowers/ribbons
-            uOpacity: { value: 0.0 }
-        },
-        vertexShader: `
-            uniform float uTime;
-            uniform float uEvolution;
-            attribute float aOffset;
-            attribute float aRandom;
-            
-            varying vec3 vColor;
-            varying float vAge;
-            varying float vShapeType; // 0=smoke, 1=ribbon, 2=bird, 3=flower
-            
-            // Simplex noise function
-            vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
-            float snoise(vec3 v){
-                const vec2 C = vec2(1.0/6.0, 1.0/3.0);
-                const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
-                vec3 i  = floor(v + dot(v, C.yyy));
-                vec3 x0 = v - i + dot(i, C.xxx);
-                vec3 g = step(x0.yzx, x0.xyz);
-                vec3 l = 1.0 - g;
-                vec3 i1 = min(g.xyz, l.zxy);
-                vec3 i2 = max(g.xyz, l.zxy);
-                vec3 x1 = x0 - i1 + C.xxx;
-                vec3 x2 = x0 - i2 + C.yyy;
-                vec3 x3 = x0 - D.yyy;
-                i = mod(i, 289.0);
-                vec4 p = permute(permute(permute(
-                            i.z + vec4(0.0, i1.z, i2.z, 1.0))
-                          + i.y + vec4(0.0, i1.y, i2.y, 1.0))
-                          + i.x + vec4(0.0, i1.x, i2.x, 1.0));
-                float n_ = 0.142857142857;
-                vec3 ns = n_ * D.wyz - D.xzx;
-                vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
-                vec4 x_ = floor(j * ns.z);
-                vec4 y_ = floor(j - 7.0 * x_);
-                vec4 x = x_ *ns.x + ns.yyyy;
-                vec4 y = y_ *ns.x + ns.yyyy;
-                vec4 h = 1.0 - abs(x) - abs(y);
-                vec4 b0 = vec4(x.xy, y.xy);
-                vec4 b1 = vec4(x.zw, y.zw);
-                vec4 s0 = floor(b0)*2.0 + 1.0;
-                vec4 s1 = floor(b1)*2.0 + 1.0;
-                vec4 sh = -step(h, vec4(0.0));
-                vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
-                vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
-                vec3 p0 = vec3(a0.xy,h.x);
-                vec3 p1 = vec3(a0.zw,h.y);
-                vec3 p2 = vec3(a1.xy,h.z);
-                vec3 p3 = vec3(a1.zw,h.w);
-                vec4 norm = 1.79284291400159 - 0.85373472095314 * vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3));
-                p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
-                vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
-                m = m * m;
-                return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
-            }
-            
-            void main() {
-                // Particle lifetime: 0 to 1
-                float speed = 0.2;
-                float age = fract((uTime * speed) + aOffset);
-                vAge = age;
-                
-                // Shape assignment based on random seed and evolution
-                vShapeType = 0.0; // Default smoke
-                if (uEvolution > 0.3) {
-                    if (aRandom < 0.2) vShapeType = 1.0; // Ribbon
-                    else if (aRandom < 0.3 && uEvolution > 0.6) vShapeType = 2.0; // Bird
-                    else if (aRandom < 0.4 && uEvolution > 0.5) vShapeType = 3.0; // Flower motif
-                }
-                
-                vec3 pos = position;
-                
-                // Base flow upwards and leftwards
-                pos.y += age * 12.0;
-                pos.x -= age * 6.0;
-                pos.z += age * 2.0;
-                
-                // Curl Noise distortion
-                float n1 = snoise(vec3(pos.y * 0.2, pos.x * 0.2, uTime * 0.1));
-                float n2 = snoise(vec3(pos.y * 0.3 + 10.0, pos.x * 0.3, uTime * 0.15));
-                float n3 = snoise(vec3(pos.y * 0.1 + 20.0, pos.x * 0.1, uTime * 0.05));
-                
-                // Spread as it ages
-                pos.x += n1 * age * 8.0;
-                pos.y += n2 * age * 4.0;
-                pos.z += n3 * age * 3.0;
-                
-                // Ribbon clustering
-                if (vShapeType == 1.0) {
-                    pos.x += sin(age * 20.0 + aOffset) * 0.5 * uEvolution;
-                }
-                
-                // Constrain flow strictly to left side (avoid face)
-                // Face is roughly at x > 0.0 in world space
-                float mask = smoothstep(-1.0, 1.0, pos.x); 
-                // We push particles back to the left if they drift too far right
-                pos.x -= mask * (pos.x + 1.0) * age * 2.0;
-                
-                vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-                gl_Position = projectionMatrix * mvPosition;
-                
-                // Size calculation
-                float baseSize = mix(40.0, 15.0, age); // Smoke gets smaller as it rises
-                if (vShapeType == 1.0) baseSize = 5.0; // Fine thread
-                if (vShapeType == 2.0) baseSize = 25.0; // Birds
-                if (vShapeType == 3.0) baseSize = 35.0; // Flowers
-                
-                gl_PointSize = baseSize / -mvPosition.z;
-                
-                // Color Palette
-                vec3 cSmoke = vec3(0.8, 0.8, 0.9); // Warm Grey / Stone White
-                vec3 cRed = vec3(0.8, 0.1, 0.2); // Rangila Pichora Red
-                vec3 cGold = vec3(0.8, 0.6, 0.1); // Antique Gold
-                vec3 cBlue = vec3(0.1, 0.3, 0.8); // Royal Blue
-                vec3 cMagenta = vec3(0.8, 0.1, 0.6); // Magenta
-                
-                vec3 finalColor = cSmoke;
-                if (vShapeType > 0.0) {
-                    if (aRandom < 0.2) finalColor = cRed;
-                    else if (aRandom < 0.3) finalColor = cGold;
-                    else if (aRandom < 0.35) finalColor = cBlue;
-                    else finalColor = cMagenta;
-                }
-                
-                // Interpolate from smoke to vibrant colors based on evolution
-                vColor = mix(cSmoke, finalColor, uEvolution);
-            }
-        `,
-        fragmentShader: `
-            uniform float uOpacity;
-            varying vec3 vColor;
-            varying float vAge;
-            varying float vShapeType;
-            
-            void main() {
-                vec2 uv = gl_PointCoord - vec2(0.5);
-                float dist = length(uv);
-                
-                float alpha = 0.0;
-                
-                if (vShapeType < 0.5) {
-                    // Smoke (Soft circle)
-                    alpha = 1.0 - smoothstep(0.1, 0.5, dist);
-                    // Add some noise texture to smoke
-                    alpha *= 0.6;
-                } else if (vShapeType < 1.5) {
-                    // Ribbon (thin line)
-                    alpha = 1.0 - smoothstep(0.0, 0.1, abs(uv.y));
-                    alpha *= (1.0 - smoothstep(0.3, 0.5, abs(uv.x)));
-                } else if (vShapeType < 2.5) {
-                    // Bird (V shape)
-                    float vShape = abs(uv.x) * 2.0 - uv.y;
-                    alpha = 1.0 - smoothstep(0.0, 0.2, abs(vShape - 0.2));
-                    float body = 1.0 - smoothstep(0.0, 0.1, length(uv - vec2(0.0, -0.1)));
-                    alpha = max(alpha, body);
-                } else {
-                    // Flower Motif (simplified petal shape)
-                    float angle = atan(uv.y, uv.x);
-                    float petals = cos(angle * 5.0) * 0.2 + 0.3;
-                    alpha = 1.0 - smoothstep(petals - 0.05, petals + 0.05, dist);
-                }
-                
-                // Fade in/out based on age
-                float ageFade = smoothstep(0.0, 0.1, vAge) * (1.0 - smoothstep(0.7, 1.0, vAge));
-                
-                if (alpha < 0.01) discard;
-                
-                gl_FragColor = vec4(vColor, alpha * ageFade * uOpacity);
-            }
-        `,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending
-    });
-    
-    elderParticles = new THREE.Points(pGeom, pMat);
-    elderParticles.position.set(0, 0, 10.1); // Slightly in front of BG
-    elderParticles.visible = false;
-    worldGroup.add(elderParticles);
+// We will explicitly call play() when it becomes visible to ensure it runs
+const videoTexture = new THREE.VideoTexture(elderVideo);
+videoTexture.minFilter = THREE.LinearFilter;
+videoTexture.magFilter = THREE.LinearFilter;
+
+// Create a large plane for the video
+const aspect = 16/9; // Assuming standard video aspect ratio
+const videoGeom = new THREE.PlaneGeometry(35 * aspect, 35);
+const videoMat = new THREE.MeshBasicMaterial({ 
+    map: videoTexture,
+    transparent: true,
+    opacity: 0
 });
+elderVideoMesh = new THREE.Mesh(videoGeom, videoMat);
+elderVideoMesh.position.set(0, 0, 10); // Same position as the old smoking man
+elderVideoMesh.visible = false;
+worldGroup.add(elderVideoMesh);
 
 // Lighting
 const ambientLight = new THREE.AmbientLight('#ffffff', 0.2);
@@ -486,15 +284,9 @@ function animate() {
         mountainParticles.material.uniforms.uFlightProgress.value = animState.birdFlight;
     }
     
-    if (elderParticles && elderParticles.material) {
-        elderParticles.material.uniforms.uTime.value = elapsedTime;
-        elderParticles.material.uniforms.uOpacity.value = animState.elderOpacity;
-        elderParticles.material.uniforms.uEvolution.value = animState.elderEvolution;
-        elderParticles.visible = (animState.elderOpacity > 0.01);
-    }
-    if (elderBgMesh) {
-        elderBgMesh.material.opacity = animState.elderOpacity;
-        elderBgMesh.visible = (animState.elderOpacity > 0.01);
+    if (elderVideoMesh) {
+        elderVideoMesh.material.opacity = animState.elderOpacity;
+        elderVideoMesh.visible = (animState.elderOpacity > 0.01);
     }
     
     renderer.render(scene, camera);
@@ -542,27 +334,26 @@ document.addEventListener("DOMContentLoaded", () => {
         ease: "power1.inOut"
     }, 0.6) // Trigger soon after text appears
 
-    // Act 4: Transition to Smoking Man
+    // Act 4: Transition to Smoking Man Video
     // Mountain turns into birds completely, wait until they pass, then fade out title
     .to("#devbhoomi-title", { opacity: 0, duration: 0.5 }, 2.0)
     .add(() => { if (mountainParticles) mountainParticles.visible = false; }, 3.0)
+    .add(() => { 
+        if (elderVideo) elderVideo.play();
+    }, 2.8)
     .to(animState, {
         elderOpacity: 1,
         duration: 1,
         ease: "power2.inOut"
     }, 3)
 
-    // Act 5: Macro Zoom (Smoking Man Magic & Particle Evolution)
+    // Act 5: Macro Zoom (Video is playing)
     .to(camera.position, {
         z: 18,
         y: 0,
-        duration: 2,
-    }, 4)
-    .to(animState, {
-        elderEvolution: 1.0, // Evolve from smoke -> ribbons -> birds -> flowers
         duration: 3,
         ease: "power1.inOut"
-    }, 4);
+    }, 3.5);
 
     // Act 6: Portrait Closeups (End of Experience)
     masterTl.to(camera.position, {
