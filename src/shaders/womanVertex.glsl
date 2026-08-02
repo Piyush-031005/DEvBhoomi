@@ -124,9 +124,10 @@ void main(){
   // ── Particle size ─────────────────────────────────────────────────
   // Main flow: very tiny points packed densely → forms solid glowing line
   // Flowers & stars: bigger
-  float sz = 4.0;
-  if (aLayer > 0.5 && aLayer < 1.5) sz = 30.0;
-  if (aLayer > 1.5)                  sz = 12.0;
+  // Using much larger sizes because it's divided by -mvPos.z which scales it down significantly
+  float sz = 80.0; 
+  if (aLayer > 0.5 && aLayer < 1.5) sz = 500.0;
+  if (aLayer > 1.5)                  sz = 200.0;
 
   // Demon Slayer style: brightest near the tip of each ribbon
   float tipBright = smoothstep(0.0, 0.4, t) * (1.0 - smoothstep(0.85, 1.0, t));

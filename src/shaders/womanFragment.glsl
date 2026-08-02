@@ -65,7 +65,7 @@ void main(){
   if (alpha < 0.01) discard;
 
   // Additive blending is set on the material.
-  // Multiply colour by a boost so the thin lines accumulate brightly.
-  float boost = (vType < 0.5) ? 1.8 : 1.3;
+  // Multiply colour by a huge boost so the thin lines accumulate brightly and glow like neon.
+  float boost = (vType < 0.5) ? 6.0 : 4.0;
   gl_FragColor = vec4(vColor * boost, alpha * vAlpha * uOpacity);
 }
