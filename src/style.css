@@ -66,16 +66,25 @@ body {
 /* BRUTALIST EDITORIAL SYSTEM                                    */
 /* ============================================================ */
 
-/* Each chapter fills the viewport — GSAP pin:true handles the sticky behaviour */
+/* Each chapter sits in the absolute stack */
 .br-chapter {
+  position: absolute;
+  top: 0;
+  left: 0;
   height: 100vh;
   width: 100%;
   display: flex;
   align-items: center;
   z-index: 10;
   pointer-events: none;
-  /* Start hidden — GSAP onEnter reveals */
+  /* Start hidden — GSAP controls visibility */
   opacity: 0;
+  visibility: hidden;
+}
+
+.br-chapter.active-ch {
+  visibility: visible;
+  pointer-events: auto;
 }
 
 /* Swiss grid: 3 columns */
@@ -326,22 +335,22 @@ body {
   transform: scaleX(1);
 }
 
-/* Bleed text — massive word behind the image (z-index below canvas) */
+/* ------------------------------------------------ */
+/* MASSIVE BLEED TEXT (BACKGROUND)                  */
+/* Awwwards style: huge outlined typography         */
+/* ------------------------------------------------ */
 .br-bleed-text {
   position: absolute;
-  bottom: -0.15em;
-  right: -0.05em;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   font-family: var(--f-condensed);
+  font-size: clamp(20rem, 35vw, 40rem);
   font-weight: 900;
-  font-size: clamp(8rem, 22vw, 28rem);
-  line-height: 1;
   color: transparent;
-  -webkit-text-stroke: 1px rgba(232, 25, 10, 0.18);
-  text-transform: uppercase;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.05);
+  z-index: 0;
   pointer-events: none;
-  user-select: none;
-  letter-spacing: -0.04em;
-  z-index: -1; /* Sits below the chapter content, above WebGL */
   white-space: nowrap;
   overflow: hidden;
 }

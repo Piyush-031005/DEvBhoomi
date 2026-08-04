@@ -445,86 +445,81 @@ document.addEventListener("DOMContentLoaded", () => {
     .to(camera.position, { z: 22, y: 0, duration: 2.5, ease: "power1.inOut" }, 3);
 
     // ============================================================
-    // PER-CHAPTER SCROLL TRIGGERS
+    // BRUTALIST UI SCROLL LOGIC
+    // Single pinned container controls 4 layered chapters
     // ============================================================
     const chapters = [
-        { id: 'br-ch-01', chIdx: 0 }, // Mountains
-        { id: 'br-ch-02', chIdx: 1 }, // Char Dham
-        { id: 'br-ch-03', chIdx: 2 }, // Culture
-        { id: 'br-ch-04', chIdx: 3 }, // Nature
+        { id: 'br-ch-01', chIdx: 0 },
+        { id: 'br-ch-02', chIdx: 1 },
+        { id: 'br-ch-03', chIdx: 2 },
+        { id: 'br-ch-04', chIdx: 3 },
     ];
+    let currentCh = -1;
 
-    chapters.forEach((ch, idx) => {
-        const el = document.getElementById(ch.id);
-        if (!el) return;
+    ScrollTrigger.create({
+        trigger: '#brutalist-act',
+        start: 'top top',
+        end: '+=400%', // 4 chapters, pin for 400vh
+        pin: true,
+        onUpdate: (self) => {
+            // self.progress goes from 0 to 1
+            // Convert to chapter index (0, 1, 2, 3)
+            let idx = Math.min(3, Math.floor(self.progress * 4));
+            
+            if (idx !== currentCh) {
+                // Fade out old
+                if (currentCh >= 0) {
+                    const oldEl = document.getElementById(chapters[currentCh].id);
+                    const oldWords = oldEl.querySelectorAll('.br-word');
+                    const oldBody = oldEl.querySelector('.br-body');
+                    
+                    gsap.to(oldWords, { y: '-110%', duration: 0.5, ease: 'power4.in', stagger: 0.04, overwrite: true });
+                    if (oldBody) gsap.to(oldBody, { opacity: 0, y: -20, duration: 0.35, overwrite: true });
+                    gsap.to(oldEl, { 
+                        opacity: 0, 
+                        duration: 0.4, 
+                        onComplete: () => oldEl.classList.remove('active-ch') 
+                    });
+                }
+                
+                // Fade in new
+                const newEl = document.getElementById(chapters[idx].id);
+                newEl.classList.add('active-ch');
+                const newWords = newEl.querySelectorAll('.br-word');
+                const newBody = newEl.querySelector('.br-body');
+                const newDivider = newEl.querySelector('.br-divider');
+                const newNumEl = newEl.querySelector('.br-chapter-num');
 
-        const words   = el.querySelectorAll('.br-word');
-        const body    = el.querySelector('.br-body');
-        const divider = el.querySelector('.br-divider');
-        const numEl   = el.querySelector('.br-chapter-num');
-        const chNum   = String(idx + 1).padStart(2, '0');
+                // Switch WebGL Shader chapter
+                switchBrutalistChapter(chapters[idx].chIdx);
 
-        // Helper to update the progress rail
-        const updateRail = () => {
-            document.querySelectorAll('.br-progress-tick').forEach((t, ti) => {
-                t.classList.toggle('active', ti === idx);
-            });
-            const counter = document.getElementById('br-chapter-counter');
-            if (counter) counter.textContent = `${chNum} / 04`;
-        };
+                // Update UI Rail
+                document.querySelectorAll('.br-progress-tick').forEach((t, ti) => {
+                    t.classList.toggle('active', ti === idx);
+                });
+                const chNum = String(idx + 1).padStart(2, '0');
+                const counter = document.getElementById('br-chapter-counter');
+                if (counter) counter.textContent = `${chNum} / 04`;
 
-        ScrollTrigger.create({
-            trigger:   el,
-            start:     'top top',
-            end:       '+=100%',       // pin for exactly 100vh of scroll
-            pin:       true,
-            pinSpacing: false,         // chapters stack cleanly, no extra space
-            anticipatePin: 1,
-            onEnter: () => {
-                // Switch to this chapter's procedural world
-                switchBrutalistChapter(ch.chIdx);
-                updateRail();
-
-                // Brutal word slam (translateY 110%→0)
-                gsap.to(words, {
-                    y: '0%',
-                    duration: 0.85,
-                    ease: 'power4.out',
-                    stagger: 0.07,
-                    overwrite: true,
+                // GSAP Typography Slam
+                gsap.killTweensOf(newWords);
+                gsap.fromTo(newWords, { y: '110%' }, {
+                    y: '0%', duration: 0.85, ease: 'power4.out', stagger: 0.07, overwrite: true
                 });
 
-                // Red chapter number count-up feel
-                if (numEl) gsap.from(numEl, { opacity: 0, x: -30, duration: 0.6, ease: 'power3.out' });
-
-                // Fade body + extend divider line
-                if (body) gsap.to(body, { opacity: 1, y: 0, duration: 0.9, delay: 0.25, ease: 'power2.out', overwrite: true });
-                if (divider) {
-                    gsap.set(divider, { width: 0 });
-                    gsap.to(divider, { width: '80px', duration: 0.7, delay: 0.2, ease: 'power3.out' });
+                if (newNumEl) gsap.fromTo(newNumEl, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6, ease: 'power3.out' });
+                
+                if (newBody) gsap.fromTo(newBody, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.9, delay: 0.25, ease: 'power2.out', overwrite: true });
+                
+                if (newDivider) {
+                    gsap.fromTo(newDivider, { width: 0 }, { width: '80px', duration: 0.7, delay: 0.2, ease: 'power3.out' });
                 }
+                
+                gsap.to(newEl, { opacity: 1, duration: 0.5, ease: 'power2.out' });
 
-                gsap.to(el, { opacity: 1, duration: 0.5, ease: 'power2.out' });
-            },
-            onLeave: () => {
-                // Swipe words back up as we leave going forward
-                gsap.to(words, { y: '-110%', duration: 0.5, ease: 'power4.in', stagger: 0.04, overwrite: true });
-                if (body) gsap.to(body, { opacity: 0, y: -20, duration: 0.35, overwrite: true });
-            },
-            onEnterBack: () => {
-                switchBrutalistChapter(ch.chIdx);
-                updateRail();
-                gsap.to(words, { y: '0%', duration: 0.85, ease: 'power4.out', stagger: 0.07, overwrite: true });
-                if (body) gsap.to(body, { opacity: 1, y: 0, duration: 0.9, delay: 0.25, ease: 'power2.out', overwrite: true });
-                gsap.to(el, { opacity: 1, duration: 0.5 });
-            },
-            onLeaveBack: () => {
-                gsap.to(words, { y: '110%', duration: 0.5, ease: 'power4.in', stagger: 0.04, overwrite: true });
-                if (body) gsap.to(body, { opacity: 0, y: 20, duration: 0.35, overwrite: true });
-                gsap.to(el, { opacity: 0, duration: 0.4 });
-                if (idx > 0) switchBrutalistChapter(chapters[idx - 1].chIdx);
-            },
-        });
+                currentCh = idx;
+            }
+        }
     });
 
     // Track scroll velocity for the shader
