@@ -4506,7 +4506,30 @@ vec3 renderCulture(vec2 uv) {
     float aipan = max(max(lotus, ring1), max(ring2, max(ring3, max(cross, gridDots))));
     // Breathing animation (Aipan motifs gently pulse)
     aipan *= 0.80 + 0.20 * sin(uTime * 0.8 + tr * 8.0);
-    col = mix(col, vec3(0.96, 0.93, 0.88), aipan * 0.88);
+    
+    // Interactive Magic: Mouse hovering over Aipan turns it gold and glowing
+    float mouseDist = length(p - (uMouse - 0.5) * vec2(1.78, 1.0));
+    float magicGlow = exp(-mouseDist * 12.0) * uHover;
+    
+    vec3 aipanBase = vec3(0.96, 0.93, 0.88);
+    vec3 aipanMagic = vec3(1.0, 0.8, 0.2); // Gold
+    vec3 aipanColor = mix(aipanBase, aipanMagic, magicGlow);
+    
+    col = mix(col, aipanColor, aipan * (0.88 + magicGlow * 0.5));
+    
+    // Magical dust particles floating in the air
+    float dust = 0.0;
+    for(int i = 0; i < 15; i++) {
+        float fi = float(i);
+        vec2 dPos = vec2(
+            sin(fi * 43.1 + t * 0.8) * 0.8,
+            cos(fi * 23.4 + t * 0.6) * 0.4
+        );
+        dPos.x += sin(dPos.y * 5.0 + t) * 0.05;
+        float d = length(p - dPos);
+        dust += exp(-d * (200.0 + sin(fi + t * 2.0) * 100.0)) * (0.5 + 0.5 * sin(fi * 7.0 + t * 4.0));
+    }
+    col += vec3(0.9, 0.7, 0.3) * dust;
 
     // ---- Uttarakhand Topi (procedural SDF) ----
     // Traditional Garhwali/Kumaoni flat-topped woolen cap
