@@ -454,6 +454,9 @@ document.addEventListener("DOMContentLoaded", () => {
     .to("#devbhoomi-title", { opacity: 0, duration: 0.5 }, 2.0)
     .add(() => { if (mountainParticles) mountainParticles.visible = false; }, 3.0)
     .to(animState, { brutalistOpacity: 1, duration: 1.5, ease: "power2.inOut" }, 3)
+    // Reveal brutalist UI shell
+    .to('#br-shell', { opacity: 1, duration: 1.0, ease: 'power2.inOut' }, 3.2)
+    .add(() => { document.getElementById('br-shell')?.classList.add('active'); }, 3.8)
     // Camera settles back for the editorial experience (wider frame)
     .to(camera.position, { z: 22, y: 0, duration: 2.5, ease: "power1.inOut" }, 3);
 
@@ -477,6 +480,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const body    = el.querySelector('.br-body');
         const divider = el.querySelector('.br-divider');
         const numEl   = el.querySelector('.br-chapter-num');
+        const chNum   = String(idx + 1).padStart(2, '0');
+
+        // Helper to update the progress rail
+        const updateRail = () => {
+            document.querySelectorAll('.br-progress-tick').forEach((t, ti) => {
+                t.classList.toggle('active', ti === idx);
+            });
+            const counter = document.getElementById('br-chapter-counter');
+            if (counter) counter.textContent = `${chNum} / 04`;
+        };
 
         ScrollTrigger.create({
             trigger:   el,
@@ -488,6 +501,7 @@ document.addEventListener("DOMContentLoaded", () => {
             onEnter: () => {
                 // Swap WebGL image with cinematic cross-fade
                 switchBrutalistChapter(ch.curr, ch.next);
+                updateRail();
 
                 // Brutal word slam (translateY 110%→0)
                 gsap.to(words, {
@@ -518,6 +532,7 @@ document.addEventListener("DOMContentLoaded", () => {
             onEnterBack: () => {
                 // Re-enter from below — snap words back in from below
                 switchBrutalistChapter(ch.curr, ch.next);
+                updateRail();
                 gsap.to(words, { y: '0%', duration: 0.85, ease: 'power4.out', stagger: 0.07, overwrite: true });
                 if (body) gsap.to(body, { opacity: 1, y: 0, duration: 0.9, delay: 0.25, ease: 'power2.out', overwrite: true });
                 gsap.to(el, { opacity: 1, duration: 0.5 });

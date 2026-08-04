@@ -18,6 +18,43 @@
       <h1 class="hero-title" id="devbhoomi-title">देवभूमी</h1>
     </div>
 
+    <!-- ============================================================ -->
+    <!-- BRUTALIST UI SHELL — Fixed overlay for the editorial phase   -->
+    <!-- ============================================================ -->
+    <div class="br-shell" id="br-shell">
+
+      <!-- Top bar: title + chapter counter -->
+      <div class="br-topbar">
+        <span class="br-topbar-brand">DEVBHOOMI</span>
+        <div class="br-topbar-right">
+          <span class="br-topbar-label">UTTARAKHAND</span>
+          <span class="br-topbar-label">INDIA</span>
+          <span class="br-topbar-label" id="br-chapter-counter">01 / 04</span>
+        </div>
+      </div>
+
+      <!-- Bottom bar: date, design credit, region -->
+      <div class="br-bottombar">
+        <span class="br-bottombar-item">30°22'N 78°04'E</span>
+        <span class="br-bottombar-item">DEVBHOOMI — INTERACTIVE FILM</span>
+        <span class="br-bottombar-item">2026</span>
+      </div>
+
+      <!-- Vertical chapter progress rail (right side) -->
+      <div class="br-progress-rail">
+        <div class="br-progress-tick active" data-ch="01">01</div>
+        <div class="br-progress-tick" data-ch="02">02</div>
+        <div class="br-progress-tick" data-ch="03">03</div>
+        <div class="br-progress-tick" data-ch="04">04</div>
+      </div>
+
+      <!-- Red decorative horizontal accent lines -->
+      <div class="br-accent-line top"></div>
+      <div class="br-accent-line bottom"></div>
+
+    </div>
+    <!-- END BRUTALIST SHELL -->
+
     <main id="app">
       <!-- Act 1: The Void -->
       <section class="act-section" id="act-1" style="height: 30vh;"></section>
@@ -42,7 +79,7 @@
               <span class="br-chapter-num">01</span>
             </div>
             <div class="br-col-main">
-              <h2 class="br-headline" id="br-h1">
+              <h2 class="br-headline">
                 <span class="br-word" style="--i:0">PAHAD</span>
                 <span class="br-word outline" style="--i:1">KI</span>
                 <span class="br-word" style="--i:2">AWAAZ</span>
@@ -51,10 +88,12 @@
               <p class="br-body">Nanda Devi. Trishul. Panchachuli.<br>Peaks that pierce the sky and hold<br>the sky in return.</p>
             </div>
             <div class="br-col-side">
-              <p class="br-side-text">28°23'N 79°26'E</p>
+              <p class="br-side-text">28°23'N<br>79°26'E</p>
               <p class="br-side-text">ELEVATION<br>7,816 m</p>
             </div>
           </div>
+          <!-- Bleed headline (overflowing, behind image) -->
+          <div class="br-bleed-text" aria-hidden="true">PAHAD</div>
         </div>
 
         <!-- CHAPTER 02 — THE RIVERS -->
@@ -65,7 +104,7 @@
               <span class="br-chapter-num">02</span>
             </div>
             <div class="br-col-main">
-              <h2 class="br-headline" id="br-h2">
+              <h2 class="br-headline">
                 <span class="br-word" style="--i:0">GANGA</span>
                 <span class="br-word outline" style="--i:1">KI</span>
                 <span class="br-word" style="--i:2">DHAAR</span>
@@ -78,6 +117,7 @@
               <p class="br-side-text">FLOW<br>2,525 km</p>
             </div>
           </div>
+          <div class="br-bleed-text" aria-hidden="true">GANGA</div>
         </div>
 
         <!-- CHAPTER 03 — THE TEMPLES -->
@@ -88,7 +128,7 @@
               <span class="br-chapter-num">03</span>
             </div>
             <div class="br-col-main">
-              <h2 class="br-headline" id="br-h3">
+              <h2 class="br-headline">
                 <span class="br-word" style="--i:0">DEVO</span>
                 <span class="br-word outline" style="--i:1">KA</span>
                 <span class="br-word" style="--i:2">GHAR</span>
@@ -101,6 +141,7 @@
               <p class="br-side-text">CHAR DHAM<br>UTTARAKHAND</p>
             </div>
           </div>
+          <div class="br-bleed-text" aria-hidden="true">MANDIR</div>
         </div>
 
         <!-- CHAPTER 04 — THE PEOPLE -->
@@ -111,7 +152,7 @@
               <span class="br-chapter-num">04</span>
             </div>
             <div class="br-col-main">
-              <h2 class="br-headline" id="br-h4">
+              <h2 class="br-headline">
                 <span class="br-word" style="--i:0">PAHADI</span>
                 <span class="br-word outline" style="--i:1">LOG</span>
               </h2>
@@ -123,6 +164,7 @@
               <p class="br-side-text">SINCE<br>TIME BEGAN</p>
             </div>
           </div>
+          <div class="br-bleed-text" aria-hidden="true">LOG</div>
         </div>
 
       </section>

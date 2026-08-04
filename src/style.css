@@ -186,3 +186,162 @@ body {
   text-transform: uppercase;
   line-height: 1.6;
 }
+
+/* ============================================================ */
+/* BRUTALIST UI SHELL — Fixed HUD visible during editorial      */
+/* ============================================================ */
+
+.br-shell {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  opacity: 0; /* revealed by GSAP when brutalist section begins */
+}
+
+/* Top metadata bar */
+.br-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4vw;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  background: rgba(10,10,10,0.6);
+  backdrop-filter: blur(8px);
+}
+
+.br-topbar-brand {
+  font-family: var(--f-condensed);
+  font-weight: 900;
+  font-size: 1.1rem;
+  letter-spacing: 0.2em;
+  color: var(--c-polar);
+  text-transform: uppercase;
+}
+
+.br-topbar-right {
+  display: flex;
+  gap: 3vw;
+  align-items: center;
+}
+
+.br-topbar-label {
+  font-family: var(--f-condensed);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  color: var(--c-fog);
+  text-transform: uppercase;
+}
+
+/* Bottom metadata bar */
+.br-bottombar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4vw;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.br-bottombar-item {
+  font-family: var(--f-condensed);
+  font-size: 0.65rem;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  color: var(--c-fog);
+  text-transform: uppercase;
+}
+
+/* Right-side vertical chapter progress rail */
+.br-progress-rail {
+  position: absolute;
+  right: 2.5vw;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.br-progress-tick {
+  font-family: var(--f-condensed);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.25);
+  text-transform: uppercase;
+  cursor: default;
+  transition: color 0.4s ease;
+  position: relative;
+}
+
+.br-progress-tick::before {
+  content: '';
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 1px;
+  background: rgba(255,255,255,0.15);
+  transition: background 0.4s, width 0.4s;
+}
+
+.br-progress-tick.active {
+  color: var(--c-red);
+}
+
+.br-progress-tick.active::before {
+  background: var(--c-red);
+  width: 32px;
+}
+
+/* Red horizontal accent lines (top and bottom edge of image area) */
+.br-accent-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--c-red);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.br-accent-line.top    { top: 48px; }
+.br-accent-line.bottom { bottom: 40px; }
+
+.br-shell.active .br-accent-line {
+  transform: scaleX(1);
+}
+
+/* Bleed text — massive word behind the image (z-index below canvas) */
+.br-bleed-text {
+  position: absolute;
+  bottom: -0.15em;
+  right: -0.05em;
+  font-family: var(--f-condensed);
+  font-weight: 900;
+  font-size: clamp(8rem, 22vw, 28rem);
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(232, 25, 10, 0.18);
+  text-transform: uppercase;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: -0.04em;
+  z-index: -1; /* Sits below the chapter content, above WebGL */
+  white-space: nowrap;
+  overflow: hidden;
+}
