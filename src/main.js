@@ -230,47 +230,34 @@ textureLoader.load('/mountain.png', (mountainTex) => {
 
 // No spline or trail needed for the scattered bird flight
 
-// --- Brutalist Uttarakhand Scene — 4-chapter multi-image system ---
+// ============================================================
+// BRUTALIST SECTION — 4 Procedural Worlds, No Images
+// Everything is code: mountains, temples, culture, nature
+// ============================================================
 
-const brutalistTextures = {}; // will hold { ch01, ch02, ch03, ch04 }
 let brutalistGroup, brutalistMesh, brutalistMaterial;
 let brutalistMouse = new THREE.Vector2(0, 0);
 let targetBrutalistHover = 0;
-
-// Map chapter IDs to images
-const chapterImages = [
-    { id: 'ch01', src: '/mountain.png' },
-    { id: 'ch02', src: '/img1.jpeg' },
-    { id: 'ch03', src: '/img2.jpeg' },
-    { id: 'ch04', src: '/img3.jpeg' },
-];
-
-// Preload all textures
 let brutalistReady = false;
-Promise.all(chapterImages.map(ch => new Promise(resolve => {
-    textureLoader.load(ch.src, tex => {
-        brutalistTextures[ch.id] = tex;
-        resolve();
-    });
-}))).then(() => {
+
+// Build the full-screen procedural plane immediately (no async texture load needed!)
+{
     brutalistGroup = new THREE.Group();
     brutalistGroup.position.set(0, 0, 10);
     brutalistGroup.visible = false;
     worldGroup.add(brutalistGroup);
 
-    // Use a wide cinematic 16:9 plane (fills the screen at z=10)
-    const geom = new THREE.PlaneGeometry(28, 16, 64, 64);
+    // Full-screen plane at z=10 (camera at z=22, FOV=60 → visible area ≈ 27.7 × 15.6 units)
+    const geom = new THREE.PlaneGeometry(30, 17, 1, 1);
 
     brutalistMaterial = new THREE.ShaderMaterial({
         uniforms: {
-            tDiffuse:        { value: brutalistTextures['ch01'] },
-            tNext:           { value: brutalistTextures['ch02'] },
-            uMixT:           { value: 0.0 },  // 0=tDiffuse, 1=tNext (cross-fade)
+            uChapter:        { value: 0 },   // 0=Mountains 1=Temples 2=Culture 3=Nature
             uTime:           { value: 0 },
             uScrollVelocity: { value: 0 },
             uHover:          { value: 0 },
             uOpacity:        { value: 0 },
-            uMouse:          { value: new THREE.Vector2(0, 0) }
+            uMouse:          { value: new THREE.Vector2(0.5, 0.5) }
         },
         vertexShader:   brutalistVertexShader,
         fragmentShader: brutalistFragmentShader,
@@ -281,27 +268,23 @@ Promise.all(chapterImages.map(ch => new Promise(resolve => {
     brutalistMesh = new THREE.Mesh(geom, brutalistMaterial);
     brutalistGroup.add(brutalistMesh);
     brutalistReady = true;
-});
+}
 
-// Helper: cross-fade to a new chapter (animates uMixT 0→1)
-function switchBrutalistChapter(chapterId, nextChapterId) {
+// Switch chapter: fade out → switch uChapter → fade in
+function switchBrutalistChapter(chapterIdx) {
     if (!brutalistReady) return;
-    const curr = brutalistTextures[chapterId];
-    const next = brutalistTextures[nextChapterId] || curr;
-    // Snap diffuse to the current chapter
-    brutalistMaterial.uniforms.tDiffuse.value = curr;
-    brutalistMaterial.uniforms.tNext.value    = next;
-    // Kill any previous tween and animate uMixT from 0 to 1 for a cinematic cross-fade
-    gsap.killTweensOf(brutalistMaterial.uniforms.uMixT);
-    brutalistMaterial.uniforms.uMixT.value = 0;
-    gsap.to(brutalistMaterial.uniforms.uMixT, {
-        value: 1,
-        duration: 1.4,
-        ease: 'power2.inOut',
+    const current = brutalistMaterial.uniforms.uChapter.value;
+    if (current === chapterIdx) return;
+    // Quick cross-dissolve via opacity
+    gsap.killTweensOf(brutalistMaterial.uniforms.uOpacity);
+    gsap.to(brutalistMaterial.uniforms.uOpacity, {
+        value: 0, duration: 0.3, ease: 'power2.in',
         onComplete: () => {
-            // Once fully blended, snap diffuse to next so future cross-fades start clean
-            brutalistMaterial.uniforms.tDiffuse.value = next;
-            brutalistMaterial.uniforms.uMixT.value = 0;
+            brutalistMaterial.uniforms.uChapter.value = chapterIdx;
+            gsap.to(brutalistMaterial.uniforms.uOpacity, {
+                value: animState.brutalistOpacity,
+                duration: 0.6, ease: 'power2.out'
+            });
         }
     });
 }
@@ -377,25 +360,26 @@ function animate() {
     // Brutalist animations
     if (brutalistGroup && brutalistMaterial) {
         brutalistMaterial.uniforms.uTime.value = elapsedTime;
-        brutalistMaterial.uniforms.uOpacity.value = animState.brutalistOpacity;
-        
-        // Smooth damp hover state
+        // uOpacity is driven by both animState AND chapter switch — only push animState if no chapter switch tween
+        if (!gsap.isTweening(brutalistMaterial.uniforms.uOpacity)) {
+            brutalistMaterial.uniforms.uOpacity.value = animState.brutalistOpacity;
+        }
+
+        // Smooth damp hover
         brutalistMaterial.uniforms.uHover.value = THREE.MathUtils.lerp(
-            brutalistMaterial.uniforms.uHover.value, 
-            targetBrutalistHover, 
-            0.1
+            brutalistMaterial.uniforms.uHover.value, targetBrutalistHover, 0.1
         );
-        
-        // Smooth damp scroll velocity
+        // Scroll velocity
         brutalistMaterial.uniforms.uScrollVelocity.value = THREE.MathUtils.lerp(
-            brutalistMaterial.uniforms.uScrollVelocity.value,
-            window.lastScrollVelocity || 0,
-            0.05
+            brutalistMaterial.uniforms.uScrollVelocity.value, window.lastScrollVelocity || 0, 0.05
         );
-        
-        // Smooth damp mouse position
-        brutalistMaterial.uniforms.uMouse.value.lerp(brutalistMouse, 0.1);
-        brutalistGroup.visible = (animState.brutalistOpacity > 0.01);
+        // Mouse in UV space (0-1)
+        const targetMouseUV = new THREE.Vector2(
+            brutalistMouse.x,
+            brutalistMouse.y
+        );
+        brutalistMaterial.uniforms.uMouse.value.lerp(targetMouseUV, 0.08);
+        brutalistGroup.visible = (animState.brutalistOpacity > 0.005);
     }
 
     // Atmospheric mist particles
@@ -462,14 +446,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ============================================================
     // PER-CHAPTER SCROLL TRIGGERS
-    // Each chapter pins itself for 100vh, creating a locked
-    // cinematic editorial experience as the user scrolls through
     // ============================================================
     const chapters = [
-        { id: 'br-ch-01', curr: 'ch01', next: 'ch02' },
-        { id: 'br-ch-02', curr: 'ch02', next: 'ch03' },
-        { id: 'br-ch-03', curr: 'ch03', next: 'ch04' },
-        { id: 'br-ch-04', curr: 'ch04', next: 'ch04' },
+        { id: 'br-ch-01', chIdx: 0 }, // Mountains
+        { id: 'br-ch-02', chIdx: 1 }, // Char Dham
+        { id: 'br-ch-03', chIdx: 2 }, // Culture
+        { id: 'br-ch-04', chIdx: 3 }, // Nature
     ];
 
     chapters.forEach((ch, idx) => {
@@ -499,8 +481,8 @@ document.addEventListener("DOMContentLoaded", () => {
             pinSpacing: false,         // chapters stack cleanly, no extra space
             anticipatePin: 1,
             onEnter: () => {
-                // Swap WebGL image with cinematic cross-fade
-                switchBrutalistChapter(ch.curr, ch.next);
+                // Switch to this chapter's procedural world
+                switchBrutalistChapter(ch.chIdx);
                 updateRail();
 
                 // Brutal word slam (translateY 110%→0)
@@ -530,8 +512,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (body) gsap.to(body, { opacity: 0, y: -20, duration: 0.35, overwrite: true });
             },
             onEnterBack: () => {
-                // Re-enter from below — snap words back in from below
-                switchBrutalistChapter(ch.curr, ch.next);
+                switchBrutalistChapter(ch.chIdx);
                 updateRail();
                 gsap.to(words, { y: '0%', duration: 0.85, ease: 'power4.out', stagger: 0.07, overwrite: true });
                 if (body) gsap.to(body, { opacity: 1, y: 0, duration: 0.9, delay: 0.25, ease: 'power2.out', overwrite: true });
@@ -541,7 +522,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 gsap.to(words, { y: '110%', duration: 0.5, ease: 'power4.in', stagger: 0.04, overwrite: true });
                 if (body) gsap.to(body, { opacity: 0, y: 20, duration: 0.35, overwrite: true });
                 gsap.to(el, { opacity: 0, duration: 0.4 });
-                if (idx > 0) switchBrutalistChapter(chapters[idx - 1].curr, chapters[idx - 1].next);
+                if (idx > 0) switchBrutalistChapter(chapters[idx - 1].chIdx);
             },
         });
     });
