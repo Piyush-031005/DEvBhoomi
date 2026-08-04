@@ -71,8 +71,7 @@ const birdIndices = []; // Store which particles become birds
 const animState = {
     mountainOpacity: 0,
     birdFlight: 0,
-    elderOpacity: 0,
-    elderEvolution: 0
+    brutalistOpacity: 0
 };
 
 textureLoader.load('/mountain.png', (mountainTex) => {
@@ -230,7 +229,41 @@ textureLoader.load('/mountain.png', (mountainTex) => {
 // No spline or trail needed for the scattered bird flight
 
 // --- Brutalist Uttarakhand Scene (Placeholder) ---
-let brutalistGroup;
+import brutalistVertexShader from './shaders/brutalistVertex.glsl?raw';
+import brutalistFragmentShader from './shaders/brutalistFragment.glsl?raw';
+
+let brutalistGroup, brutalistMesh, brutalistMaterial;
+let brutalistMouse = new THREE.Vector2(0, 0);
+let targetBrutalistHover = 0;
+
+textureLoader.load('/smoking-man.jpeg', (texture) => {
+    brutalistGroup = new THREE.Group();
+    brutalistGroup.position.set(0, 0, 10);
+    brutalistGroup.visible = false;
+    worldGroup.add(brutalistGroup);
+    
+    const imgAspect = texture.image.width / texture.image.height;
+    // Massive cinematic plane
+    const geom = new THREE.PlaneGeometry(15 * imgAspect, 15, 64, 64);
+    
+    brutalistMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            tDiffuse: { value: texture },
+            uTime: { value: 0 },
+            uScrollVelocity: { value: 0 },
+            uHover: { value: 0 },
+            uOpacity: { value: 0 },
+            uMouse: { value: new THREE.Vector2(0, 0) }
+        },
+        vertexShader: brutalistVertexShader,
+        fragmentShader: brutalistFragmentShader,
+        transparent: true,
+        side: THREE.DoubleSide
+    });
+    
+    brutalistMesh = new THREE.Mesh(geom, brutalistMaterial);
+    brutalistGroup.add(brutalistMesh);
+});
 
 
 // Lighting
@@ -261,7 +294,30 @@ function animate() {
         mountainParticles.material.uniforms.uFlightProgress.value = animState.birdFlight;
     }
     
-    // Brutalist animations will go here
+    // Brutalist animations
+    if (brutalistGroup && brutalistMaterial) {
+        brutalistMaterial.uniforms.uTime.value = elapsedTime;
+        brutalistMaterial.uniforms.uOpacity.value = animState.brutalistOpacity;
+        
+        // Smooth damp hover state
+        brutalistMaterial.uniforms.uHover.value = THREE.MathUtils.lerp(
+            brutalistMaterial.uniforms.uHover.value, 
+            targetBrutalistHover, 
+            0.1
+        );
+        
+        // Smooth damp scroll velocity
+        brutalistMaterial.uniforms.uScrollVelocity.value = THREE.MathUtils.lerp(
+            brutalistMaterial.uniforms.uScrollVelocity.value,
+            window.lastScrollVelocity || 0,
+            0.05
+        );
+        
+        // Smooth damp mouse position
+        brutalistMaterial.uniforms.uMouse.value.lerp(brutalistMouse, 0.1);
+        
+        brutalistGroup.visible = (animState.brutalistOpacity > 0.01);
+    }
     
     renderer.render(scene, camera);
 }
@@ -311,7 +367,56 @@ document.addEventListener("DOMContentLoaded", () => {
     // Act 4: Transition to Brutalist Section
     .to("#devbhoomi-title", { opacity: 0, duration: 0.5 }, 2.0)
     .add(() => { if (mountainParticles) mountainParticles.visible = false; }, 3.0)
+    .to(animState, {
+        brutalistOpacity: 1,
+        duration: 1.5,
+        ease: "power2.inOut"
+    }, 3)
+    
+    // Camera pushes in close to the brutalist poster
+    .to(camera.position, {
+        z: 18,
+        y: 0,
+        duration: 3,
+        ease: "power1.inOut"
+    }, 3);
 
-    // TODO: Add Brutalist GSAP Timeline here
+    // Track scroll velocity for the shader
+    let scrollTimeout;
+    window.lastScrollVelocity = 0;
+    
+    ScrollTrigger.create({
+        trigger: "#app",
+        start: "top top",
+        end: "bottom bottom",
+        onUpdate: (self) => {
+            window.lastScrollVelocity = self.getVelocity() * 0.002;
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                window.lastScrollVelocity = 0;
+            }, 100);
+        }
+    });
 
+    // Mouse tracking for WebGL liquid/glitch effect
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    
+    window.addEventListener('mousemove', (event) => {
+        // Normalize mouse coordinates
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        
+        if (brutalistMesh) {
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(brutalistMesh);
+            
+            if (intersects.length > 0) {
+                targetBrutalistHover = 1.0;
+                brutalistMouse.copy(intersects[0].uv);
+            } else {
+                targetBrutalistHover = 0.0;
+            }
+        }
+    });
 });

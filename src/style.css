@@ -113,3 +113,56 @@ html.lenis { height: auto; }
   text-align: right;
   max-width: 50vw;
 }
+
+/* --- BRUTALISM x UTTARAKHAND SECTION --- */
+.brutalist-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none; /* Let pointer events pass through to canvas */
+}
+
+.brutalist-content {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  mix-blend-mode: difference;
+}
+
+.brutalist-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 900;
+  font-size: 15vw;
+  line-height: 0.8;
+  color: #fff;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: -0.05em;
+  position: relative;
+}
+
+.brutalist-title.outline {
+  color: transparent;
+  -webkit-text-stroke: 2px #fff;
+}
+
+.brutalist-description {
+  margin-top: 2rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: #ff0f0f; /* Harsh Red */
+  text-align: center;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.brutalist-description p {
+  margin: 0;
+}
