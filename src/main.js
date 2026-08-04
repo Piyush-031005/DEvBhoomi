@@ -458,8 +458,9 @@ document.addEventListener("DOMContentLoaded", () => {
     .to(camera.position, { z: 22, y: 0, duration: 2.5, ease: "power1.inOut" }, 3);
 
     // ============================================================
-    // PER-CHAPTER SCROLL TRIGGERS — each chapter is a sticky panel
-    // with its own ScrollTrigger so text animates in as you scroll
+    // PER-CHAPTER SCROLL TRIGGERS
+    // Each chapter pins itself for 100vh, creating a locked
+    // cinematic editorial experience as the user scrolls through
     // ============================================================
     const chapters = [
         { id: 'br-ch-01', curr: 'ch01', next: 'ch02' },
@@ -472,41 +473,59 @@ document.addEventListener("DOMContentLoaded", () => {
         const el = document.getElementById(ch.id);
         if (!el) return;
 
-        const words  = el.querySelectorAll('.br-word');
-        const body   = el.querySelector('.br-body');
+        const words   = el.querySelectorAll('.br-word');
+        const body    = el.querySelector('.br-body');
         const divider = el.querySelector('.br-divider');
+        const numEl   = el.querySelector('.br-chapter-num');
 
-        // Each chapter spans 1/4 of the 500vh brutalist section
         ScrollTrigger.create({
-            trigger: el,
-            // We use the brutalist-act section as the scroller pin
-            start: () => `top+=${idx * window.innerHeight} top`,
-            end:   () => `top+=${(idx + 1) * window.innerHeight} top`,
+            trigger:   el,
+            start:     'top top',
+            end:       '+=100%',       // pin for exactly 100vh of scroll
+            pin:       true,
+            pinSpacing: false,         // chapters stack cleanly, no extra space
+            anticipatePin: 1,
             onEnter: () => {
-                // Swap the WebGL texture to this chapter's image
+                // Swap WebGL image with cinematic cross-fade
                 switchBrutalistChapter(ch.curr, ch.next);
 
-                // Stagger words up with a brutal snap
+                // Brutal word slam (translateY 110%→0)
                 gsap.to(words, {
                     y: '0%',
-                    duration: 0.9,
+                    duration: 0.85,
                     ease: 'power4.out',
-                    stagger: 0.08,
+                    stagger: 0.07,
                     overwrite: true,
                 });
-                // Fade in body copy and divider line
-                if (body) gsap.to(body, { opacity: 1, y: 0, duration: 1.0, delay: 0.3, ease: 'power2.out', overwrite: true });
-                if (divider) gsap.to(divider, { width: '80px', duration: 0.6, delay: 0.2, ease: 'power2.out' });
 
-                // Chapter opacity reveal
-                gsap.to(el, { opacity: 1, duration: 0.6, ease: 'power2.out' });
+                // Red chapter number count-up feel
+                if (numEl) gsap.from(numEl, { opacity: 0, x: -30, duration: 0.6, ease: 'power3.out' });
+
+                // Fade body + extend divider line
+                if (body) gsap.to(body, { opacity: 1, y: 0, duration: 0.9, delay: 0.25, ease: 'power2.out', overwrite: true });
+                if (divider) {
+                    gsap.set(divider, { width: 0 });
+                    gsap.to(divider, { width: '80px', duration: 0.7, delay: 0.2, ease: 'power3.out' });
+                }
+
+                gsap.to(el, { opacity: 1, duration: 0.5, ease: 'power2.out' });
+            },
+            onLeave: () => {
+                // Swipe words back up as we leave going forward
+                gsap.to(words, { y: '-110%', duration: 0.5, ease: 'power4.in', stagger: 0.04, overwrite: true });
+                if (body) gsap.to(body, { opacity: 0, y: -20, duration: 0.35, overwrite: true });
+            },
+            onEnterBack: () => {
+                // Re-enter from below — snap words back in from below
+                switchBrutalistChapter(ch.curr, ch.next);
+                gsap.to(words, { y: '0%', duration: 0.85, ease: 'power4.out', stagger: 0.07, overwrite: true });
+                if (body) gsap.to(body, { opacity: 1, y: 0, duration: 0.9, delay: 0.25, ease: 'power2.out', overwrite: true });
+                gsap.to(el, { opacity: 1, duration: 0.5 });
             },
             onLeaveBack: () => {
-                // Reverse: slam words back down
                 gsap.to(words, { y: '110%', duration: 0.5, ease: 'power4.in', stagger: 0.04, overwrite: true });
-                if (body) gsap.to(body, { opacity: 0, y: 20, duration: 0.4, overwrite: true });
+                if (body) gsap.to(body, { opacity: 0, y: 20, duration: 0.35, overwrite: true });
                 gsap.to(el, { opacity: 0, duration: 0.4 });
-                // Revert to previous chapter image
                 if (idx > 0) switchBrutalistChapter(chapters[idx - 1].curr, chapters[idx - 1].next);
             },
         });

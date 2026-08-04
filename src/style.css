@@ -66,17 +66,15 @@ body {
 /* BRUTALIST EDITORIAL SYSTEM                                    */
 /* ============================================================ */
 
-/* Each chapter fills the viewport and is sticky */
+/* Each chapter fills the viewport — GSAP pin:true handles the sticky behaviour */
 .br-chapter {
-  position: sticky;
-  top: 0;
   height: 100vh;
   width: 100%;
   display: flex;
   align-items: center;
   z-index: 10;
   pointer-events: none;
-  /* Initial state: hidden, GSAP will reveal */
+  /* Start hidden — GSAP onEnter reveals */
   opacity: 0;
 }
 
