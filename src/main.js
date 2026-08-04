@@ -4,8 +4,10 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
 
-import brutalistVertexShader from './shaders/brutalistVertex.glsl?raw';
+import brutalistVertexShader  from './shaders/brutalistVertex.glsl?raw';
 import brutalistFragmentShader from './shaders/brutalistFragment.glsl?raw';
+import atmosVertexShader      from './shaders/atmosVertex.glsl?raw';
+import atmosFragmentShader    from './shaders/atmosFragment.glsl?raw';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -281,15 +283,67 @@ Promise.all(chapterImages.map(ch => new Promise(resolve => {
     brutalistReady = true;
 });
 
-// Helper: smoothly cross-fade to a new chapter texture
+// Helper: cross-fade to a new chapter (animates uMixT 0→1)
 function switchBrutalistChapter(chapterId, nextChapterId) {
     if (!brutalistReady) return;
     const curr = brutalistTextures[chapterId];
-    const next  = brutalistTextures[nextChapterId] || curr;
+    const next = brutalistTextures[nextChapterId] || curr;
+    // Snap diffuse to the current chapter
     brutalistMaterial.uniforms.tDiffuse.value = curr;
     brutalistMaterial.uniforms.tNext.value    = next;
-    gsap.to(brutalistMaterial.uniforms.uMixT, { value: 0, duration: 0.01 }); // reset
+    // Kill any previous tween and animate uMixT from 0 to 1 for a cinematic cross-fade
+    gsap.killTweensOf(brutalistMaterial.uniforms.uMixT);
+    brutalistMaterial.uniforms.uMixT.value = 0;
+    gsap.to(brutalistMaterial.uniforms.uMixT, {
+        value: 1,
+        duration: 1.4,
+        ease: 'power2.inOut',
+        onComplete: () => {
+            // Once fully blended, snap diffuse to next so future cross-fades start clean
+            brutalistMaterial.uniforms.tDiffuse.value = next;
+            brutalistMaterial.uniforms.uMixT.value = 0;
+        }
+    });
 }
+
+// --- Atmospheric Mist Particle System (active during brutalist section) ---
+const ATMOS_COUNT = 600;
+const atmosPositions = new Float32Array(ATMOS_COUNT * 3);
+const atmosSizes     = new Float32Array(ATMOS_COUNT);
+const atmosOffsets   = new Float32Array(ATMOS_COUNT);
+const atmosSpeeds    = new Float32Array(ATMOS_COUNT);
+
+for (let i = 0; i < ATMOS_COUNT; i++) {
+    // Scatter particles across the editorial stage (z slightly in front of image)
+    atmosPositions[i * 3]     = (Math.random() - 0.5) * 30;
+    atmosPositions[i * 3 + 1] = (Math.random() - 0.5) * 18;
+    atmosPositions[i * 3 + 2] = 11 + Math.random() * 4; // Between image and camera
+    atmosSizes[i]   = 0.4 + Math.random() * 1.2; // Large, soft blobs
+    atmosOffsets[i] = Math.random();
+    atmosSpeeds[i]  = 0.025 + Math.random() * 0.04; // Very slow drift
+}
+
+const atmosGeom = new THREE.BufferGeometry();
+atmosGeom.setAttribute('position', new THREE.BufferAttribute(atmosPositions, 3));
+atmosGeom.setAttribute('aSize',    new THREE.BufferAttribute(atmosSizes,     1));
+atmosGeom.setAttribute('aOffset',  new THREE.BufferAttribute(atmosOffsets,   1));
+atmosGeom.setAttribute('aSpeed',   new THREE.BufferAttribute(atmosSpeeds,    1));
+
+const atmosMat = new THREE.ShaderMaterial({
+    uniforms: {
+        uTime:    { value: 0 },
+        uOpacity: { value: 0 }
+    },
+    vertexShader:   atmosVertexShader,
+    fragmentShader: atmosFragmentShader,
+    transparent: true,
+    depthWrite:  false,
+    blending:    THREE.AdditiveBlending
+});
+
+const atmosMesh = new THREE.Points(atmosGeom, atmosMat);
+atmosMesh.visible = false;
+worldGroup.add(atmosMesh);
 
 
 // Lighting
@@ -341,8 +395,14 @@ function animate() {
         
         // Smooth damp mouse position
         brutalistMaterial.uniforms.uMouse.value.lerp(brutalistMouse, 0.1);
-        
         brutalistGroup.visible = (animState.brutalistOpacity > 0.01);
+    }
+
+    // Atmospheric mist particles
+    if (atmosMesh) {
+        atmosMat.uniforms.uTime.value    = elapsedTime;
+        atmosMat.uniforms.uOpacity.value = animState.brutalistOpacity;
+        atmosMesh.visible = (animState.brutalistOpacity > 0.01);
     }
     
     renderer.render(scene, camera);
