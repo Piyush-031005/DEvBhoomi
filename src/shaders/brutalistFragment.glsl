@@ -511,10 +511,17 @@ vec3 renderNature(vec2 uv) {
     p.x *= 1.78;
     float t = uTime * 0.06;
 
-    // ---- High-altitude Bugyal sky ----
-    vec3 skyHigh = vec3(0.08, 0.22, 0.58);
-    vec3 skyLow  = vec3(0.48, 0.68, 0.88);
-    vec3 col = mix(skyLow, skyHigh, smoothstep(0.0, 0.7, uv.y) * smoothstep(0.0, 0.7, uv.y));
+    // ---- High-altitude Bugyal sky + Alpine Aurora ----
+    vec3 skyHigh = vec3(0.05, 0.12, 0.38);
+    vec3 skyLow  = vec3(0.18, 0.48, 0.68);
+    vec3 col = mix(skyLow, skyHigh, smoothstep(0.0, 0.7, uv.y));
+    
+    // Magical Green Aurora
+    float auroraT = t * 3.0;
+    float aurora = fbm(vec2(p.x * 2.0 + auroraT, uv.y * 3.0)) * 
+                   sin(p.x * 3.0 - auroraT * 0.5) * 0.5 + 0.5;
+    aurora *= smoothstep(0.3, 0.8, uv.y);
+    col += vec3(0.1, 0.8, 0.4) * aurora * 0.45;
 
     // Clouds (SDF blobs)
     vec2 c1P = p - vec2( 0.28, 0.35);
@@ -523,25 +530,57 @@ vec3 renderNature(vec2 uv) {
     vec2 c2P = p - vec2(-0.45, 0.28);
     float cl2 = opSmooth(sdCircle(c2P, 0.070), sdCircle(c2P - vec2(0.06, 0.0), 0.055), 0.03);
     float cloudM = max(smoothstep(0.02, -0.01, cl1), smoothstep(0.02, -0.01, cl2));
-    col = mix(col, vec3(0.96, 0.97, 0.99), cloudM);
+    col = mix(col, vec3(0.96, 0.97, 0.99), cloudM * 0.85);
+
+    // ---- Flock of Eagles (Dynamic particle system) ----
+    float flock = 0.0;
+    for(int i = 0; i < 15; i++) {
+        float fi = float(i);
+        float bx = mod(fi * 0.3 + t * 4.0, 3.5) - 1.75;
+        float by = 0.2 + sin(bx * 2.0 + fi) * 0.1 + fbm(vec2(bx * 5.0, fi)) * 0.05;
+        vec2 bp = p - vec2(bx, by);
+        // Flap animation
+        float flap = sin(t * 40.0 + fi * 1.5) * 0.012;
+        float bird = sdTriangle(bp, vec2(-0.015, flap), vec2(0.015, flap), vec2(0.0, -0.005));
+        flock = max(flock, smoothstep(0.002, 0.0, bird));
+    }
+    col = mix(col, vec3(0.05, 0.04, 0.08), flock);
 
     // ---- Background snow peaks ----
     float bgH = mountainRidge(p.x * 0.7 + 0.15) * 0.42 + 0.22;
-    // Use inline mountain function (redefine to avoid shader scope issues)
     float bgHm = 0.0;
     bgHm += 0.55 * exp(-pow((p.x * 0.7 + 0.15 + 0.38) * 3.8, 2.0));
     bgHm += 0.40 * exp(-pow((p.x * 0.7 + 0.15 + 0.12) * 4.5, 2.0));
     bgHm += 0.48 * exp(-pow((p.x * 0.7 + 0.15 - 0.18) * 3.5, 2.0));
     bgHm += fbm(vec2(p.x * 5.0, 0.0)) * 0.10;
     float bgMask = smoothstep(bgHm * 0.82 + 0.24 + 0.008, bgHm * 0.82 + 0.24 - 0.008, p.y);
-    col = mix(col, vec3(0.80, 0.86, 0.94), bgMask);
+    col = mix(col, vec3(0.60, 0.72, 0.88), bgMask);
 
-    // ---- Bugyal (alpine meadow) ----
+    // ---- Interactive Bugyal (alpine meadow) ----
+    // Grass bends away from mouse hover
+    float mouseDist = length(p - (uMouse - 0.5) * vec2(1.78, 1.0));
+    float mouseForce = exp(-mouseDist * 10.0) * uHover * 0.08;
+    
     float grassY = -0.12;
-    float grassM = smoothstep(grassY + 0.015, grassY - 0.015, p.y);
-    float windT  = fbm(vec2(p.x * 6.0 + t * 1.8, p.y * 3.0));
-    vec3  grassC = mix(vec3(0.22, 0.48, 0.18), vec3(0.40, 0.64, 0.28), windT);
-    col = mix(col, grassC, grassM * 0.92);
+    float grassM = smoothstep(grassY + 0.015, grassY - 0.015, p.y - mouseForce);
+    float windT  = fbm(vec2(p.x * 6.0 + t * 1.8, (p.y - mouseForce) * 3.0));
+    vec3  grassC = mix(vec3(0.12, 0.38, 0.18), vec3(0.30, 0.54, 0.28), windT);
+    col = mix(col, grassC, grassM * 0.95);
+
+    // ---- Magical Fireflies / Dust ----
+    float fireflies = 0.0;
+    for(int i = 0; i < 20; i++) {
+        float fi = float(i);
+        vec2 fPos = vec2(
+            sin(fi * 73.1 + t * 1.2) * 0.8,
+            -0.15 + mod(fi * 21.3 + t * 0.5, 0.35)
+        );
+        fPos.x += sin(fPos.y * 10.0 + t) * 0.05;
+        float d = length(p - fPos);
+        float glow = exp(-d * (150.0 + sin(fi + t * 5.0) * 50.0));
+        fireflies += glow * (0.5 + 0.5 * sin(fi * 11.0 + t * 8.0));
+    }
+    col += vec3(0.8, 0.9, 0.2) * fireflies * grassM;
 
     // Wildflowers in bugyal
     vec2 flwG = fract(uv * 30.0 + vec2(0.4, 0.2)) - 0.5;
@@ -569,6 +608,7 @@ vec3 renderNature(vec2 uv) {
         float ts  = 0.58 + hash(vec2(fxi, 1.0)) * 0.28;
 
         vec2 tp = p - vec2(tx, ty);
+        tp.x += mouseForce * 0.5; // Trees bend away from mouse too!
         tp /= ts;
         float tree = opUnion(opUnion(
             sdPineLayer(tp + vec2(0.0, 0.0),  0.065, 0.160),
@@ -579,10 +619,8 @@ vec3 renderNature(vec2 uv) {
         ));
         float treeMask = smoothstep(0.004, 0.0, tree);
         float pineShade = valueNoise(vec2(fxi, 2.0)) * 0.15;
-        // Wind sway
         float sway = sin(uTime * 0.8 + fxi * 1.5) * 0.003;
         col = mix(col, vec3(0.04, 0.16 + pineShade, 0.07), treeMask * 0.96);
-        // Snow on pine tips
         float tipSnow = smoothstep(0.060, 0.075, tp.y + 0.175) * treeMask;
         col = mix(col, vec3(0.90, 0.93, 0.96), tipSnow * 0.6);
     }
@@ -610,10 +648,12 @@ vec3 renderNature(vec2 uv) {
     float spot    = step(0.65, spotH) * smoothstep(0.28, 0.0, length(spotF));
     vec3  leopCol = mix(vec3(0.72, 0.70, 0.66), vec3(0.18, 0.14, 0.11), spot);
     col = mix(col, leopCol, leopM * 0.92);
-    // Eyes glow
+    // Eyes glow with magic green
     float eye1 = smoothstep(0.005, -0.002, sdCircle(leopP - vec2(0.095, 0.038), 0.007));
     float eye2 = smoothstep(0.005, -0.002, sdCircle(leopP - vec2(0.112, 0.040), 0.007));
-    col = mix(col, vec3(0.30, 0.90, 0.40), max(eye1, eye2) * leopM);
+    col = mix(col, vec3(0.40, 1.0, 0.50), max(eye1, eye2) * leopM);
+    // Add eye glow aura
+    col += vec3(0.1, 0.6, 0.2) * exp(-length(leopP - vec2(0.10, 0.039)) * 40.0) * leopM * 1.5;
 
     return col;
 }

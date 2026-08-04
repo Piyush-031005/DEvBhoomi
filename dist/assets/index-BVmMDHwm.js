@@ -4624,10 +4624,17 @@ vec3 renderNature(vec2 uv) {
     p.x *= 1.78;
     float t = uTime * 0.06;
 
-    // ---- High-altitude Bugyal sky ----
-    vec3 skyHigh = vec3(0.08, 0.22, 0.58);
-    vec3 skyLow  = vec3(0.48, 0.68, 0.88);
-    vec3 col = mix(skyLow, skyHigh, smoothstep(0.0, 0.7, uv.y) * smoothstep(0.0, 0.7, uv.y));
+    // ---- High-altitude Bugyal sky + Alpine Aurora ----
+    vec3 skyHigh = vec3(0.05, 0.12, 0.38);
+    vec3 skyLow  = vec3(0.18, 0.48, 0.68);
+    vec3 col = mix(skyLow, skyHigh, smoothstep(0.0, 0.7, uv.y));
+    
+    // Magical Green Aurora
+    float auroraT = t * 3.0;
+    float aurora = fbm(vec2(p.x * 2.0 + auroraT, uv.y * 3.0)) * 
+                   sin(p.x * 3.0 - auroraT * 0.5) * 0.5 + 0.5;
+    aurora *= smoothstep(0.3, 0.8, uv.y);
+    col += vec3(0.1, 0.8, 0.4) * aurora * 0.45;
 
     // Clouds (SDF blobs)
     vec2 c1P = p - vec2( 0.28, 0.35);
@@ -4636,25 +4643,57 @@ vec3 renderNature(vec2 uv) {
     vec2 c2P = p - vec2(-0.45, 0.28);
     float cl2 = opSmooth(sdCircle(c2P, 0.070), sdCircle(c2P - vec2(0.06, 0.0), 0.055), 0.03);
     float cloudM = max(smoothstep(0.02, -0.01, cl1), smoothstep(0.02, -0.01, cl2));
-    col = mix(col, vec3(0.96, 0.97, 0.99), cloudM);
+    col = mix(col, vec3(0.96, 0.97, 0.99), cloudM * 0.85);
+
+    // ---- Flock of Eagles (Dynamic particle system) ----
+    float flock = 0.0;
+    for(int i = 0; i < 15; i++) {
+        float fi = float(i);
+        float bx = mod(fi * 0.3 + t * 4.0, 3.5) - 1.75;
+        float by = 0.2 + sin(bx * 2.0 + fi) * 0.1 + fbm(vec2(bx * 5.0, fi)) * 0.05;
+        vec2 bp = p - vec2(bx, by);
+        // Flap animation
+        float flap = sin(t * 40.0 + fi * 1.5) * 0.012;
+        float bird = sdTriangle(bp, vec2(-0.015, flap), vec2(0.015, flap), vec2(0.0, -0.005));
+        flock = max(flock, smoothstep(0.002, 0.0, bird));
+    }
+    col = mix(col, vec3(0.05, 0.04, 0.08), flock);
 
     // ---- Background snow peaks ----
     float bgH = mountainRidge(p.x * 0.7 + 0.15) * 0.42 + 0.22;
-    // Use inline mountain function (redefine to avoid shader scope issues)
     float bgHm = 0.0;
     bgHm += 0.55 * exp(-pow((p.x * 0.7 + 0.15 + 0.38) * 3.8, 2.0));
     bgHm += 0.40 * exp(-pow((p.x * 0.7 + 0.15 + 0.12) * 4.5, 2.0));
     bgHm += 0.48 * exp(-pow((p.x * 0.7 + 0.15 - 0.18) * 3.5, 2.0));
     bgHm += fbm(vec2(p.x * 5.0, 0.0)) * 0.10;
     float bgMask = smoothstep(bgHm * 0.82 + 0.24 + 0.008, bgHm * 0.82 + 0.24 - 0.008, p.y);
-    col = mix(col, vec3(0.80, 0.86, 0.94), bgMask);
+    col = mix(col, vec3(0.60, 0.72, 0.88), bgMask);
 
-    // ---- Bugyal (alpine meadow) ----
+    // ---- Interactive Bugyal (alpine meadow) ----
+    // Grass bends away from mouse hover
+    float mouseDist = length(p - (uMouse - 0.5) * vec2(1.78, 1.0));
+    float mouseForce = exp(-mouseDist * 10.0) * uHover * 0.08;
+    
     float grassY = -0.12;
-    float grassM = smoothstep(grassY + 0.015, grassY - 0.015, p.y);
-    float windT  = fbm(vec2(p.x * 6.0 + t * 1.8, p.y * 3.0));
-    vec3  grassC = mix(vec3(0.22, 0.48, 0.18), vec3(0.40, 0.64, 0.28), windT);
-    col = mix(col, grassC, grassM * 0.92);
+    float grassM = smoothstep(grassY + 0.015, grassY - 0.015, p.y - mouseForce);
+    float windT  = fbm(vec2(p.x * 6.0 + t * 1.8, (p.y - mouseForce) * 3.0));
+    vec3  grassC = mix(vec3(0.12, 0.38, 0.18), vec3(0.30, 0.54, 0.28), windT);
+    col = mix(col, grassC, grassM * 0.95);
+
+    // ---- Magical Fireflies / Dust ----
+    float fireflies = 0.0;
+    for(int i = 0; i < 20; i++) {
+        float fi = float(i);
+        vec2 fPos = vec2(
+            sin(fi * 73.1 + t * 1.2) * 0.8,
+            -0.15 + mod(fi * 21.3 + t * 0.5, 0.35)
+        );
+        fPos.x += sin(fPos.y * 10.0 + t) * 0.05;
+        float d = length(p - fPos);
+        float glow = exp(-d * (150.0 + sin(fi + t * 5.0) * 50.0));
+        fireflies += glow * (0.5 + 0.5 * sin(fi * 11.0 + t * 8.0));
+    }
+    col += vec3(0.8, 0.9, 0.2) * fireflies * grassM;
 
     // Wildflowers in bugyal
     vec2 flwG = fract(uv * 30.0 + vec2(0.4, 0.2)) - 0.5;
@@ -4682,6 +4721,7 @@ vec3 renderNature(vec2 uv) {
         float ts  = 0.58 + hash(vec2(fxi, 1.0)) * 0.28;
 
         vec2 tp = p - vec2(tx, ty);
+        tp.x += mouseForce * 0.5; // Trees bend away from mouse too!
         tp /= ts;
         float tree = opUnion(opUnion(
             sdPineLayer(tp + vec2(0.0, 0.0),  0.065, 0.160),
@@ -4692,10 +4732,8 @@ vec3 renderNature(vec2 uv) {
         ));
         float treeMask = smoothstep(0.004, 0.0, tree);
         float pineShade = valueNoise(vec2(fxi, 2.0)) * 0.15;
-        // Wind sway
         float sway = sin(uTime * 0.8 + fxi * 1.5) * 0.003;
         col = mix(col, vec3(0.04, 0.16 + pineShade, 0.07), treeMask * 0.96);
-        // Snow on pine tips
         float tipSnow = smoothstep(0.060, 0.075, tp.y + 0.175) * treeMask;
         col = mix(col, vec3(0.90, 0.93, 0.96), tipSnow * 0.6);
     }
@@ -4723,10 +4761,12 @@ vec3 renderNature(vec2 uv) {
     float spot    = step(0.65, spotH) * smoothstep(0.28, 0.0, length(spotF));
     vec3  leopCol = mix(vec3(0.72, 0.70, 0.66), vec3(0.18, 0.14, 0.11), spot);
     col = mix(col, leopCol, leopM * 0.92);
-    // Eyes glow
+    // Eyes glow with magic green
     float eye1 = smoothstep(0.005, -0.002, sdCircle(leopP - vec2(0.095, 0.038), 0.007));
     float eye2 = smoothstep(0.005, -0.002, sdCircle(leopP - vec2(0.112, 0.040), 0.007));
-    col = mix(col, vec3(0.30, 0.90, 0.40), max(eye1, eye2) * leopM);
+    col = mix(col, vec3(0.40, 1.0, 0.50), max(eye1, eye2) * leopM);
+    // Add eye glow aura
+    col += vec3(0.1, 0.6, 0.2) * exp(-length(leopP - vec2(0.10, 0.039)) * 40.0) * leopM * 1.5;
 
     return col;
 }
@@ -4885,4 +4925,4 @@ void main() {
                 
                 gl_FragColor = vec4(finalColor, finalShape * uOpacity * flightFade);
             }
-        `,transparent:!0,depthWrite:!1,blending:1})),$_.add(av)});var sv,cv,lv,uv=new bt(0,0),dv=0,fv=!1;{sv=new yn,sv.position.set(0,0,10),sv.visible=!1,$_.add(sv);let e=new gi(30,17,1,1);lv=new Ti({uniforms:{uChapter:{value:0},uTime:{value:0},uScrollVelocity:{value:0},uHover:{value:0},uOpacity:{value:0},uMouse:{value:new bt(.5,.5)}},vertexShader:H_,fragmentShader:U_,transparent:!0,side:2}),cv=new Kr(e,lv),sv.add(cv),fv=!0}function pv(e){fv&&lv.uniforms.uChapter.value!==e&&(sm.killTweensOf(lv.uniforms.uOpacity),sm.to(lv.uniforms.uOpacity,{value:0,duration:.3,ease:`power2.in`,onComplete:()=>{lv.uniforms.uChapter.value=e,sm.to(lv.uniforms.uOpacity,{value:ov.brutalistOpacity,duration:.6,ease:`power2.out`})}}))}var mv=600,hv=new Float32Array(mv*3),gv=new Float32Array(mv),_v=new Float32Array(mv),vv=new Float32Array(mv);for(let e=0;e<mv;e++)hv[e*3]=(Math.random()-.5)*30,hv[e*3+1]=(Math.random()-.5)*18,hv[e*3+2]=11+Math.random()*4,gv[e]=.4+Math.random()*1.2,_v[e]=Math.random(),vv[e]=.025+Math.random()*.04;var yv=new Cr;yv.setAttribute(`position`,new cr(hv,3)),yv.setAttribute(`aSize`,new cr(gv,1)),yv.setAttribute(`aOffset`,new cr(_v,1)),yv.setAttribute(`aSpeed`,new cr(vv,1));var bv=new Ti({uniforms:{uTime:{value:0},uOpacity:{value:0}},vertexShader:W_,fragmentShader:G_,transparent:!0,depthWrite:!1,blending:2}),xv=new li(yv,bv);xv.visible=!1,$_.add(xv);var Sv=new fa(`#ffffff`,.2);Y_.add(Sv);var Cv=new da(`#ffffff`,1.5);Cv.position.set(10,20,-10),Y_.add(Cv),window.addEventListener(`resize`,()=>{X_.aspect=window.innerWidth/window.innerHeight,X_.updateProjectionMatrix(),Z_.setSize(window.innerWidth,window.innerHeight),Z_.setPixelRatio(Math.min(window.devicePixelRatio,2))});function wv(){requestAnimationFrame(wv);let e=Q_.getElapsedTime();if(rv.rotation.y=e*.01,av&&av.material&&(av.material.uniforms.uOpacity.value=ov.mountainOpacity,av.material.uniforms.uTime.value=e,av.material.uniforms.uFlightProgress.value=ov.birdFlight),sv&&lv){lv.uniforms.uTime.value=e,sm.isTweening(lv.uniforms.uOpacity)||(lv.uniforms.uOpacity.value=ov.brutalistOpacity),lv.uniforms.uHover.value=yt.lerp(lv.uniforms.uHover.value,dv,.1),lv.uniforms.uScrollVelocity.value=yt.lerp(lv.uniforms.uScrollVelocity.value,window.lastScrollVelocity||0,.05);let t=new bt(uv.x,uv.y);lv.uniforms.uMouse.value.lerp(t,.08),sv.visible=ov.brutalistOpacity>.005}xv&&(bv.uniforms.uTime.value=e,bv.uniforms.uOpacity.value=ov.brutalistOpacity,xv.visible=ov.brutalistOpacity>.01),Z_.render(Y_,X_)}wv(),document.addEventListener(`DOMContentLoaded`,()=>{X_.position.set(0,2,20),X_.rotation.x=0,sm.timeline({scrollTrigger:{trigger:`#app`,start:`top top`,end:`bottom bottom`,scrub:1,onUpdate:e=>{}}}).to(ov,{mountainOpacity:1,duration:.5,ease:`power2.inOut`},0).to(`#devbhoomi-title`,{opacity:1,y:`0px`,duration:.5,ease:`power2.out`},.2).to(ov,{birdFlight:1,duration:1.5,ease:`power1.inOut`},.6).to(`#devbhoomi-title`,{opacity:0,duration:.5},2).add(()=>{av&&(av.visible=!1)},3).to(ov,{brutalistOpacity:1,duration:1.5,ease:`power2.inOut`},3).to(`#br-shell`,{opacity:1,duration:1,ease:`power2.inOut`},3.2).add(()=>{document.getElementById(`br-shell`)?.classList.add(`active`)},3.8).to(X_.position,{z:22,y:0,duration:2.5,ease:`power1.inOut`},3);let e=[{id:`br-ch-01`,chIdx:0},{id:`br-ch-02`,chIdx:1},{id:`br-ch-03`,chIdx:2},{id:`br-ch-04`,chIdx:3}];e.forEach((t,n)=>{let r=document.getElementById(t.id);if(!r)return;let i=r.querySelectorAll(`.br-word`),a=r.querySelector(`.br-body`),o=r.querySelector(`.br-divider`),s=r.querySelector(`.br-chapter-num`),c=String(n+1).padStart(2,`0`),l=()=>{document.querySelectorAll(`.br-progress-tick`).forEach((e,t)=>{e.classList.toggle(`active`,t===n)});let e=document.getElementById(`br-chapter-counter`);e&&(e.textContent=`${c} / 04`)};T_.create({trigger:r,start:`top top`,end:`+=100%`,pin:!0,pinSpacing:!1,anticipatePin:1,onEnter:()=>{pv(t.chIdx),l(),sm.to(i,{y:`0%`,duration:.85,ease:`power4.out`,stagger:.07,overwrite:!0}),s&&sm.from(s,{opacity:0,x:-30,duration:.6,ease:`power3.out`}),a&&sm.to(a,{opacity:1,y:0,duration:.9,delay:.25,ease:`power2.out`,overwrite:!0}),o&&(sm.set(o,{width:0}),sm.to(o,{width:`80px`,duration:.7,delay:.2,ease:`power3.out`})),sm.to(r,{opacity:1,duration:.5,ease:`power2.out`})},onLeave:()=>{sm.to(i,{y:`-110%`,duration:.5,ease:`power4.in`,stagger:.04,overwrite:!0}),a&&sm.to(a,{opacity:0,y:-20,duration:.35,overwrite:!0})},onEnterBack:()=>{pv(t.chIdx),l(),sm.to(i,{y:`0%`,duration:.85,ease:`power4.out`,stagger:.07,overwrite:!0}),a&&sm.to(a,{opacity:1,y:0,duration:.9,delay:.25,ease:`power2.out`,overwrite:!0}),sm.to(r,{opacity:1,duration:.5})},onLeaveBack:()=>{sm.to(i,{y:`110%`,duration:.5,ease:`power4.in`,stagger:.04,overwrite:!0}),a&&sm.to(a,{opacity:0,y:20,duration:.35,overwrite:!0}),sm.to(r,{opacity:0,duration:.4}),n>0&&pv(e[n-1].chIdx)}})});let t;window.lastScrollVelocity=0,T_.create({trigger:`#app`,start:`top top`,end:`bottom bottom`,onUpdate:e=>{window.lastScrollVelocity=e.getVelocity()*.002,clearTimeout(t),t=setTimeout(()=>{window.lastScrollVelocity=0},100)}});let n=new Aa,r=new bt;window.addEventListener(`mousemove`,e=>{if(r.x=e.clientX/window.innerWidth*2-1,r.y=-(e.clientY/window.innerHeight)*2+1,cv){n.setFromCamera(r,X_);let e=n.intersectObject(cv);e.length>0?(dv=1,uv.copy(e[0].uv)):dv=0}})});
+        `,transparent:!0,depthWrite:!1,blending:1})),$_.add(av)});var sv,cv,lv,uv=new bt(0,0),dv=0,fv=!1;{sv=new yn,sv.position.set(0,0,10),sv.visible=!1,$_.add(sv);let e=new gi(30,17,1,1);lv=new Ti({uniforms:{uChapter:{value:0},uTime:{value:0},uScrollVelocity:{value:0},uHover:{value:0},uOpacity:{value:0},uMouse:{value:new bt(.5,.5)}},vertexShader:H_,fragmentShader:U_,transparent:!0,side:2}),cv=new Kr(e,lv),sv.add(cv),fv=!0}function pv(e){fv&&lv.uniforms.uChapter.value!==e&&(sm.killTweensOf(lv.uniforms.uOpacity),sm.to(lv.uniforms.uOpacity,{value:0,duration:.3,ease:`power2.in`,onComplete:()=>{lv.uniforms.uChapter.value=e,sm.to(lv.uniforms.uOpacity,{value:ov.brutalistOpacity,duration:.6,ease:`power2.out`})}}))}var mv=600,hv=new Float32Array(mv*3),gv=new Float32Array(mv),_v=new Float32Array(mv),vv=new Float32Array(mv);for(let e=0;e<mv;e++)hv[e*3]=(Math.random()-.5)*30,hv[e*3+1]=(Math.random()-.5)*18,hv[e*3+2]=11+Math.random()*4,gv[e]=.4+Math.random()*1.2,_v[e]=Math.random(),vv[e]=.025+Math.random()*.04;var yv=new Cr;yv.setAttribute(`position`,new cr(hv,3)),yv.setAttribute(`aSize`,new cr(gv,1)),yv.setAttribute(`aOffset`,new cr(_v,1)),yv.setAttribute(`aSpeed`,new cr(vv,1));var bv=new Ti({uniforms:{uTime:{value:0},uOpacity:{value:0}},vertexShader:W_,fragmentShader:G_,transparent:!0,depthWrite:!1,blending:2}),xv=new li(yv,bv);xv.visible=!1,$_.add(xv);var Sv=new fa(`#ffffff`,.2);Y_.add(Sv);var Cv=new da(`#ffffff`,1.5);Cv.position.set(10,20,-10),Y_.add(Cv),window.addEventListener(`resize`,()=>{X_.aspect=window.innerWidth/window.innerHeight,X_.updateProjectionMatrix(),Z_.setSize(window.innerWidth,window.innerHeight),Z_.setPixelRatio(Math.min(window.devicePixelRatio,2))});function wv(){requestAnimationFrame(wv);let e=Q_.getElapsedTime();if(rv.rotation.y=e*.01,av&&av.material&&(av.material.uniforms.uOpacity.value=ov.mountainOpacity,av.material.uniforms.uTime.value=e,av.material.uniforms.uFlightProgress.value=ov.birdFlight),sv&&lv){lv.uniforms.uTime.value=e,sm.isTweening(lv.uniforms.uOpacity)||(lv.uniforms.uOpacity.value=ov.brutalistOpacity),lv.uniforms.uHover.value=yt.lerp(lv.uniforms.uHover.value,dv,.1),lv.uniforms.uScrollVelocity.value=yt.lerp(lv.uniforms.uScrollVelocity.value,window.lastScrollVelocity||0,.05);let t=new bt(uv.x,uv.y);lv.uniforms.uMouse.value.lerp(t,.08),sv.visible=ov.brutalistOpacity>.005}xv&&(bv.uniforms.uTime.value=e,bv.uniforms.uOpacity.value=ov.brutalistOpacity,xv.visible=ov.brutalistOpacity>.01),Z_.render(Y_,X_)}wv(),document.addEventListener(`DOMContentLoaded`,()=>{X_.position.set(0,2,20),X_.rotation.x=0,sm.timeline({scrollTrigger:{trigger:`#app`,start:`top top`,end:`bottom bottom`,scrub:1,onUpdate:e=>{}}}).to(ov,{mountainOpacity:1,duration:.5,ease:`power2.inOut`},0).to(`#devbhoomi-title`,{opacity:1,y:`0px`,duration:.5,ease:`power2.out`},.2).to(ov,{birdFlight:1,duration:1.5,ease:`power1.inOut`},.6).to(`#devbhoomi-title`,{opacity:0,duration:.5},2).add(()=>{av&&(av.visible=!1)},3).to(ov,{brutalistOpacity:1,duration:1.5,ease:`power2.inOut`},3).to(`#br-shell`,{opacity:1,duration:1,ease:`power2.inOut`},3.2).add(()=>{document.getElementById(`br-shell`)?.classList.add(`active`)},3.8).to(X_.position,{z:22,y:0,duration:2.5,ease:`power1.inOut`},3);let e=[{id:`br-ch-01`,chIdx:0},{id:`br-ch-02`,chIdx:1},{id:`br-ch-03`,chIdx:2},{id:`br-ch-04`,chIdx:3}],t=-1;T_.create({trigger:`#brutalist-act`,start:`top top`,end:`+=400%`,pin:!0,onUpdate:n=>{let r=Math.min(3,Math.floor(n.progress*4));if(r!==t){if(t>=0){let n=document.getElementById(e[t].id),r=n.querySelectorAll(`.br-word`),i=n.querySelector(`.br-body`);sm.to(r,{y:`-110%`,duration:.5,ease:`power4.in`,stagger:.04,overwrite:!0}),i&&sm.to(i,{opacity:0,y:-20,duration:.35,overwrite:!0}),sm.to(n,{opacity:0,duration:.4,onComplete:()=>n.classList.remove(`active-ch`)})}let n=document.getElementById(e[r].id);n.classList.add(`active-ch`);let i=n.querySelectorAll(`.br-word`),a=n.querySelector(`.br-body`),o=n.querySelector(`.br-divider`),s=n.querySelector(`.br-chapter-num`);pv(e[r].chIdx),document.querySelectorAll(`.br-progress-tick`).forEach((e,t)=>{e.classList.toggle(`active`,t===r)});let c=String(r+1).padStart(2,`0`),l=document.getElementById(`br-chapter-counter`);l&&(l.textContent=`${c} / 04`),sm.killTweensOf(i),sm.fromTo(i,{y:`110%`},{y:`0%`,duration:.85,ease:`power4.out`,stagger:.07,overwrite:!0}),s&&sm.fromTo(s,{opacity:0,x:-30},{opacity:1,x:0,duration:.6,ease:`power3.out`}),a&&sm.fromTo(a,{opacity:0,y:20},{opacity:1,y:0,duration:.9,delay:.25,ease:`power2.out`,overwrite:!0}),o&&sm.fromTo(o,{width:0},{width:`80px`,duration:.7,delay:.2,ease:`power3.out`}),sm.to(n,{opacity:1,duration:.5,ease:`power2.out`}),t=r}}});let n;window.lastScrollVelocity=0,T_.create({trigger:`#app`,start:`top top`,end:`bottom bottom`,onUpdate:e=>{window.lastScrollVelocity=e.getVelocity()*.002,clearTimeout(n),n=setTimeout(()=>{window.lastScrollVelocity=0},100)}});let r=new Aa,i=new bt;window.addEventListener(`mousemove`,e=>{if(i.x=e.clientX/window.innerWidth*2-1,i.y=-(e.clientY/window.innerHeight)*2+1,cv){r.setFromCamera(i,X_);let e=r.intersectObject(cv);e.length>0?(dv=1,uv.copy(e[0].uv)):dv=0}})});
