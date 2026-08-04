@@ -4,8 +4,8 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
 
-import womanVertexShader from './shaders/womanVertex.glsl?raw';
-import womanFragmentShader from './shaders/womanFragment.glsl?raw';
+import brutalistVertexShader from './shaders/brutalistVertex.glsl?raw';
+import brutalistFragmentShader from './shaders/brutalistFragment.glsl?raw';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -228,9 +228,7 @@ textureLoader.load('/mountain.png', (mountainTex) => {
 
 // No spline or trail needed for the scattered bird flight
 
-// --- Brutalist Uttarakhand Scene (Placeholder) ---
-import brutalistVertexShader from './shaders/brutalistVertex.glsl?raw';
-import brutalistFragmentShader from './shaders/brutalistFragment.glsl?raw';
+// --- Brutalist Uttarakhand Scene ---
 
 let brutalistGroup, brutalistMesh, brutalistMaterial;
 let brutalistMouse = new THREE.Vector2(0, 0);
