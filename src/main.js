@@ -228,40 +228,68 @@ textureLoader.load('/mountain.png', (mountainTex) => {
 
 // No spline or trail needed for the scattered bird flight
 
-// --- Brutalist Uttarakhand Scene ---
+// --- Brutalist Uttarakhand Scene — 4-chapter multi-image system ---
 
+const brutalistTextures = {}; // will hold { ch01, ch02, ch03, ch04 }
 let brutalistGroup, brutalistMesh, brutalistMaterial;
 let brutalistMouse = new THREE.Vector2(0, 0);
 let targetBrutalistHover = 0;
 
-textureLoader.load('/smoking-man.jpeg', (texture) => {
+// Map chapter IDs to images
+const chapterImages = [
+    { id: 'ch01', src: '/mountain.png' },
+    { id: 'ch02', src: '/img1.jpeg' },
+    { id: 'ch03', src: '/img2.jpeg' },
+    { id: 'ch04', src: '/img3.jpeg' },
+];
+
+// Preload all textures
+let brutalistReady = false;
+Promise.all(chapterImages.map(ch => new Promise(resolve => {
+    textureLoader.load(ch.src, tex => {
+        brutalistTextures[ch.id] = tex;
+        resolve();
+    });
+}))).then(() => {
     brutalistGroup = new THREE.Group();
     brutalistGroup.position.set(0, 0, 10);
     brutalistGroup.visible = false;
     worldGroup.add(brutalistGroup);
-    
-    const imgAspect = texture.image.width / texture.image.height;
-    // Massive cinematic plane
-    const geom = new THREE.PlaneGeometry(15 * imgAspect, 15, 64, 64);
-    
+
+    // Use a wide cinematic 16:9 plane (fills the screen at z=10)
+    const geom = new THREE.PlaneGeometry(28, 16, 64, 64);
+
     brutalistMaterial = new THREE.ShaderMaterial({
         uniforms: {
-            tDiffuse: { value: texture },
-            uTime: { value: 0 },
+            tDiffuse:        { value: brutalistTextures['ch01'] },
+            tNext:           { value: brutalistTextures['ch02'] },
+            uMixT:           { value: 0.0 },  // 0=tDiffuse, 1=tNext (cross-fade)
+            uTime:           { value: 0 },
             uScrollVelocity: { value: 0 },
-            uHover: { value: 0 },
-            uOpacity: { value: 0 },
-            uMouse: { value: new THREE.Vector2(0, 0) }
+            uHover:          { value: 0 },
+            uOpacity:        { value: 0 },
+            uMouse:          { value: new THREE.Vector2(0, 0) }
         },
-        vertexShader: brutalistVertexShader,
+        vertexShader:   brutalistVertexShader,
         fragmentShader: brutalistFragmentShader,
         transparent: true,
         side: THREE.DoubleSide
     });
-    
+
     brutalistMesh = new THREE.Mesh(geom, brutalistMaterial);
     brutalistGroup.add(brutalistMesh);
+    brutalistReady = true;
 });
+
+// Helper: smoothly cross-fade to a new chapter texture
+function switchBrutalistChapter(chapterId, nextChapterId) {
+    if (!brutalistReady) return;
+    const curr = brutalistTextures[chapterId];
+    const next  = brutalistTextures[nextChapterId] || curr;
+    brutalistMaterial.uniforms.tDiffuse.value = curr;
+    brutalistMaterial.uniforms.tNext.value    = next;
+    gsap.to(brutalistMaterial.uniforms.uMixT, { value: 0, duration: 0.01 }); // reset
+}
 
 
 // Lighting
@@ -362,22 +390,67 @@ document.addEventListener("DOMContentLoaded", () => {
         ease: "power1.inOut"
     }, 0.6) // Trigger soon after text appears
 
-    // Act 4: Transition to Brutalist Section
+    // Act 4: Himalayan birds fade, brutalist era begins
     .to("#devbhoomi-title", { opacity: 0, duration: 0.5 }, 2.0)
     .add(() => { if (mountainParticles) mountainParticles.visible = false; }, 3.0)
-    .to(animState, {
-        brutalistOpacity: 1,
-        duration: 1.5,
-        ease: "power2.inOut"
-    }, 3)
-    
-    // Camera pushes in close to the brutalist poster
-    .to(camera.position, {
-        z: 18,
-        y: 0,
-        duration: 3,
-        ease: "power1.inOut"
-    }, 3);
+    .to(animState, { brutalistOpacity: 1, duration: 1.5, ease: "power2.inOut" }, 3)
+    // Camera settles back for the editorial experience (wider frame)
+    .to(camera.position, { z: 22, y: 0, duration: 2.5, ease: "power1.inOut" }, 3);
+
+    // ============================================================
+    // PER-CHAPTER SCROLL TRIGGERS — each chapter is a sticky panel
+    // with its own ScrollTrigger so text animates in as you scroll
+    // ============================================================
+    const chapters = [
+        { id: 'br-ch-01', curr: 'ch01', next: 'ch02' },
+        { id: 'br-ch-02', curr: 'ch02', next: 'ch03' },
+        { id: 'br-ch-03', curr: 'ch03', next: 'ch04' },
+        { id: 'br-ch-04', curr: 'ch04', next: 'ch04' },
+    ];
+
+    chapters.forEach((ch, idx) => {
+        const el = document.getElementById(ch.id);
+        if (!el) return;
+
+        const words  = el.querySelectorAll('.br-word');
+        const body   = el.querySelector('.br-body');
+        const divider = el.querySelector('.br-divider');
+
+        // Each chapter spans 1/4 of the 500vh brutalist section
+        ScrollTrigger.create({
+            trigger: el,
+            // We use the brutalist-act section as the scroller pin
+            start: () => `top+=${idx * window.innerHeight} top`,
+            end:   () => `top+=${(idx + 1) * window.innerHeight} top`,
+            onEnter: () => {
+                // Swap the WebGL texture to this chapter's image
+                switchBrutalistChapter(ch.curr, ch.next);
+
+                // Stagger words up with a brutal snap
+                gsap.to(words, {
+                    y: '0%',
+                    duration: 0.9,
+                    ease: 'power4.out',
+                    stagger: 0.08,
+                    overwrite: true,
+                });
+                // Fade in body copy and divider line
+                if (body) gsap.to(body, { opacity: 1, y: 0, duration: 1.0, delay: 0.3, ease: 'power2.out', overwrite: true });
+                if (divider) gsap.to(divider, { width: '80px', duration: 0.6, delay: 0.2, ease: 'power2.out' });
+
+                // Chapter opacity reveal
+                gsap.to(el, { opacity: 1, duration: 0.6, ease: 'power2.out' });
+            },
+            onLeaveBack: () => {
+                // Reverse: slam words back down
+                gsap.to(words, { y: '110%', duration: 0.5, ease: 'power4.in', stagger: 0.04, overwrite: true });
+                if (body) gsap.to(body, { opacity: 0, y: 20, duration: 0.4, overwrite: true });
+                gsap.to(el, { opacity: 0, duration: 0.4 });
+                // Revert to previous chapter image
+                if (idx > 0) switchBrutalistChapter(chapters[idx - 1].curr, chapters[idx - 1].next);
+            },
+        });
+    });
 
     // Track scroll velocity for the shader
     let scrollTimeout;

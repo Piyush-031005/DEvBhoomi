@@ -4,14 +4,16 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DEVBHOOMI | The Spiritual Journey</title>
+    <title>DEVBHOOMI | The Land of the Gods</title>
+    <meta name="description" content="An immersive cinematic journey through Uttarakhand — the Land of the Gods. Mountains, rivers, temples, and the soul of the Himalayas.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Yatra+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,700;0,900;1,700&family=Inter:wght@300;400;500&family=Yatra+One&display=swap" rel="stylesheet">
   </head>
   <body>
     <div id="canvas-container"></div>
     
+    <!-- Hero Title: Himalayan Opening -->
     <div class="fixed-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; z-index: 1; pointer-events: none;">
       <h1 class="hero-title" id="devbhoomi-title">देवभूमी</h1>
     </div>
@@ -21,28 +23,110 @@
       <section class="act-section" id="act-1" style="height: 30vh;"></section>
 
       <!-- Act 2: The Himalaya -->
-      <section class="act-section" id="act-2" style="height: 120vh;">
-      </section>
+      <section class="act-section" id="act-2" style="height: 120vh;"></section>
 
       <!-- Act 3: Birds -->
-      <section class="act-section" id="act-3" style="height: 150vh;">
-      </section>
+      <section class="act-section" id="act-3" style="height: 150vh;"></section>
 
-      <!-- Act 4: Sacred -->
-      <section class="act-section" id="act-4" style="height: 100vh;">
-      </section>
+      <!-- Act 4: transition buffer -->
+      <section class="act-section" id="act-4" style="height: 50vh;"></section>
 
-      <!-- Act 5: Brutalism x Uttarakhand -->
-      <section class="act-section brutalist-section" id="brutalist-act" style="height: 300vh; position: relative;">
-        <!-- The WebGL canvas (already fixed position) will render behind/intertwined with this HTML -->
-        <div class="brutalist-content">
-           <h1 class="brutalist-title glitch-text" data-text="DEV">DEV</h1>
-           <h1 class="brutalist-title glitch-text outline" data-text="BHOOMI">BHOOMI</h1>
-           <div class="brutalist-description">
-              <p>THE LAND OF THE GODS</p>
-              <p>REIMAGINED</p>
-           </div>
+      <!-- ============================================================ -->
+      <!-- ACT 5: BRUTALIST UTTARAKHAND — 4 Editorial Chapters          -->
+      <!-- ============================================================ -->
+      <section class="act-section" id="brutalist-act" style="height: 500vh; position: relative;">
+
+        <!-- CHAPTER 01 — THE MOUNTAINS -->
+        <div class="br-chapter" id="br-ch-01">
+          <div class="br-grid">
+            <div class="br-col-index">
+              <span class="br-chapter-label">CHAPTER</span>
+              <span class="br-chapter-num">01</span>
+            </div>
+            <div class="br-col-main">
+              <h2 class="br-headline" id="br-h1">
+                <span class="br-word" style="--i:0">PAHAD</span>
+                <span class="br-word outline" style="--i:1">KI</span>
+                <span class="br-word" style="--i:2">AWAAZ</span>
+              </h2>
+              <div class="br-divider"></div>
+              <p class="br-body">Nanda Devi. Trishul. Panchachuli.<br>Peaks that pierce the sky and hold<br>the sky in return.</p>
+            </div>
+            <div class="br-col-side">
+              <p class="br-side-text">28°23'N 79°26'E</p>
+              <p class="br-side-text">ELEVATION<br>7,816 m</p>
+            </div>
+          </div>
         </div>
+
+        <!-- CHAPTER 02 — THE RIVERS -->
+        <div class="br-chapter" id="br-ch-02">
+          <div class="br-grid">
+            <div class="br-col-index">
+              <span class="br-chapter-label">CHAPTER</span>
+              <span class="br-chapter-num">02</span>
+            </div>
+            <div class="br-col-main">
+              <h2 class="br-headline" id="br-h2">
+                <span class="br-word" style="--i:0">GANGA</span>
+                <span class="br-word outline" style="--i:1">KI</span>
+                <span class="br-word" style="--i:2">DHAAR</span>
+              </h2>
+              <div class="br-divider"></div>
+              <p class="br-body">Alaknanda. Bhagirathi. Mandakini.<br>Sacred rivers born from glaciers,<br>carrying the memory of ice.</p>
+            </div>
+            <div class="br-col-side">
+              <p class="br-side-text">ORIGIN<br>GANGOTRI</p>
+              <p class="br-side-text">FLOW<br>2,525 km</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHAPTER 03 — THE TEMPLES -->
+        <div class="br-chapter" id="br-ch-03">
+          <div class="br-grid">
+            <div class="br-col-index">
+              <span class="br-chapter-label">CHAPTER</span>
+              <span class="br-chapter-num">03</span>
+            </div>
+            <div class="br-col-main">
+              <h2 class="br-headline" id="br-h3">
+                <span class="br-word" style="--i:0">DEVO</span>
+                <span class="br-word outline" style="--i:1">KA</span>
+                <span class="br-word" style="--i:2">GHAR</span>
+              </h2>
+              <div class="br-divider"></div>
+              <p class="br-body">Kedarnath. Badrinath. Tungnath.<br>Jageshwar. Stone temples older<br>than language.</p>
+            </div>
+            <div class="br-col-side">
+              <p class="br-side-text">BUILT<br>8th CENTURY</p>
+              <p class="br-side-text">CHAR DHAM<br>UTTARAKHAND</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHAPTER 04 — THE PEOPLE -->
+        <div class="br-chapter" id="br-ch-04">
+          <div class="br-grid">
+            <div class="br-col-index">
+              <span class="br-chapter-label">CHAPTER</span>
+              <span class="br-chapter-num">04</span>
+            </div>
+            <div class="br-col-main">
+              <h2 class="br-headline" id="br-h4">
+                <span class="br-word" style="--i:0">PAHADI</span>
+                <span class="br-word outline" style="--i:1">LOG</span>
+              </h2>
+              <div class="br-divider"></div>
+              <p class="br-body">Aipan art. Ringaal craft. Chholiya dance.<br>A culture woven from pine needles<br>and ancient memory.</p>
+            </div>
+            <div class="br-col-side">
+              <p class="br-side-text">KUMAON<br>&amp; GARHWAL</p>
+              <p class="br-side-text">SINCE<br>TIME BEGAN</p>
+            </div>
+          </div>
+        </div>
+
       </section>
 
     </main>
