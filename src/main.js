@@ -229,92 +229,8 @@ textureLoader.load('/mountain.png', (mountainTex) => {
 
 // No spline or trail needed for the scattered bird flight
 
-// --- Act 5: The Himalayan Elder — Cinematic Silk/Smoke Flow ---
-let elderBgMesh, elderParticles;
-
-textureLoader.load('/smoking-man.jpeg', (texture) => {
-    const imgAspect = texture.image.width / texture.image.height;
-
-    // Background image plane — full screen feel
-    const bgGeom = new THREE.PlaneGeometry(30 * imgAspect, 30);
-    const bgMat  = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0 });
-    elderBgMesh  = new THREE.Mesh(bgGeom, bgMat);
-    elderBgMesh.position.set(0, 0, 10);
-    elderBgMesh.visible = false;
-    worldGroup.add(elderBgMesh);
-
-    // ── Demon Slayer Particle System ────────────────────────────────
-    // Strategy: pack particles densely along parametric bezier ribbons
-    // Result:   thin, continuous glowing lines — exactly like Water Breathing
-    const NUM_PATHS    = 120;   // number of distinct ribbon strands
-    const PTS_PER_PATH = 500;   // particles along each ribbon → solid line
-    const FLOWERS      = 2000;  // flower accent particles
-    const STARS        = 1000;  // sparkle accent particles
-    const pCount       = NUM_PATHS * PTS_PER_PATH + FLOWERS + STARS;
-
-    const pPositions = new Float32Array(pCount * 3); // dummy (real pos calculated in vertex shader)
-    const pPathIds   = new Float32Array(pCount);
-    const pTs        = new Float32Array(pCount);
-    const pRandoms   = new Float32Array(pCount);
-    const pLayers    = new Float32Array(pCount);     // 0=flow, 1=flower, 2=star
-
-    let idx = 0;
-
-    // Main ribbon flow particles
-    for (let p = 0; p < NUM_PATHS; p++) {
-        const pathId = p / NUM_PATHS;
-        for (let s = 0; s < PTS_PER_PATH; s++) {
-            pPathIds[idx]  = pathId;
-            pTs[idx]       = s / PTS_PER_PATH;   // evenly spaced along ribbon
-            pRandoms[idx]  = Math.random();
-            pLayers[idx]   = 0.0;
-            idx++;
-        }
-    }
-
-    // Flower accent particles
-    for (let f = 0; f < FLOWERS; f++) {
-        pPathIds[idx]  = Math.random();
-        pTs[idx]       = Math.random();
-        pRandoms[idx]  = Math.random();
-        pLayers[idx]   = 1.0;
-        idx++;
-    }
-
-    // Star/sparkle accent particles
-    for (let s = 0; s < STARS; s++) {
-        pPathIds[idx]  = Math.random();
-        pTs[idx]       = Math.random();
-        pRandoms[idx]  = Math.random();
-        pLayers[idx]   = 2.0;
-        idx++;
-    }
-
-    const pGeom = new THREE.BufferGeometry();
-    pGeom.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
-    pGeom.setAttribute('aPathId',  new THREE.BufferAttribute(pPathIds,   1));
-    pGeom.setAttribute('aT',       new THREE.BufferAttribute(pTs,        1));
-    pGeom.setAttribute('aRandom',  new THREE.BufferAttribute(pRandoms,   1));
-    pGeom.setAttribute('aLayer',   new THREE.BufferAttribute(pLayers,    1));
-
-    const pMat = new THREE.ShaderMaterial({
-        uniforms: {
-            uTime:      { value: 0 },
-            uEvolution: { value: 0.0 },
-            uOpacity:   { value: 0.0 }
-        },
-        vertexShader:   womanVertexShader,
-        fragmentShader: womanFragmentShader,
-        transparent: true,
-        depthWrite:  false,
-        blending:    THREE.AdditiveBlending
-    });
-
-    elderParticles = new THREE.Points(pGeom, pMat);
-    elderParticles.position.set(0, 0, 10.5);
-    elderParticles.visible = false;
-    worldGroup.add(elderParticles);
-});
+// --- Brutalist Uttarakhand Scene (Placeholder) ---
+let brutalistGroup;
 
 
 // Lighting
@@ -345,16 +261,7 @@ function animate() {
         mountainParticles.material.uniforms.uFlightProgress.value = animState.birdFlight;
     }
     
-    if (elderParticles && elderParticles.material) {
-        elderParticles.material.uniforms.uTime.value = elapsedTime;
-        elderParticles.material.uniforms.uOpacity.value = animState.elderOpacity;
-        elderParticles.material.uniforms.uEvolution.value = animState.elderEvolution;
-        elderParticles.visible = (animState.elderOpacity > 0.01);
-    }
-    if (elderBgMesh) {
-        elderBgMesh.material.opacity = animState.elderOpacity;
-        elderBgMesh.visible = (animState.elderOpacity > 0.01);
-    }
+    // Brutalist animations will go here
     
     renderer.render(scene, camera);
 }
@@ -401,34 +308,10 @@ document.addEventListener("DOMContentLoaded", () => {
         ease: "power1.inOut"
     }, 0.6) // Trigger soon after text appears
 
-    // Act 4: Transition to Smoking Man
-    // Mountain turns into birds completely, wait until they pass, then fade out title
+    // Act 4: Transition to Brutalist Section
     .to("#devbhoomi-title", { opacity: 0, duration: 0.5 }, 2.0)
     .add(() => { if (mountainParticles) mountainParticles.visible = false; }, 3.0)
-    .to(animState, {
-        elderOpacity: 1,
-        duration: 1,
-        ease: "power2.inOut"
-    }, 3)
 
-    // Act 5: Macro Zoom (Smoking Man Magic & Particle Evolution)
-    .to(camera.position, {
-        z: 18,
-        y: 0,
-        duration: 2,
-    }, 4)
-    .to(animState, {
-        elderEvolution: 1.0, // Evolve from smoke -> ribbons -> birds -> flowers
-        duration: 3,
-        ease: "power1.inOut"
-    }, 4);
-
-    // Act 6: Portrait Closeups (End of Experience)
-    masterTl.to(camera.position, {
-        z: 22,
-        x: 2,
-        duration: 2,
-        ease: "power2.inOut"
-    }, 6);
+    // TODO: Add Brutalist GSAP Timeline here
 
 });
