@@ -71,13 +71,6 @@ let mountainParticles;
 let birdParticles;
 const birdIndices = []; // Store which particles become birds
 
-// We need a dummy object for GSAP to target before the async load finishes
-const animState = {
-    mountainOpacity: 0,
-    birdFlight: 0,
-    brutalistOpacity: 0
-    birdFlight: 0.0,
-};
 
 textureLoader.load('/mountain.png', (mountainTex) => {
     const img = mountainTex.image;
@@ -235,10 +228,12 @@ textureLoader.load('/mountain.png', (mountainTex) => {
 const animState = {
     introProgress: 0.0, 
     brutalistOpacity: 0.0,
-    maskScale: 15,
+    maskScale: 9,      // Scaled down so it fits in the screen
     maskRotY: 0,
-    maskOpacity: 1.0,
-    titleOpacity: 0.0
+    maskRotX: 0,       // New: for mouse interaction pinning
+    maskOpacity: 0.85, // Base transparency so we can see text behind it
+    titleOpacity: 0.0,
+    birdFlight: 0.0
 };
 
 // --- Act 2 & 3: Brutalist 3D Mask ---
@@ -264,11 +259,15 @@ loader.load('/mask.glb', (gltf) => {
     // Apply materials
     maskModel.traverse((child) => {
         if (child.isMesh) {
+            // Apply Brutalist dark metallic theme
             if (child.material) {
-                child.material.roughness = 0.6;
-                child.material.metalness = 0.2;
+                child.material.color.setHex(0x222222); // Dark graphite
+                child.material.roughness = 0.3;
+                child.material.metalness = 0.8;
                 child.material.transparent = true;
+                // Additive/Normal blending with opacity
                 child.material.opacity = animState.maskOpacity;
+                child.material.depthWrite = false; // Helps text show through cleanly
             }
         }
     });
@@ -390,6 +389,14 @@ window.addEventListener('resize', () => {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
 
+
+// Interactive Mask Mouse Control
+let mouseX = 0;
+window.addEventListener('mousemove', (e) => {
+    // Map mouse X to -1.0 to 1.0 range
+    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+});
+
 function animate() {
     requestAnimationFrame(animate);
     const elapsedTime = clock.getElapsedTime();
@@ -403,8 +410,12 @@ function animate() {
         mountainParticles.material.uniforms.uOpacity.value = 1.0 - animState.brutalistOpacity;
     }
     if (maskModel) {
-        // Continuous slow floating rotation
-        maskModel.rotation.y = Math.sin(elapsedTime * 0.5) * 0.1 + animState.maskRotY;
+        // Continuous slow floating rotation + Interactive Mouse X rotation
+        // The mask is "pinned" on the Y axis, so only rotation.y is affected by mouseX
+        let targetRotY = animState.maskRotY + (mouseX * 0.8) + (Math.sin(elapsedTime * 0.5) * 0.1);
+        
+        // Smoothly interpolate current rotation to target rotation
+        maskModel.rotation.y += (targetRotY - maskModel.rotation.y) * 0.1;
         maskModel.rotation.x = Math.cos(elapsedTime * 0.3) * 0.05;
         
         // Scale and opacity driven by GSAP
