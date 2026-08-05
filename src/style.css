@@ -227,7 +227,7 @@ body {
 }
 
 .br-body {
-  font-family: var(--f-editorial);
+  font-family: var(--f-condensed);
   font-size: clamp(1rem, 1.8vw, 1.5rem);
   font-weight: 400;
   font-style: italic;
