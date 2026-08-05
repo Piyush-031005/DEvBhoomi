@@ -1,5 +1,6 @@
 import './style.css';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
@@ -67,11 +68,47 @@ worldGroup.add(starsMesh);
 // --- Intro State ---
 const animState = {
     introProgress: 0.0, 
-    titleOpacity: 0.0,
-    titleScale: 0.9,
     brutalistOpacity: 0.0,
-    birdFlight: 0.0
+    maskScale: 15,
+    maskRotY: 0,
+    maskOpacity: 1.0,
+    titleOpacity: 0.0
 };
+
+// --- Act 2 & 3: Brutalist 3D Mask ---
+let maskModel = null;
+const loader = new GLTFLoader();
+
+// Dramatic Brutalist Lighting
+const maskLight = new THREE.DirectionalLight('#ff1a2b', 5.0); // Intense red rim light
+maskLight.position.set(5, 5, -5);
+scene.add(maskLight);
+
+const maskFill = new THREE.DirectionalLight('#ffffff', 1.0); // Soft white fill
+maskFill.position.set(-5, 0, 10);
+scene.add(maskFill);
+
+loader.load('/mask.glb', (gltf) => {
+    maskModel = gltf.scene;
+    
+    // Scale and position the massive mask
+    maskModel.scale.set(animState.maskScale, animState.maskScale, animState.maskScale);
+    maskModel.position.set(0, 0, 0);
+    
+    // Apply materials
+    maskModel.traverse((child) => {
+        if (child.isMesh) {
+            if (child.material) {
+                child.material.roughness = 0.6;
+                child.material.metalness = 0.2;
+                child.material.transparent = true;
+                child.material.opacity = animState.maskOpacity;
+            }
+        }
+    });
+    
+    worldGroup.add(maskModel);
+});
 // ============================================================
 // BRUTALIST SECTION — 4 Procedural Worlds, No Images
 // Everything is code: mountains, temples, culture, nature
@@ -194,12 +231,20 @@ function animate() {
     // Constant subtle motion
     starsMesh.rotation.y = elapsedTime * 0.01;
     
-    // Intro + Brutalist animations
-    
-    if (typeof mountainParticles !== "undefined" && mountainParticles) {
-        mountainParticles.material.uniforms.uTime.value = elapsedTime;
-        mountainParticles.material.uniforms.uFlightProgress.value = animState.birdFlight;
-        mountainParticles.material.uniforms.uOpacity.value = 1.0 - animState.brutalistOpacity;
+    if (maskModel) {
+        // Continuous slow floating rotation
+        maskModel.rotation.y = Math.sin(elapsedTime * 0.5) * 0.1 + animState.maskRotY;
+        maskModel.rotation.x = Math.cos(elapsedTime * 0.3) * 0.05;
+        
+        // Scale and opacity driven by GSAP
+        maskModel.scale.set(animState.maskScale, animState.maskScale, animState.maskScale);
+        
+        // Traverse and update opacity
+        maskModel.traverse((child) => {
+            if (child.isMesh && child.material) {
+                child.material.opacity = animState.maskOpacity;
+            }
+        });
     }
     if (brutalistGroup && brutalistMaterial) {
 
@@ -259,24 +304,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 
-    // 1. Title fades in immediately
-    masterTl.to("#devbhoomi-title", {
+    // 1. Mask and typography idle until scroll
+    masterTl.to(".hero-title-container", {
         opacity: 1,
         scale: 1,
         duration: 0.5,
         ease: "power2.out"
     }, 0.2)
     
-    // 2. Birds fly to camera
+    // 2. Dramatic mask scale up and rotation towards camera on scroll
     .to(animState, {
-        birdFlight: 1.0,
+        maskScale: 50, // Scale up massively to swallow the camera
+        maskRotY: Math.PI / 2, // Rotate to side profile
         duration: 1.5,
-        ease: "power1.inOut"
+        ease: "power2.inOut"
     }, 0.6)
     
-    // 3. Transition to Editorial exactly as birds hit screen
-    .to("#devbhoomi-title", { opacity: 0, scale: 1.1, duration: 0.3 }, 1.6)
-    .add(() => { if (typeof mountainParticles !== "undefined" && mountainParticles) mountainParticles.visible = false; }, 2.0)
+    // 3. Transition to Editorial Procedural Worlds
+    .to(".hero-title-container", { opacity: 0, scale: 1.1, duration: 0.3 }, 1.6)
+    .to(animState, { maskOpacity: 0.0, duration: 0.4 }, 1.8) // Fade mask out
     .to(animState, { brutalistOpacity: 1.0, duration: 0.5, ease: "power2.inOut" }, 1.8)
     .to('#br-shell', { opacity: 1, duration: 0.5, ease: 'power2.inOut' }, 1.8)
     .add(() => { document.getElementById('br-shell')?.classList.add('active'); }, 1.9)
