@@ -702,16 +702,6 @@ vec3 renderNature(vec2 uv) {
     return col;
 }
 
-// Reuse mountain ridge from scene 0 here
-float mountainRidge(float x) {
-    float h = 0.0;
-    h += 0.88 * exp(-pow((x + 0.38) * 3.8, 2.0));
-    h += 0.64 * exp(-pow((x + 0.12) * 4.5, 2.0));
-    h += 0.76 * exp(-pow((x - 0.18) * 3.5, 2.0));
-    h += 0.52 * exp(-pow((x + 0.60) * 5.0, 2.0));
-    h += 0.44 * exp(-pow((x - 0.42) * 5.5, 2.0));
-    return h;
-}
 
 // ============================================================
 // SCENE -1 — THE AWAKENING (HERO SEQUENCE)
