@@ -287,14 +287,7 @@ body {
   backdrop-filter: blur(8px);
 }
 
-.br-topbar-brand {
-  font-family: var(--f-condensed);
-  font-weight: 900;
-  font-size: 1.1rem;
-  letter-spacing: 0.2em;
-  color: var(--c-polar);
-  text-transform: uppercase;
-}
+.br-topbar-brand { font-family: var(--f-brand); font-size: 1.5rem; font-weight: 800; letter-spacing: 0.2em; color: #ffffff; text-transform: uppercase; }
 
 .br-topbar-right {
   display: flex;

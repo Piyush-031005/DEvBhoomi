@@ -261,126 +261,18 @@ loader.load('/mask.glb', (gltf) => {
         if (child.isMesh) {
             // Apply Brutalist dark metallic theme
             if (child.material) {
-                child.material.color.setHex(0x222222); // Dark graphite
-                child.material.roughness = 0.3;
-                child.material.metalness = 0.8;
+                child.material.color.setHex(0xaaaaaa); // Chrome / Silver
+                child.material.roughness = 0.1;
+                child.material.metalness = 1.0;
                 child.material.transparent = true;
-                // Additive/Normal blending with opacity
                 child.material.opacity = animState.maskOpacity;
-                child.material.depthWrite = false; // Helps text show through cleanly
+                child.material.depthWrite = false;
             }
         }
     });
     
     worldGroup.add(maskModel);
 });
-// ============================================================
-// BRUTALIST SECTION — 4 Procedural Worlds, No Images
-// Everything is code: mountains, temples, culture, nature
-// ============================================================
-
-let brutalistGroup, brutalistMesh, brutalistMaterial;
-let brutalistMouse = new THREE.Vector2(0, 0);
-let targetBrutalistHover = 0;
-let brutalistReady = false;
-
-// Build the full-screen procedural plane immediately (no async texture load needed!)
-{
-    brutalistGroup = new THREE.Group();
-    brutalistGroup.position.set(0, 0, 10);
-    brutalistGroup.visible = false;
-    worldGroup.add(brutalistGroup);
-
-    // Full-screen plane at z=10 (camera at z=22, FOV=60 → visible area ≈ 27.7 × 15.6 units)
-    const geom = new THREE.PlaneGeometry(30, 17, 1, 1);
-
-    brutalistMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-            uTime: { value: 0 },
-            uChapter: { value: -1 }, // -1 = Hero Intro, 0, 1, 2, 3 = Editorial Chapters
-            uOpacity: { value: 0 }, // Crossfade opacity
-            uIntroProgress: { value: 0 }, // 0 to 1 for the Awakening
-            uMouse: { value: new THREE.Vector2(0.5, 0.5) },
-            uHover: { value: 0 }, // 0 to 1 smooth
-            uScrollVelocity: { value: 0 }
-        },
-        vertexShader:   brutalistVertexShader,
-        fragmentShader: brutalistFragmentShader,
-        transparent: true,
-        side: THREE.DoubleSide
-    });
-
-    brutalistMesh = new THREE.Mesh(geom, brutalistMaterial);
-    brutalistGroup.add(brutalistMesh);
-    brutalistReady = true;
-}
-
-// Switch chapter: fade out → switch uChapter → fade in
-function switchBrutalistChapter(chapterIdx) {
-    if (!brutalistReady) return;
-    const current = brutalistMaterial.uniforms.uChapter.value;
-    if (current === chapterIdx) return;
-    // Quick cross-dissolve via opacity
-    gsap.killTweensOf(brutalistMaterial.uniforms.uOpacity);
-    gsap.to(brutalistMaterial.uniforms.uOpacity, {
-        value: 0, duration: 0.3, ease: 'power2.in',
-        onComplete: () => {
-            brutalistMaterial.uniforms.uChapter.value = chapterIdx;
-            gsap.to(brutalistMaterial.uniforms.uOpacity, {
-                value: animState.brutalistOpacity,
-                duration: 0.6, ease: 'power2.out'
-            });
-        }
-    });
-}
-
-// --- Atmospheric Mist Particle System (active during brutalist section) ---
-const ATMOS_COUNT = 600;
-const atmosPositions = new Float32Array(ATMOS_COUNT * 3);
-const atmosSizes     = new Float32Array(ATMOS_COUNT);
-const atmosOffsets   = new Float32Array(ATMOS_COUNT);
-const atmosSpeeds    = new Float32Array(ATMOS_COUNT);
-
-for (let i = 0; i < ATMOS_COUNT; i++) {
-    // Scatter particles across the editorial stage (z slightly in front of image)
-    atmosPositions[i * 3]     = (Math.random() - 0.5) * 30;
-    atmosPositions[i * 3 + 1] = (Math.random() - 0.5) * 18;
-    atmosPositions[i * 3 + 2] = 11 + Math.random() * 4; // Between image and camera
-    atmosSizes[i]   = 0.4 + Math.random() * 1.2; // Large, soft blobs
-    atmosOffsets[i] = Math.random();
-    atmosSpeeds[i]  = 0.025 + Math.random() * 0.04; // Very slow drift
-}
-
-const atmosGeom = new THREE.BufferGeometry();
-atmosGeom.setAttribute('position', new THREE.BufferAttribute(atmosPositions, 3));
-atmosGeom.setAttribute('aSize',    new THREE.BufferAttribute(atmosSizes,     1));
-atmosGeom.setAttribute('aOffset',  new THREE.BufferAttribute(atmosOffsets,   1));
-atmosGeom.setAttribute('aSpeed',   new THREE.BufferAttribute(atmosSpeeds,    1));
-
-const atmosMat = new THREE.ShaderMaterial({
-    uniforms: {
-        uTime:    { value: 0 },
-        uOpacity: { value: 0 }
-    },
-    vertexShader:   atmosVertexShader,
-    fragmentShader: atmosFragmentShader,
-    transparent: true,
-    depthWrite:  false,
-    blending:    THREE.AdditiveBlending
-});
-
-const atmosMesh = new THREE.Points(atmosGeom, atmosMat);
-atmosMesh.visible = false;
-worldGroup.add(atmosMesh);
-
-
-// Lighting
-const ambientLight = new THREE.AmbientLight('#ffffff', 0.2);
-scene.add(ambientLight);
-const directionalLight = new THREE.DirectionalLight('#ffffff', 1.5);
-directionalLight.position.set(10, 20, -10); // Sunlight from behind mountains
-scene.add(directionalLight);
-
 // Handle Resize
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -428,40 +320,8 @@ function animate() {
             }
         });
     }
-    if (brutalistGroup && brutalistMaterial) {
 
-        brutalistMaterial.uniforms.uTime.value = elapsedTime;
-        brutalistMaterial.uniforms.uIntroProgress.value = animState.introProgress;
-        
-        // Use timeline opacity for intro, but let switchBrutalistChapter override for sections
-        if (brutalistMaterial.uniforms.uChapter.value === -1) {
-            brutalistMaterial.uniforms.uOpacity.value = animState.brutalistOpacity;
-        }
 
-        // Smooth damp hover
-        brutalistMaterial.uniforms.uHover.value = THREE.MathUtils.lerp(
-            brutalistMaterial.uniforms.uHover.value, targetBrutalistHover, 0.1
-        );
-        // Scroll velocity
-        brutalistMaterial.uniforms.uScrollVelocity.value = THREE.MathUtils.lerp(
-            brutalistMaterial.uniforms.uScrollVelocity.value, window.lastScrollVelocity || 0, 0.05
-        );
-        // Mouse in UV space (0-1)
-        const targetMouseUV = new THREE.Vector2(
-            brutalistMouse.x,
-            brutalistMouse.y
-        );
-        brutalistMaterial.uniforms.uMouse.value.lerp(targetMouseUV, 0.08);
-        brutalistGroup.visible = (animState.brutalistOpacity > 0.005);
-    }
-
-    // Atmospheric mist particles
-    if (atmosMesh) {
-        atmosMat.uniforms.uTime.value    = elapsedTime;
-        atmosMat.uniforms.uOpacity.value = animState.brutalistOpacity;
-        atmosMesh.visible = (animState.brutalistOpacity > 0.01);
-    }
-    
     renderer.render(scene, camera);
 }
 animate();
@@ -507,135 +367,11 @@ document.addEventListener("DOMContentLoaded", () => {
         ease: "power2.out"
     }, 1.5)
     
-    // 3. Dramatic Mask Scale Up (2.5 to 4.0)
+    // 3. Subtle Mask Interaction
     .to(animState, {
-        maskScale: 50, // Scale up massively to swallow the camera
-        maskRotY: Math.PI / 2, // Rotate to side profile
+        maskRotY: Math.PI / 12,
         duration: 1.5,
         ease: "power2.inOut"
-    }, 2.5)
+    }, 2.5);
     
-    // 4. Transition to Editorial Procedural Worlds (4.0 to 4.5)
-    .to(".hero-title-container", { opacity: 0, scale: 1.1, duration: 0.3 }, 4.0)
-    .to(animState, { maskOpacity: 0.0, duration: 0.4 }, 4.1) // Fade mask out
-    .to(animState, { brutalistOpacity: 1.0, duration: 0.5, ease: "power2.inOut" }, 4.2)
-    .to('#br-shell', { opacity: 1, duration: 0.5, ease: 'power2.inOut' }, 4.2)
-    .add(() => { document.getElementById('br-shell')?.classList.add('active'); }, 4.3)
-    .add(() => { switchBrutalistChapter(0); }, 4.2);
-    // ============================================================
-    // BRUTALIST UI SCROLL LOGIC
-    // Single pinned container controls 4 layered chapters
-    // ============================================================
-    const chapters = [
-        { id: 'br-ch-01', chIdx: 0 },
-        { id: 'br-ch-02', chIdx: 1 },
-        { id: 'br-ch-03', chIdx: 2 },
-        { id: 'br-ch-04', chIdx: 3 },
-    ];
-    let currentCh = -1;
-
-    ScrollTrigger.create({
-        trigger: '#brutalist-act',
-        start: 'top top',
-        end: '+=400%', // 4 chapters, pin for 400vh
-        pin: true,
-        onUpdate: (self) => {
-            // self.progress goes from 0 to 1
-            // Convert to chapter index (0, 1, 2, 3)
-            let idx = Math.min(3, Math.floor(self.progress * 4));
-            
-            if (idx !== currentCh) {
-                // Fade out old
-                if (currentCh >= 0) {
-                    const oldEl = document.getElementById(chapters[currentCh].id);
-                    const oldWords = oldEl.querySelectorAll('.br-word');
-                    const oldBody = oldEl.querySelector('.br-body');
-                    
-                    gsap.to(oldWords, { y: '-110%', duration: 0.5, ease: 'power4.in', stagger: 0.04, overwrite: true });
-                    if (oldBody) gsap.to(oldBody, { opacity: 0, y: -20, duration: 0.35, overwrite: true });
-                    gsap.to(oldEl, { 
-                        opacity: 0, 
-                        duration: 0.4, 
-                        onComplete: () => oldEl.classList.remove('active-ch') 
-                    });
-                }
-                
-                // Fade in new
-                const newEl = document.getElementById(chapters[idx].id);
-                newEl.classList.add('active-ch');
-                const newWords = newEl.querySelectorAll('.br-word');
-                const newBody = newEl.querySelector('.br-body');
-                const newDivider = newEl.querySelector('.br-divider');
-                const newNumEl = newEl.querySelector('.br-chapter-num');
-
-                // Switch WebGL Shader chapter
-                switchBrutalistChapter(chapters[idx].chIdx);
-
-                // Update UI Rail
-                document.querySelectorAll('.br-progress-tick').forEach((t, ti) => {
-                    t.classList.toggle('active', ti === idx);
-                });
-                const chNum = String(idx + 1).padStart(2, '0');
-                const counter = document.getElementById('br-chapter-counter');
-                if (counter) counter.textContent = `${chNum} / 04`;
-
-                // GSAP Typography Slam
-                gsap.killTweensOf(newWords);
-                gsap.fromTo(newWords, { y: '110%' }, {
-                    y: '0%', duration: 0.85, ease: 'power4.out', stagger: 0.07, overwrite: true
-                });
-
-                if (newNumEl) gsap.fromTo(newNumEl, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6, ease: 'power3.out' });
-                
-                if (newBody) gsap.fromTo(newBody, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.9, delay: 0.25, ease: 'power2.out', overwrite: true });
-                
-                if (newDivider) {
-                    gsap.fromTo(newDivider, { width: 0 }, { width: '80px', duration: 0.7, delay: 0.2, ease: 'power3.out' });
-                }
-                
-                gsap.to(newEl, { opacity: 1, duration: 0.5, ease: 'power2.out' });
-
-                currentCh = idx;
-            }
-        }
-    });
-
-    // Track scroll velocity for the shader
-    let scrollTimeout;
-    window.lastScrollVelocity = 0;
-    
-    ScrollTrigger.create({
-        trigger: "#app",
-        start: "top top",
-        end: "bottom bottom",
-        onUpdate: (self) => {
-            window.lastScrollVelocity = self.getVelocity() * 0.002;
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => {
-                window.lastScrollVelocity = 0;
-            }, 100);
-        }
-    });
-
-    // Mouse tracking for WebGL liquid/glitch effect
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    
-    window.addEventListener('mousemove', (event) => {
-        // Normalize mouse coordinates
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        
-        if (brutalistMesh) {
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObject(brutalistMesh);
-            
-            if (intersects.length > 0) {
-                targetBrutalistHover = 1.0;
-                brutalistMouse.copy(intersects[0].uv);
-            } else {
-                targetBrutalistHover = 0.0;
-            }
-        }
-    });
 });
