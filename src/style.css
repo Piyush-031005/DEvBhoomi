@@ -6,9 +6,9 @@
   --c-fog: #717b8b;
   --c-warm: #f5f0e8;
 
-  --f-editorial: 'Inter', sans-serif;
-  --f-condensed: 'Barlow Condensed', sans-serif;
-  --f-hero: 'Yatra One', cursive;
+  --f-editorial: 'Cormorant Garamond', serif;
+  --f-condensed: 'Syne', sans-serif;
+  --f-hero: 'Cormorant Garamond', serif;
 }
 
 * {
@@ -53,11 +53,12 @@ body {
 /* Himalayan Hero Title */
 .hero-title {
   font-family: var(--f-hero);
-  font-size: clamp(3rem, 10vw, 10rem);
-  font-weight: 400;
+  font-size: clamp(3rem, 12vw, 15rem);
+  font-weight: 300;
+  letter-spacing: 0.05em;
   color: #ffffff;
   opacity: 0;
-  transform: translateY(300px);
+  transform: scale(0.9);
   text-shadow: none;
   letter-spacing: 0.05em;
 }
@@ -135,10 +136,10 @@ body {
 .br-headline {
   font-family: var(--f-condensed);
   font-size: clamp(5rem, 13vw, 16rem);
-  font-weight: 900;
-  line-height: 0.82;
+  font-weight: 800;
+  line-height: 0.85;
   text-transform: uppercase;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.02em;
   display: flex;
   flex-wrap: wrap;
   gap: 0 0.2em;
@@ -166,12 +167,13 @@ body {
 
 .br-body {
   font-family: var(--f-editorial);
-  font-size: clamp(0.9rem, 1.3vw, 1.15rem);
-  font-weight: 300;
-  line-height: 1.7;
-  color: rgba(255,255,255,0.65);
-  letter-spacing: 0.01em;
-  max-width: 38ch;
+  font-size: clamp(1rem, 1.8vw, 1.5rem);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.02em;
+  max-width: 34ch;
   transform: translateY(20px);
   opacity: 0; /* GSAP reveals */
 }
@@ -285,10 +287,10 @@ body {
 
 .br-progress-tick {
   font-family: var(--f-condensed);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.25);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.5);
   text-transform: uppercase;
   cursor: default;
   transition: color 0.4s ease;
