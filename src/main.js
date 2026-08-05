@@ -98,7 +98,8 @@ let brutalistReady = false;
             uOpacity: { value: 0 }, // Crossfade opacity
             uIntroProgress: { value: 0 }, // 0 to 1 for the Awakening
             uMouse: { value: new THREE.Vector2(0.5, 0.5) },
-            uHover: { value: 0 } // 0 to 1 smooth
+            uHover: { value: 0 }, // 0 to 1 smooth
+            uScrollVelocity: { value: 0 }
         },
         vertexShader:   brutalistVertexShader,
         fragmentShader: brutalistFragmentShader,
