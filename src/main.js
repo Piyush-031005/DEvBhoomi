@@ -231,7 +231,7 @@ const animState = {
     maskScale: 9,      // Scaled down so it fits in the screen
     maskRotY: 0,
     maskRotX: 0,       // New: for mouse interaction pinning
-    maskOpacity: 0.85, // Base transparency so we can see text behind it
+    maskOpacity: 0.0,  // Start invisible!
     titleOpacity: 0.0,
     birdFlight: 0.0
 };
@@ -486,38 +486,42 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 
-    // 1. Title fades in immediately
-    masterTl.to(".hero-title-container", {
+    // 1. Mountain to Birds Flight (0.0 to 1.5)
+    masterTl.to(animState, {
+        birdFlight: 1.0,
+        duration: 1.5,
+        ease: "power1.inOut"
+    }, 0.0)
+    .add(() => { if (typeof mountainParticles !== "undefined" && mountainParticles) mountainParticles.visible = false; }, 1.5)
+    
+    // 2. Mask and Typography Reveal (1.5 to 2.0)
+    .to(".hero-title-container", {
         opacity: 1,
         scale: 1,
         duration: 0.5,
         ease: "power2.out"
-    }, 0.2)
-    
-    // 2. Birds fly to camera
+    }, 1.5)
     .to(animState, {
-        birdFlight: 1.0,
-        duration: 1.5,
-        ease: "power1.inOut"
-    }, 0.6)
+        maskOpacity: 0.85,
+        duration: 0.5,
+        ease: "power2.out"
+    }, 1.5)
     
-    // 3. Mountain disappears, dramatic mask scale up and rotation towards camera
-    .add(() => { if (typeof mountainParticles !== "undefined" && mountainParticles) mountainParticles.visible = false; }, 2.0)
+    // 3. Dramatic Mask Scale Up (2.5 to 4.0)
     .to(animState, {
         maskScale: 50, // Scale up massively to swallow the camera
         maskRotY: Math.PI / 2, // Rotate to side profile
         duration: 1.5,
         ease: "power2.inOut"
-    }, 2.0)
+    }, 2.5)
     
-    // 3. Transition to Editorial Procedural Worlds
-    .to(".hero-title-container", { opacity: 0, scale: 1.1, duration: 0.3 }, 1.6)
-    .to(animState, { maskOpacity: 0.0, duration: 0.4 }, 1.8) // Fade mask out
-    .to(animState, { brutalistOpacity: 1.0, duration: 0.5, ease: "power2.inOut" }, 1.8)
-    .to('#br-shell', { opacity: 1, duration: 0.5, ease: 'power2.inOut' }, 1.8)
-    .add(() => { document.getElementById('br-shell')?.classList.add('active'); }, 1.9)
-    .add(() => { switchBrutalistChapter(0); }, 1.8);
-
+    // 4. Transition to Editorial Procedural Worlds (4.0 to 4.5)
+    .to(".hero-title-container", { opacity: 0, scale: 1.1, duration: 0.3 }, 4.0)
+    .to(animState, { maskOpacity: 0.0, duration: 0.4 }, 4.1) // Fade mask out
+    .to(animState, { brutalistOpacity: 1.0, duration: 0.5, ease: "power2.inOut" }, 4.2)
+    .to('#br-shell', { opacity: 1, duration: 0.5, ease: 'power2.inOut' }, 4.2)
+    .add(() => { document.getElementById('br-shell')?.classList.add('active'); }, 4.3)
+    .add(() => { switchBrutalistChapter(0); }, 4.2);
     // ============================================================
     // BRUTALIST UI SCROLL LOGIC
     // Single pinned container controls 4 layered chapters
