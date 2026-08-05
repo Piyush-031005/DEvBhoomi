@@ -63,172 +63,13 @@ const particlesMat = new THREE.PointsMaterial({
 });
 const starsMesh = new THREE.Points(particlesGeom, particlesMat);
 worldGroup.add(starsMesh);
-// --- Act 2 & 3: Particle Mountain & Bird Transition ---
-const textureLoader = new THREE.TextureLoader();
-let mountainParticles;
-let birdParticles;
-const birdIndices = []; // Store which particles become birds
-
-// We need a dummy object for GSAP to target before the async load finishes
+// --- Intro State ---
 const animState = {
-    mountainOpacity: 0,
-    birdFlight: 0,
-    brutalistOpacity: 0
+    introProgress: 0.0, // Drives the GLSL awakening sequence
+    titleOpacity: 0.0,
+    titleScale: 0.9,
+    brutalistOpacity: 0.0
 };
-
-textureLoader.load('/mountain.png', (mountainTex) => {
-    const img = mountainTex.image;
-    const canvas = document.createElement('canvas');
-    
-    // Massive resolution for ultra dense mountain (double density again to 80%)
-    const maxWidth = 1800; // Super dense!
-    const scale = maxWidth / img.width;
-    canvas.width = maxWidth;
-    canvas.height = Math.floor(img.height * scale);
-    
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-    
-    const positions = [];
-    const targetPositions = [];
-    const colors = [];
-    const offsets = [];
-    
-    // Mountain width slightly wider than 16:9 screen at z=20 (which is ~41 units)
-    // 50 ensures it covers left and right edges completely.
-    const mountainWidth = 55; 
-    const mountainHeight = mountainWidth * (canvas.height / canvas.width);
-    
-    // Iterate through pixels
-    for(let y = 0; y < canvas.height; y++) {
-        for(let x = 0; x < canvas.width; x++) {
-            const index = (y * canvas.width + x) * 4;
-            const r = imgData[index];
-            const g = imgData[index+1];
-            const b = imgData[index+2];
-            
-            // Luminance
-            const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-            
-            // If bright enough, create a particle (lowered threshold for more density)
-            if (lum > 2) {
-                // PosX and PosY
-                const posX = (x / canvas.width - 0.5) * mountainWidth;
-                // Center the mountain. A slight upward shift (+5) pushes the peaks well above the halfway mark
-                const posY = -(y / canvas.height - 0.5) * mountainHeight + 5; 
-                const posZ = 0;
-                
-                positions.push(posX, posY, posZ);
-                
-                // Polar whiteness: boost the brightness significantly
-                const boost = 1.5;
-                colors.push(Math.min(1.0, (r/255)*boost), Math.min(1.0, (g/255)*boost), Math.min(1.0, (b/255)*boost));
-                
-                // Target position for when it turns into a bird and flies to the screen
-                const scatterX = posX * (1.5 + Math.random() * 2.0);
-                const scatterY = posY + 15 + Math.random() * 20; 
-                const scatterZ = posZ + 25 + Math.random() * 15; // Fly past camera (camera is at z=20)
-                targetPositions.push(scatterX, scatterY, scatterZ);
-                
-                offsets.push(Math.random() * Math.PI * 2);
-            }
-        }
-    }
-    
-    // --- Create Unified Mountain/Bird System ---
-    const geom = new THREE.BufferGeometry();
-    geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geom.setAttribute('aStartPos', new THREE.Float32BufferAttribute(positions, 3));
-    geom.setAttribute('aTargetPos', new THREE.Float32BufferAttribute(targetPositions, 3));
-    geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    geom.setAttribute('aOffset', new THREE.Float32BufferAttribute(offsets, 1));
-    
-    const matShader = new THREE.ShaderMaterial({
-        uniforms: {
-            uTime: { value: 0 },
-            uFlightProgress: { value: 0.0 }, // 0 = mountain, 1 = flown past camera
-            uOpacity: { value: 0.0 }
-        },
-        vertexShader: `
-            uniform float uTime;
-            uniform float uFlightProgress;
-            attribute vec3 aStartPos;
-            attribute vec3 aTargetPos;
-            attribute vec3 color;
-            attribute float aOffset;
-            
-            varying vec3 vColor;
-            varying float vProgress;
-            
-            void main() {
-                vColor = color;
-                vProgress = uFlightProgress;
-                
-                // Non-linear flight path
-                float easeProgress = pow(uFlightProgress, 1.5);
-                vec3 localPos = mix(aStartPos, aTargetPos, easeProgress);
-                
-                // Add flapping and chaos as they fly
-                if (uFlightProgress > 0.0) {
-                    float flap = sin(uTime * 25.0 + aOffset) * 0.8;
-                    localPos.y += flap * uFlightProgress;
-                    float driftX = sin(uTime * 3.0 + aOffset) * 4.0;
-                    localPos.x += driftX * uFlightProgress;
-                }
-                
-                vec4 mvPosition = modelViewMatrix * vec4(localPos, 1.0);
-                gl_Position = projectionMatrix * mvPosition;
-                
-                // Base size for mountain, gets MASSIVE as they fly towards camera
-                float baseSize = 3.5; // Enough to fill all microscopic gaps at 1800 density, creating a solid block
-                float birdSize = 120.0; // Huge bird size
-                float currentSize = mix(baseSize, birdSize, uFlightProgress);
-                
-                gl_PointSize = max(1.0, currentSize / -mvPosition.z);
-            }
-        `,
-        fragmentShader: `
-            uniform float uOpacity;
-            varying vec3 vColor;
-            varying float vProgress;
-            
-            void main() {
-                vec2 uv = gl_PointCoord - vec2(0.5);
-                
-                // Mountain particle shape (soft circle)
-                float circle = 1.0 - smoothstep(0.1, 0.5, length(uv));
-                
-                // Bird shape (V silhouette)
-                float vShape = abs(uv.x) * 2.0 - uv.y;
-                float birdAlpha = 1.0 - smoothstep(0.0, 0.2, abs(vShape - 0.2));
-                float body = 1.0 - smoothstep(0.0, 0.1, length(uv - vec2(0.0, -0.1)));
-                birdAlpha = max(birdAlpha, body);
-                
-                // Morph shape from circle to bird based on flight progress
-                float finalShape = mix(circle, birdAlpha, smoothstep(0.01, 0.2, vProgress));
-                
-                // Color morphs to pure white birds
-                vec3 finalColor = mix(vColor, vec3(1.0), smoothstep(0.01, 0.3, vProgress));
-                
-                // Fade out at the very end of the flight (past camera)
-                float flightFade = 1.0 - smoothstep(0.8, 1.0, vProgress);
-                
-                if (finalShape < 0.01) discard;
-                
-                gl_FragColor = vec4(finalColor, finalShape * uOpacity * flightFade);
-            }
-        `,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.NormalBlending
-    });
-    
-    mountainParticles = new THREE.Points(geom, matShader);
-    worldGroup.add(mountainParticles);
-});
-
-// No spline or trail needed for the scattered bird flight
 
 // ============================================================
 // BRUTALIST SECTION — 4 Procedural Worlds, No Images
@@ -252,12 +93,12 @@ let brutalistReady = false;
 
     brutalistMaterial = new THREE.ShaderMaterial({
         uniforms: {
-            uChapter:        { value: 0 },   // 0=Mountains 1=Temples 2=Culture 3=Nature
-            uTime:           { value: 0 },
-            uScrollVelocity: { value: 0 },
-            uHover:          { value: 0 },
-            uOpacity:        { value: 0 },
-            uMouse:          { value: new THREE.Vector2(0.5, 0.5) }
+            uTime: { value: 0 },
+            uChapter: { value: -1 }, // -1 = Hero Intro, 0, 1, 2, 3 = Editorial Chapters
+            uOpacity: { value: 0 }, // Crossfade opacity
+            uIntroProgress: { value: 0 }, // 0 to 1 for the Awakening
+            uMouse: { value: new THREE.Vector2(0.5, 0.5) },
+            uHover: { value: 0 } // 0 to 1 smooth
         },
         vertexShader:   brutalistVertexShader,
         fragmentShader: brutalistFragmentShader,
@@ -351,17 +192,13 @@ function animate() {
     // Constant subtle motion
     starsMesh.rotation.y = elapsedTime * 0.01;
     
-    if (mountainParticles && mountainParticles.material) {
-        mountainParticles.material.uniforms.uOpacity.value = animState.mountainOpacity;
-        mountainParticles.material.uniforms.uTime.value = elapsedTime;
-        mountainParticles.material.uniforms.uFlightProgress.value = animState.birdFlight;
-    }
-    
-    // Brutalist animations
+    // Intro + Brutalist animations
     if (brutalistGroup && brutalistMaterial) {
         brutalistMaterial.uniforms.uTime.value = elapsedTime;
-        // uOpacity is driven by both animState AND chapter switch — only push animState if no chapter switch tween
-        if (!gsap.isTweening(brutalistMaterial.uniforms.uOpacity)) {
+        brutalistMaterial.uniforms.uIntroProgress.value = animState.introProgress;
+        
+        // Use timeline opacity for intro, but let switchBrutalistChapter override for sections
+        if (brutalistMaterial.uniforms.uChapter.value === -1) {
             brutalistMaterial.uniforms.uOpacity.value = animState.brutalistOpacity;
         }
 
@@ -412,37 +249,34 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Act 1 to 2: The Himalaya Reveal
-    // Speed up initial animations drastically!
+    // 1. The Awakening (0 to 2)
     masterTl.to(animState, {
-        mountainOpacity: 1, // Fade in mountain from black
-        duration: 0.5, // Used to be 2.5
+        brutalistOpacity: 1.0, // Fade in the GLSL canvas completely
+        duration: 0.2,
+    }, 0)
+    .to(animState, {
+        introProgress: 1.0, // Drives the darkness -> heartbeat -> portal math
+        duration: 2.0,
         ease: "power2.inOut"
     }, 0)
-    // Act 2 to 3: Devbhoomi Text
+    // 2. The Divine Word Appears (1.5 to 2.5)
     .to("#devbhoomi-title", {
         opacity: 1,
-        y: "0px", // Subtle rise to center
-        duration: 0.5,
-        ease: "power2.out"
-    }, 0.2) // Triggers almost immediately
+        scale: 1,
+        duration: 1.0,
+        ease: "power3.out"
+    }, 1.5)
     
-    // Act 3: The Poetic Bird Flight
-    .to(animState, {
-        birdFlight: 1.0,
-        duration: 1.5, // Used to be 4
-        ease: "power1.inOut"
-    }, 0.6) // Trigger soon after text appears
-
-    // Act 4: Himalayan birds fade, brutalist era begins
-    .to("#devbhoomi-title", { opacity: 0, duration: 0.5 }, 2.0)
-    .add(() => { if (mountainParticles) mountainParticles.visible = false; }, 3.0)
-    .to(animState, { brutalistOpacity: 1, duration: 1.5, ease: "power2.inOut" }, 3)
+    // 3. The Transition to Editorial (2.5 to 3.5)
+    // Title fades out
+    .to("#devbhoomi-title", { opacity: 0, scale: 1.1, duration: 0.8 }, 2.5)
+    
     // Reveal brutalist UI shell
-    .to('#br-shell', { opacity: 1, duration: 1.0, ease: 'power2.inOut' }, 3.2)
-    .add(() => { document.getElementById('br-shell')?.classList.add('active'); }, 3.8)
-    // Camera settles back for the editorial experience (wider frame)
-    .to(camera.position, { z: 22, y: 0, duration: 2.5, ease: "power1.inOut" }, 3);
+    .to('#br-shell', { opacity: 1, duration: 1.0, ease: 'power2.inOut' }, 3.0)
+    .add(() => { document.getElementById('br-shell')?.classList.add('active'); }, 3.5)
+    
+    // Switch GLSL to Chapter 0 (Panchachuli) smoothly
+    .add(() => { switchBrutalistChapter(0); }, 2.8);
 
     // ============================================================
     // BRUTALIST UI SCROLL LOGIC
