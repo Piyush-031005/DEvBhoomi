@@ -10,6 +10,7 @@ uniform vec2  uMouse;
 uniform float uHover;
 uniform float uScrollVelocity;
 uniform int   uChapter;
+uniform float uIntroProgress;
 
 varying vec2 vUv;
 
@@ -109,13 +110,19 @@ float mountainRidge(float x) {
 vec3 renderMountains(vec2 uv) {
     vec2 p = uv - 0.5;
     p.x *= 1.78;
-    float t = uTime * 0.05;
+    float t = uTime;
+    
+    // 3D Parallax from mouse
+    vec2 mv = (uMouse - 0.5) * 2.0;
 
-    // ---- Sky ----
-    vec3 nightTop    = vec3(0.01, 0.02, 0.06);
-    vec3 twilightMid = vec3(0.06, 0.10, 0.22);
-    vec3 dawnLow     = vec3(0.18, 0.08, 0.06);
-    float skyH = uv.y;
+    // Dynamic wind direction for clouds
+    float windX = t * (0.8 + 0.2 * sin(t * 0.3));
+
+    // ==== Sky & Clouds ====
+    float skyH = uv.y + mv.y * 0.02;
+    vec3 dawnLow   = vec3(0.05, 0.15, 0.30);
+    vec3 twilightMid = vec3(0.12, 0.25, 0.45);
+    vec3 nightTop  = vec3(0.02, 0.04, 0.08);
     vec3 sky = mix(dawnLow, mix(twilightMid, nightTop, smoothstep(0.0, 0.8, skyH)), smoothstep(0.0, 0.5, skyH));
 
     // Stars
@@ -125,44 +132,61 @@ vec3 renderMountains(vec2 uv) {
     float starVis  = smoothstep(0.42, 0.75, uv.y);
     sky += vec3(0.85, 0.90, 1.00) * star * twinkle * starVis;
 
-    // Aurora
-    float auroraX  = sin(p.x * 2.8 + t * 1.5) * 0.5 + 0.5;
-    float auroraFBM = fbm(vec2(p.x * 1.5 + t, uv.y * 2.0));
+    // God Rays (Sunlight appearing through clouds)
+    float rays = 0.0;
+    for(int i = 0; i < 5; i++) {
+        float rayY = uv.y - 0.5 - float(i)*0.1;
+        float rayX = uv.x - 0.5 - mv.x * 0.01;
+        float ang = atan(rayY, rayX);
+        rays += (sin(ang * 12.0 + t * 0.5) * 0.5 + 0.5) * exp(-length(vec2(rayX, rayY)) * 2.0) * 0.05;
+    }
+    sky += vec3(1.0, 0.8, 0.5) * rays * smoothstep(0.2, 0.6, uv.y);
+
+    // Aurora (now affected by wind)
+    float auroraX  = sin(p.x * 2.8 + windX) * 0.5 + 0.5;
+    float auroraFBM = fbm(vec2(p.x * 1.5 + windX, uv.y * 2.0));
     float aurora   = auroraX * auroraFBM * smoothstep(0.48, 0.78, uv.y) * 0.5;
     sky += vec3(0.0, aurora * 0.4, aurora * 0.8);
 
     vec3 col = sky;
 
-    // ---- Far ridge (misty blue) ----
-    float farH = mountainRidge(p.x * 0.65 + 0.08) * 0.45 + 0.20;
-    float farFBM = fbm(vec2(p.x * 5.0, 0.3)) * 0.12;
-    float farMask = smoothstep(farH + farFBM + 0.006, farH + farFBM - 0.006, p.y);
+    // ---- Far ridge (misty blue, deep parallax) ----
+    vec2 pFar = p - mv * 0.02;
+    float farH = mountainRidge(pFar.x * 0.65 + 0.08) * 0.45 + 0.20;
+    float farFBM = fbm(vec2(pFar.x * 5.0, 0.3)) * 0.12;
+    float farMask = smoothstep(farH + farFBM + 0.006, farH + farFBM - 0.006, pFar.y);
     col = mix(col, vec3(0.12, 0.16, 0.30), farMask * 0.92);
 
-    // ---- Mid ridge ----
-    float midH = mountainRidge(p.x * 0.80 + 0.05) * 0.60 + 0.08;
-    float midFBM = fbm(vec2(p.x * 6.0 + 2.1, 0.0)) * 0.10;
-    float midMask = smoothstep(midH + midFBM + 0.007, midH + midFBM - 0.007, p.y);
+    // ---- Mid ridge (medium parallax) ----
+    vec2 pMid = p - mv * 0.05;
+    float midH = mountainRidge(pMid.x * 0.80 + 0.05) * 0.60 + 0.08;
+    float midFBM = fbm(vec2(pMid.x * 6.0 + 2.1, 0.0)) * 0.10;
+    float midMask = smoothstep(midH + midFBM + 0.007, midH + midFBM - 0.007, pMid.y);
     col = mix(col, vec3(0.09, 0.11, 0.19), midMask * 0.95);
 
-    // ---- Main foreground peaks ----
-    float mainFBM = fbm(vec2(p.x * 7.0 + t * 0.2, p.y * 3.0)) * 0.12;
-    float mainH   = mountainRidge(p.x) * 0.82 + mainFBM - 0.06;
-    float mainMask = smoothstep(mainH + 0.010, mainH - 0.010, p.y);
+    // ---- Main foreground peaks (max parallax) ----
+    vec2 pMain = p - mv * 0.1;
+    float mainFBM = fbm(vec2(pMain.x * 7.0 + windX * 0.5, pMain.y * 3.0)) * 0.12;
+    float mainH   = mountainRidge(pMain.x) * 0.82 + mainFBM - 0.06;
+    float mainMask = smoothstep(mainH + 0.010, mainH - 0.010, pMain.y);
 
-    // Snow coverage
+    // Snow coverage on main peaks
     float snowY  = mainH - 0.10;
-    float snowN  = fbm(vec2(p.x * 14.0, p.y * 9.0)) * 0.08;
-    float snowT  = smoothstep(snowY - 0.06 + snowN, snowY + 0.10 + snowN, p.y);
-    vec3 rock    = vec3(0.16, 0.14, 0.12) + fbm(vec2(p.x * 20.0, p.y * 10.0)) * 0.06;
+    float snowN  = fbm(vec2(pMain.x * 14.0, pMain.y * 9.0)) * 0.08;
+    float snowT  = smoothstep(snowY - 0.06 + snowN, snowY + 0.10 + snowN, pMain.y);
+    vec3 rock    = vec3(0.16, 0.14, 0.12) + fbm(vec2(pMain.x * 20.0, pMain.y * 10.0)) * 0.06;
     vec3 snow    = vec3(0.87, 0.92, 0.98);
     col = mix(col, mix(rock, snow, snowT * snowT), mainMask);
 
-    // ---- Valley mist ----
-    float mistY   = -0.08 - p.y;
-    float mistFBM = fbm(vec2(p.x * 2.5 + t * 0.4, 0.0));
-    float mist    = clamp(mistY * 3.5 + mistFBM * 0.6, 0.0, 0.85);
-    col = mix(col, vec3(0.40, 0.52, 0.68), mist * 0.7);
+    // ---- Volumetric Valley mist (flowing through valleys) ----
+    float mistY   = -0.08 - pMain.y;
+    // Layered fbm for volumetric look
+    float mistFBM1 = fbm(vec2(pMain.x * 2.5 + windX * 0.8, pMain.y * 4.0 - t * 0.2));
+    float mistFBM2 = fbm(vec2(pMain.x * 5.0 - windX * 0.4, pMain.y * 8.0 + t * 0.4));
+    float mistFBM  = (mistFBM1 * 0.7 + mistFBM2 * 0.3);
+    float mist    = clamp(mistY * 3.5 + mistFBM * 0.8, 0.0, 0.95);
+    vec3 mistCol = mix(vec3(0.40, 0.52, 0.68), vec3(0.8, 0.85, 0.9), mistFBM);
+    col = mix(col, mistCol, mist * 0.85);
 
     // ---- Drifting snow ----
     vec2 snowSeed = floor(uv * 90.0 + vec2(t * 0.5, t * 1.2));
@@ -221,132 +245,107 @@ vec3 renderMountains(vec2 uv) {
 // SCENE 1 — CHAR DHAM
 // Kedarnath shikhara + Prayer flags + Sacred fire + River
 // ============================================================
-
-float sdShikhara(vec2 p) {
-    // Kedarnath temple — stepped pyramid spire
-    float base     = sdBox(p - vec2(0.0, -0.30), vec2(0.32, 0.034));
-    float body     = sdBox(p - vec2(0.0, -0.14), vec2(0.18, 0.14));
-    float door     = sdBox(p - vec2(0.0, -0.22), vec2(0.055, 0.09));
-    float step1    = sdBox(p - vec2(0.0,  0.05), vec2(0.14, 0.055));
-    float step2    = sdBox(p - vec2(0.0,  0.16), vec2(0.10, 0.055));
-    float step3    = sdBox(p - vec2(0.0,  0.25), vec2(0.07, 0.050));
-    float step4    = sdBox(p - vec2(0.0,  0.33), vec2(0.045, 0.040));
-    float kalash   = sdCircle(p - vec2(0.0, 0.395), 0.028);
-    float danda    = sdBox(p - vec2(0.0, 0.44), vec2(0.005, 0.048));
-    float temple   = opUnion(opUnion(base, body), opUnion(opUnion(step1, step2),
-                     opUnion(opUnion(step3, step4), opUnion(kalash, danda))));
-    // Hollow out door (subtract)
-    temple = max(temple, -max(-door, -body));
-    return temple;
+float sdPortal(vec2 p, vec2 size, float thickness) {
+    float outer = sdBox(p, size);
+    float inner = sdBox(p, size - vec2(thickness));
+    return max(outer, -inner);
 }
 
-float sdSmallTemple(vec2 p, float s) {
-    p /= s;
-    float b = sdBox(p - vec2(0.0, -0.16), vec2(0.10, 0.08));
-    float s1 = sdBox(p - vec2(0.0, 0.0), vec2(0.075, 0.05));
-    float s2 = sdBox(p - vec2(0.0, 0.07), vec2(0.050, 0.04));
-    float k  = sdCircle(p - vec2(0.0, 0.125), 0.018);
-    return opUnion(opUnion(b, s1), opUnion(s2, k));
+// Function to simulate blocks assembling based on time
+float assembleMask(vec2 p, float t, float seed) {
+    float cellY = floor((p.y + 0.5) * 20.0); // Quantize Y into blocks
+    float revealT = t - cellY * 0.1 - hash1(cellY + seed) * 0.5;
+    return smoothstep(0.0, 0.2, revealT);
 }
 
 vec3 renderTemples(vec2 uv) {
     vec2 p = uv - 0.5;
     p.x *= 1.78;
-    float t = uTime * 0.08;
+    float t = uTime;
+    
+    // Interactive bell ripple (mouse hover triggers divine wave)
+    float rippleDist = distance(p, (uMouse - 0.5) * vec2(1.78, 1.0));
+    float bellRipple = sin(rippleDist * 40.0 - t * 10.0) * exp(-rippleDist * 5.0) * uHover;
+    p += normalize(p) * bellRipple * 0.02;
 
-    // ---- Sacred dawn sky ----
-    vec3 deepNight  = vec3(0.04, 0.02, 0.10);
-    vec3 saffron    = vec3(0.75, 0.32, 0.05);
-    vec3 gold       = vec3(0.95, 0.72, 0.28);
-    float sh = smoothstep(-0.5, 0.6, uv.y);
-    vec3 col = mix(gold, mix(saffron, deepNight, sh * 1.5), sh);
+    vec3 col = vec3(0.02, 0.03, 0.05); // Deep spiritual void
 
-    // God-rays from top center
-    float rayAngle = atan(p.x, uv.y - 1.0);
-    float godRay   = sin(rayAngle * 22.0 + t * 0.4) * 0.5 + 0.5;
-    float rayDist  = length(p - vec2(0.0, 0.38));
-    godRay = godRay * exp(-rayDist * 2.8) * 0.30;
-    col += vec3(1.0, 0.88, 0.52) * godRay;
-
-    // ---- Background mountain silhouette ----
-    float mH = exp(-pow(p.x * 1.6, 2.0)) * 0.52 + fbm(vec2(p.x * 4.0 + 1.2, 0.0)) * 0.14;
-    float mMask = smoothstep(mH + 0.010, mH - 0.010, p.y - 0.08);
-    col = mix(col, vec3(0.06, 0.04, 0.10), mMask * 0.95);
-    // Snow on peaks
-    float mSnow = smoothstep(mH - 0.06, mH + 0.02, p.y - 0.08);
-    col = mix(col, vec3(0.86, 0.90, 0.96), mMask * mSnow * mSnow);
-
-    // ---- Stone ground plane ----
-    float groundMask = smoothstep(-0.32, -0.35, p.y);
-    float groundNoise = fbm(vec2(p.x * 12.0, 0.0)) * 0.05;
-    col = mix(col, vec3(0.18 + groundNoise, 0.14 + groundNoise, 0.12 + groundNoise), groundMask);
-
-    // ---- River at base ----
-    float riverY  = -0.36 + sin(p.x * 3.2 + t * 2.5) * 0.012;
-    float riverW  = smoothstep(0.022, 0.0, abs(p.y - riverY));
-    float ripple  = valueNoise(vec2(p.x * 28.0 - t * 7.0, 0.0)) * 0.35 + 0.65;
-    col = mix(col, vec3(0.28, 0.52, 0.80) * ripple, riverW);
-    // Reflection of temple in river
-    float reflDist = abs(p.y - riverY + 0.02);
-    float refl = smoothstep(0.12, 0.0, reflDist) * riverW;
-    col += vec3(0.90, 0.65, 0.20) * refl * 0.4;
-
-    // ---- Sacred fire (Dhuni) ----
-    vec2 fp = p - vec2(0.0, -0.31);
-    float fireFlicker = 0.5 + 0.5 * sin(t * 14.0 + fp.x * 50.0);
-    float fireDist = length(fp * vec2(1.0, 0.6));
-    float fire = exp(-fireDist * 22.0) * (0.6 + 0.4 * fireFlicker);
-    col += vec3(1.0, 0.55, 0.08) * fire * 3.0;
-    col += vec3(1.0, 0.90, 0.40) * exp(-fireDist * 80.0) * 2.0;
-
-    // ---- Main Kedarnath temple ----
-    float temple = sdShikhara(p);
-    float tMask  = smoothstep(0.006, 0.0, temple);
-
-    vec2 stoneUV = p * 22.0;
-    float stoneN = valueNoise(stoneUV) * 0.12 + valueNoise(stoneUV * 2.5) * 0.06;
-    vec3 stone   = vec3(0.24, 0.21, 0.18) + stoneN;
-    // Sacred warmth on lit face
-    float litFace = smoothstep(-0.1, 0.05, p.x) * 0.4;
-    stone += vec3(0.12, 0.07, 0.02) * litFace;
-
-    col = mix(col, stone, tMask);
-    // Edge golden glow
-    float edgeG = smoothstep(0.025, 0.0, abs(temple)) * (1.0 - tMask);
-    col += vec3(0.90, 0.65, 0.15) * edgeG * 2.5;
-
-    // ---- Side shrines (3 Dhams flanking) ----
-    float sh1 = sdSmallTemple(p - vec2(-0.52, -0.08), 0.72);
-    float sh2 = sdSmallTemple(p - vec2( 0.52, -0.10), 0.68);
-    float sh3 = sdSmallTemple(p - vec2(-0.82, -0.12), 0.50);
-    float shMask = smoothstep(0.005, 0.0, opUnion(opUnion(sh1, sh2), sh3));
-    col = mix(col, stone * 0.80, shMask);
-
-    // ---- Prayer flags ----
-    float flagLineY = 0.28 - abs(p.x) * 0.18;
-    float flagLine  = smoothstep(0.0025, 0.0, abs(p.y - flagLineY)) * step(abs(p.x), 0.70);
-    col += vec3(0.60, 0.45, 0.28) * flagLine * 0.65;
-    // Triangular flags
-    for (int fi = -5; fi <= 5; fi++) {
-        float fx   = float(fi) * 0.13;
-        float fy   = 0.28 - abs(fx) * 0.18;
-        vec2  fP   = p - vec2(fx, fy);
-        float fBody = sdTriangle(fP, vec2(-0.038, 0.0), vec2(0.038, 0.0), vec2(0.0, -0.058));
-        float fMask = smoothstep(0.002, -0.002, fBody);
-        // Tibetan 5 colors cycle
-        float fc = mod(float(fi + 6), 5.0);
-        vec3 flagCol;
-        if      (fc < 1.0) flagCol = vec3(0.95, 0.88, 0.15); // yellow
-        else if (fc < 2.0) flagCol = vec3(0.10, 0.40, 0.90); // blue
-        else if (fc < 3.0) flagCol = vec3(0.90, 0.12, 0.12); // red
-        else if (fc < 4.0) flagCol = vec3(0.12, 0.72, 0.20); // green
-        else               flagCol = vec3(0.92, 0.92, 0.92); // white
-        col = mix(col, flagCol * 0.85, fMask * 0.9);
+    // God-rays from the heavens
+    float godRays = 0.0;
+    for(int i = 0; i < 7; i++) {
+        float f = float(i) * 0.2;
+        float r = sin(p.x * (10.0 + f * 5.0) + t * 0.2 + f) * 0.5 + 0.5;
+        godRays += r * exp(-abs(p.y - 1.0) * 1.5) * 0.08;
     }
+    col += vec3(0.9, 0.8, 0.6) * godRays * (1.0 + bellRipple * 5.0);
+    
+    // Ambient volumetric fog
+    float fog = fbm(vec2(p.x * 2.0, p.y * 2.0 - t * 0.2)) * 0.2;
+    col += vec3(0.1, 0.15, 0.25) * fog;
 
-    // Om symbol glow (above temple)
-    float omGlow = exp(-length(p - vec2(0.0, 0.52)) * 12.0) * 0.6;
-    col += vec3(0.95, 0.80, 0.30) * omGlow;
+    // ---- 4 Floating Sacred Portals ----
+    vec2 pos[4];
+    pos[0] = vec2(-0.8, sin(t * 0.5) * 0.05); // Yamunotri
+    pos[1] = vec2(-0.3, sin(t * 0.6 + 1.0) * 0.08); // Gangotri
+    pos[2] = vec2( 0.3, sin(t * 0.4 + 2.0) * 0.06); // Kedarnath (Main)
+    pos[3] = vec2( 0.8, sin(t * 0.7 + 3.0) * 0.04); // Badrinath
+    
+    vec3 pCols[4];
+    pCols[0] = vec3(0.1, 0.4, 0.8); // Water/Blue
+    pCols[1] = vec3(0.7, 0.9, 1.0); // Ice/White
+    pCols[2] = vec3(0.9, 0.3, 0.1); // Fire/Saffron
+    pCols[3] = vec3(1.0, 0.8, 0.2); // Gold/Wealth
+
+    for(int i = 0; i < 4; i++) {
+        vec2 localP = p - pos[i];
+        localP = rot(localP, sin(t * 0.2 + float(i)) * 0.1);
+        float portal = sdPortal(localP, vec2(0.15, 0.25), 0.02);
+        
+        float amask = assembleMask(localP, mod(t * 0.5, 4.0), float(i) * 12.3);
+        float pMask = smoothstep(0.005, 0.0, portal) * amask;
+        
+        vec2 stUV = localP * 20.0;
+        float stone = valueNoise(stUV) * 0.5 + 0.5;
+        vec3 frameCol = mix(vec3(0.1), vec3(0.3), stone);
+        col = mix(col, frameCol, pMask);
+        
+        float innerD = sdBox(localP, vec2(0.13, 0.23));
+        float innerEnergy = exp(-abs(innerD) * 15.0) * amask;
+        
+        float magic = fbm(vec2(localP.x * 10.0 + t, localP.y * 10.0 - t * 2.0));
+        vec3 energyCol = pCols[i] * (0.5 + magic * 0.5);
+        
+        col += energyCol * innerEnergy * 1.5;
+        float insideMask = smoothstep(0.0, -0.01, innerD);
+        col = mix(col, energyCol * 2.0, insideMask * amask);
+    }
+    
+    // ---- Thousands of floating dust/snow particles ----
+    float dust = 0.0;
+    for(int i = 0; i < 30; i++) {
+        float fi = float(i);
+        vec2 dp = vec2(
+            fract(sin(fi * 11.11) * 43.5 + t * 0.05) * 3.5 - 1.75,
+            fract(cos(fi * 22.22) * 54.3 - t * 0.1) * 2.0 - 1.0
+        );
+        dp.x += sin(dp.y * 5.0 + t) * 0.05;
+        float dist = length(p - dp);
+        dust += exp(-dist * 400.0) * (sin(t * 5.0 + fi) * 0.5 + 0.5);
+    }
+    col += vec3(0.9, 0.8, 0.6) * dust;
+    
+    // Prayer flags GPU wind simulation across the top
+    float flagLineY = 0.35 + sin(p.x * 2.0 + t) * 0.05;
+    float flags = 0.0;
+    float flagW = 0.04;
+    float flagX = mod(p.x, flagW) - flagW*0.5;
+    float flagIdx = floor(p.x / flagW);
+    float flagWind = sin(flagIdx * 10.0 + t * 5.0) * 0.01;
+    float flagH = sdBox(vec2(flagX, p.y - flagLineY + 0.03 + flagWind), vec2(0.015, 0.03));
+    if (flagH < 0.0 && p.y < flagLineY) {
+        vec3[] fC = vec3[](vec3(0.1, 0.2, 0.8), vec3(1.0, 1.0, 1.0), vec3(0.8, 0.1, 0.1), vec3(0.1, 0.7, 0.2), vec3(0.9, 0.8, 0.1));
+        col = mix(col, fC[int(abs(mod(flagIdx, 5.0)))], 0.9);
+    }
 
     return col;
 }
@@ -418,79 +417,61 @@ vec3 renderCulture(vec2 uv) {
     }
     col += vec3(0.9, 0.7, 0.3) * dust;
 
-    // ---- Uttarakhand Topi (procedural SDF) ----
-    // Traditional Garhwali/Kumaoni flat-topped woolen cap
-    vec2 topiP = p - vec2(-0.28, 0.14);
-
-    float brim   = sdBox(topiP - vec2(0.0, -0.11), vec2(0.185, 0.020));
-    float capBod = sdBox(topiP - vec2(0.0,  0.01), vec2(0.145, 0.115));
-    float capTop = sdBox(topiP - vec2(0.0,  0.12), vec2(0.125, 0.012));
-    float topi   = opUnion(opUnion(brim, capBod), capTop);
-    float topiM  = smoothstep(0.005, 0.0, topi);
-
-    // Cap material — dark navy/black wool
-    float woolN  = fbm(topiP * 35.0) * 0.08;
-    vec3  capCol = vec3(0.05, 0.04, 0.10) + woolN;
-    col = mix(col, capCol, topiM * 0.96);
-    // Gold trim brim edge
-    float topiEdge = smoothstep(0.018, 0.0, abs(topi + 0.001)) * (1.0 - topiM);
-    col += vec3(0.88, 0.65, 0.12) * topiEdge * 1.8;
-
-    // Aipan embroidery on cap face (white geometric)
-    if (topiM > 0.5) {
-        vec2 capUV = topiP / 0.14;
-        float capR = length(capUV);
-        float capA = atan(capUV.y, capUV.x);
-        float capPat = abs(cos(capA * 3.0)) * smoothstep(0.7, 0.3, capR);
-        capPat = smoothstep(0.28, 0.32, capPat);
-        col = mix(col, vec3(0.94, 0.90, 0.84) * 0.75, capPat * topiM);
+    // ---- Abstract Divine Presence (Replacing literal forms) ----
+    // Rotating geometric energy field (Sri Yantra / Mandala inspired)
+    float gT = t * 0.4;
+    vec2 centerP = p - vec2(0.2, 0.0);
+    
+    // Complex rotation
+    vec2 rp1 = rot(centerP, gT);
+    vec2 rp2 = rot(centerP, -gT * 1.5);
+    
+    // Abstract light sculpture (intersecting triangles and circles)
+    float mandala = 100.0; // Start with infinity for intersection/union
+    for(int i = 0; i < 6; i++) {
+        float fi = float(i);
+        float a = gT + fi * 1.047; // PI/3
+        vec2 tp = rot(centerP, a);
+        float tri = sdTriangle(tp, vec2(0.0, 0.3), vec2(0.25, -0.15), vec2(-0.25, -0.15));
+        mandala = opUnion(mandala, abs(tri) - 0.002);
     }
+    
+    // Inner glowing core
+    float core = sdCircle(centerP, 0.08 + sin(t * 3.0) * 0.01);
+    mandala = opUnion(mandala, abs(core) - 0.005);
+    
+    // Energy field waves radiating outward
+    float waveDist = length(centerP);
+    float waves = sin(waveDist * 40.0 - t * 5.0) * 0.5 + 0.5;
+    float waveMask = exp(-waveDist * 8.0);
+    
+    // Outer halo
+    float halo = abs(sdCircle(centerP, 0.4)) - 0.002;
+    mandala = opUnion(mandala, halo);
+    
+    float mMask = smoothstep(0.005, 0.0, mandala);
+    float mGlow = exp(-abs(mandala) * 30.0);
+    
+    // Sacred golden and bright white light
+    vec3 divineBase = vec3(1.0, 0.9, 0.7);
+    vec3 divineCore = vec3(1.0, 1.0, 1.0);
+    
+    // Render the abstract sculpture
+    col = mix(col, divineBase, mMask);
+    col += divineCore * mGlow * 1.5;
+    col += vec3(0.9, 0.5, 0.1) * waves * waveMask * 0.6; // Pulsing energy
 
-    // ---- Pahadi person in traditional dress ----
-    vec2 personP = p - vec2(0.38, -0.06);
+    // Floating orbs of consciousness
+    float orbs = 0.0;
+    for(int i = 0; i < 8; i++) {
+        float fi = float(i);
+        vec2 op = centerP + vec2(sin(fi * 7.0 + t) * 0.5, cos(fi * 13.0 + t * 1.2) * 0.5);
+        float od = length(p - (op + centerP)); // offset relative to center
+        orbs += exp(-od * 100.0) * (sin(t * 4.0 + fi) * 0.5 + 0.5);
+    }
+    col += vec3(1.0, 0.8, 0.4) * orbs * 1.2;
 
-    // Silhouette — woman in Pichora (traditional wrap)
-    float pHead  = sdCircle(personP - vec2(0.0, 0.28), 0.055);
-    float pNeck  = sdBox(personP - vec2(0.0, 0.19), vec2(0.018, 0.032));
-    float pTorso = sdBox(personP - vec2(0.0, 0.06), vec2(0.075, 0.145));
-    // Pichora flare at bottom (wider skirt)
-    float pSkirt = sdTriangle(personP, vec2(-0.085, -0.09), vec2(0.085, -0.09), vec2(0.0, -0.28));
-    // Arms in Namaste pose
-    float pArmL  = sdBox(rot(personP - vec2(-0.06, 0.1), 0.6), vec2(0.018, 0.072));
-    float pArmR  = sdBox(rot(personP - vec2( 0.06, 0.1), -0.6), vec2(0.018, 0.072));
-    // Hands joined
-    float pHands = sdCircle(personP - vec2(0.0, 0.05), 0.025);
-
-    float person = opUnion(opUnion(pHead, pNeck), opUnion(pTorso, opUnion(opUnion(pSkirt, pArmL), opUnion(pArmR, pHands))));
-    float personM = smoothstep(0.005, 0.0, person);
-
-    // Dark silhouette with warm lit edge
-    vec3 personCol = vec3(0.10, 0.06, 0.12);
-    col = mix(col, personCol, personM * 0.94);
-    // Red/gold Pichora border line
-    float pichoraBorder = smoothstep(0.020, 0.0, abs(person + 0.004)) * (1.0 - personM);
-    col += vec3(0.95, 0.72, 0.10) * pichoraBorder * 1.5;
-
-    // Nath (traditional nose ring) — gold
-    float nathRing = sdCircle(personP - vec2(-0.022, 0.255), 0.015);
-    float nathInner = sdCircle(personP - vec2(-0.022, 0.255), 0.008);
-    float nathMask = smoothstep(0.002, -0.002, nathRing) - smoothstep(0.002, -0.002, nathInner);
-    col = mix(col, vec3(0.90, 0.68, 0.12), nathMask * 0.9);
-
-    // Bindi
-    float bindi = smoothstep(0.004, -0.002, sdCircle(personP - vec2(0.0, 0.302), 0.008));
-    col = mix(col, vec3(0.92, 0.10, 0.10), bindi * 0.85);
-
-    // ---- Folk instrument — Dhol outline (left side) ----
-    vec2 dholP = p - vec2(-0.68, -0.20);
-    float dholBody = sdBox(dholP, vec2(0.055, 0.088));
-    float dholL    = sdCircle(dholP - vec2(-0.055, 0.0), 0.038);
-    float dholR    = sdCircle(dholP - vec2( 0.055, 0.0), 0.038);
-    float dhol     = opUnion(dholBody, opUnion(dholL, dholR));
-    float dholM    = smoothstep(0.005, 0.0, dhol);
-    col = mix(col, vec3(0.18, 0.12, 0.08), dholM * 0.80);
-    float dholEdge = smoothstep(0.018, 0.0, abs(dhol + 0.001)) * (1.0 - dholM);
-    col += vec3(0.85, 0.60, 0.10) * dholEdge * 1.2;
+    return col;
 
     return col;
 }
@@ -614,38 +595,71 @@ vec3 renderNature(vec2 uv) {
     flwCol       = mix(flwCol, vec3(0.30, 0.70, 0.98), step(0.66, flwHue));
     col = mix(col, flwCol, flwDot * 0.85);
 
-    // ---- Glacial river ----
-    float rvY    = -0.22 + sin(p.x * 2.8 + t * 2.0) * 0.022 + fbm(vec2(p.x * 5.0, t)) * 0.018;
-    float rvMask = smoothstep(abs(p.y - rvY) - 0.022, abs(p.y - rvY) - 0.032, 0.0);
-    float rvShim = valueNoise(vec2(p.x * 32.0 - t * 9.0, 0.0)) * 0.4 + 0.6;
+    // ---- Glacial river (Flow-map distortion) ----
+    // Use domain warping to simulate fluid flow vectors
+    float flowDistort = fbmDomainWarp(vec2(p.x * 3.0, t * 0.5)) * 0.1;
+    float rvY    = -0.22 + sin(p.x * 2.8 + t * 2.0) * 0.022 + fbm(vec2(p.x * 5.0, t)) * 0.018 + flowDistort;
+    
+    float rvDist = abs(p.y - rvY);
+    float rvMask = smoothstep(rvDist - 0.022, rvDist - 0.032, 0.0);
+    
+    // Fluid shim (water highlights based on flow map)
+    float rvShim = valueNoise(vec2(p.x * 32.0 - t * 9.0 + flowDistort * 10.0, 0.0)) * 0.4 + 0.6;
     col = mix(col, vec3(0.32, 0.62, 0.90) * rvShim, rvMask);
-    // White foam at banks
-    float foam   = smoothstep(abs(p.y - rvY) - 0.025, abs(p.y - rvY) - 0.022, 0.0) * rvMask;
+    
+    // Flowing white foam at banks
+    float foamMap = fbm(vec2(p.x * 10.0 - t * 2.0, rvY * 10.0)) * 0.01;
+    float foam   = smoothstep(rvDist - 0.025 + foamMap, rvDist - 0.022 + foamMap, 0.0) * rvMask;
     col = mix(col, vec3(0.95, 0.97, 1.0), foam * 0.7);
 
-    // ---- Pine Forest ----
-    for (int fi = -8; fi <= 8; fi++) {
-        float fxi = float(fi);
-        float tx  = fxi * 0.145 + sin(fxi * 2.17) * 0.025;
-        float ty  = -0.06 + sin(fxi * 1.63) * 0.018;
-        float ts  = 0.58 + hash(vec2(fxi, 1.0)) * 0.28;
-
-        vec2 tp = p - vec2(tx, ty);
-        tp.x += mouseForce * 0.5; // Trees bend away from mouse too!
-        tp /= ts;
-        float tree = opUnion(opUnion(
-            sdPineLayer(tp + vec2(0.0, 0.0),  0.065, 0.160),
-            sdPineLayer(tp + vec2(0.0, 0.095), 0.050, 0.130)),
-            opUnion(
-            sdPineLayer(tp + vec2(0.0, 0.175), 0.038, 0.110),
-            sdBox(tp + vec2(0.0, 0.055), vec2(0.007, 0.045))
-        ));
-        float treeMask = smoothstep(0.004, 0.0, tree);
-        float pineShade = valueNoise(vec2(fxi, 2.0)) * 0.15;
-        float sway = sin(uTime * 0.8 + fxi * 1.5) * 0.003;
-        col = mix(col, vec3(0.04, 0.16 + pineShade, 0.07), treeMask * 0.96);
-        float tipSnow = smoothstep(0.060, 0.075, tp.y + 0.175) * treeMask;
-        col = mix(col, vec3(0.90, 0.93, 0.96), tipSnow * 0.6);
+    // ---- Pine Forest (GPU Space Folding / Instancing) ----
+    float forestY = -0.06;
+    if (p.y > forestY - 0.1 && p.y < forestY + 0.25) {
+        // Domain repetition parameters
+        float treeW = 0.08;
+        
+        // 3 Layers of depth for the forest
+        for(int layer = 0; layer < 3; layer++) {
+            float fl = float(layer);
+            float parallax = mouseForce * (0.3 + fl * 0.2);
+            vec2 treeP = p - vec2(parallax, forestY + fl * 0.02);
+            
+            // X-axis folding
+            float cellX = floor(treeP.x / treeW);
+            treeP.x = mod(treeP.x, treeW) - treeW * 0.5;
+            
+            // Per-instance random properties
+            float treeSeed = cellX * 13.37 + fl * 23.45;
+            float treeHash = hash1(treeSeed);
+            float ts = 0.5 + treeHash * 0.4; // Scale
+            float ty = sin(treeSeed * 5.0) * 0.01; // Y offset
+            
+            treeP -= vec2(0.0, ty);
+            treeP /= ts;
+            
+            float tree = opUnion(opUnion(
+                sdPineLayer(treeP + vec2(0.0, 0.0),  0.065, 0.160),
+                sdPineLayer(treeP + vec2(0.0, 0.095), 0.050, 0.130)),
+                opUnion(
+                sdPineLayer(treeP + vec2(0.0, 0.175), 0.038, 0.110),
+                sdBox(treeP + vec2(0.0, 0.055), vec2(0.007, 0.045))
+            ));
+            
+            float treeMask = smoothstep(0.004, 0.0, tree);
+            
+            // Shading and wind sway
+            float sway = sin(uTime * 0.8 + treeSeed * 5.0) * 0.005;
+            float pineShade = treeHash * 0.15;
+            vec3 pineCol = vec3(0.04, 0.12 + pineShade, 0.08);
+            
+            // Depth fade
+            pineCol = mix(pineCol, vec3(0.3, 0.4, 0.5), fl * 0.15);
+            col = mix(col, pineCol, treeMask * 0.98);
+            
+            // Snow on tips
+            float tipSnow = smoothstep(0.060, 0.075, treeP.y + 0.175) * treeMask;
+            col = mix(col, vec3(0.90, 0.93, 0.96), tipSnow * (0.8 - fl * 0.2));
+        }
     }
 
     // ---- Himalayan Sheep (5 grazing) ----
@@ -678,6 +692,13 @@ vec3 renderNature(vec2 uv) {
     // Add eye glow aura
     col += vec3(0.1, 0.6, 0.2) * exp(-length(leopP - vec2(0.10, 0.039)) * 40.0) * leopM * 1.5;
 
+    // ---- Global Bloom / Glow ----
+    // Extract luminance
+    float lum = dot(col, vec3(0.299, 0.587, 0.114));
+    // Soft threshold
+    float bloom = smoothstep(0.6, 0.9, lum);
+    col += col * bloom * 0.4;
+
     return col;
 }
 
@@ -693,6 +714,94 @@ float mountainRidge(float x) {
 }
 
 // ============================================================
+// SCENE -1 — THE AWAKENING (HERO SEQUENCE)
+// Darkness -> Heartbeat -> Sacred Geometry -> Assembly -> Portal
+// ============================================================
+vec3 renderHero(vec2 uv) {
+    vec2 p = uv - 0.5;
+    p.x *= 1.78;
+    float t = uTime;
+    vec3 col = vec3(0.0);
+    
+    // uIntroProgress goes from 0.0 to 1.0
+    // Stage 1: 0.0 to 0.3 - Darkness and Heartbeat Pulse
+    // Stage 2: 0.3 to 0.6 - Sacred Geometry Awakens
+    // Stage 3: 0.6 to 0.9 - Portal Opens (Particles Assemble)
+    // Stage 4: 0.9 to 1.0 - Transition to Mountains
+    
+    // ---- 1. Heartbeat Particle (0.0 to 0.4) ----
+    float hbPhase = clamp(uIntroProgress / 0.4, 0.0, 1.0);
+    float hbFade = 1.0 - smoothstep(0.3, 0.4, uIntroProgress);
+    if (hbPhase > 0.0 && hbFade > 0.0) {
+        float pulse = sin(t * 12.0) * exp(-fract(t * 1.5) * 5.0); // Heartbeat
+        float core = sdCircle(p, 0.01 + pulse * 0.005);
+        float glow = exp(-core * (200.0 - pulse * 100.0));
+        col += vec3(0.9, 0.5, 0.2) * glow * hbFade * smoothstep(0.0, 0.1, hbPhase);
+    }
+    
+    // ---- 2. Sacred Geometry Awakens (0.3 to 0.7) ----
+    float geoPhase = clamp((uIntroProgress - 0.3) / 0.4, 0.0, 1.0);
+    float geoFade = 1.0 - smoothstep(0.65, 0.75, uIntroProgress);
+    if (geoPhase > 0.0 && geoFade > 0.0) {
+        float gT = t * 0.5;
+        vec2 rp = rot(p, gT);
+        float mandala = sdCircle(rp, 0.2 * geoPhase);
+        
+        // Rotating triangles (Sri Yantra vibe)
+        for(int i = 0; i < 4; i++) {
+            float fi = float(i);
+            vec2 tp = rot(p, gT * (fi + 1.0) * (mod(fi, 2.0) == 0.0 ? 1.0 : -1.0));
+            float tri = sdTriangle(tp, vec2(0.0, 0.15 + fi*0.05) * geoPhase, 
+                                       vec2(0.13 + fi*0.04, -0.1 + fi*0.02) * geoPhase, 
+                                       vec2(-0.13 - fi*0.04, -0.1 + fi*0.02) * geoPhase);
+            mandala = opUnion(mandala, abs(tri) - 0.002);
+        }
+        
+        float geoGlow = smoothstep(0.005, 0.0, abs(mandala));
+        geoGlow += exp(-abs(mandala) * 50.0) * 0.5;
+        
+        // Color shifts from gold to divine white
+        vec3 geoCol = mix(vec3(0.9, 0.6, 0.1), vec3(0.8, 0.9, 1.0), geoPhase);
+        col += geoCol * geoGlow * smoothstep(0.0, 0.1, geoPhase) * geoFade;
+    }
+    
+    // ---- 3. The Divine Portal & Particles (0.5 to 1.0) ----
+    float portalPhase = clamp((uIntroProgress - 0.5) / 0.5, 0.0, 1.0);
+    if (portalPhase > 0.0) {
+        // Portal ring expanding
+        float ringR = portalPhase * 2.5; // Expands outward
+        float ringD = abs(length(p) - ringR);
+        float ringGlow = exp(-ringD * 10.0) * (1.0 - portalPhase); // Fades as it expands
+        col += vec3(0.6, 0.8, 1.0) * ringGlow;
+        
+        // Particles flying towards the camera (out of the portal)
+        float stars = 0.0;
+        for(int i = 0; i < 40; i++) {
+            float fi = float(i);
+            // Z-coordinate determines size and speed
+            float pZ = fract(fi * 0.123 - t * 0.8 + portalPhase * 5.0); 
+            // XY scatter
+            vec2 pXY = vec2(sin(fi * 111.1), cos(fi * 222.2));
+            vec2 stP = p - (pXY * (1.0 - pZ) * 2.0 * portalPhase);
+            
+            float stSize = (1.0 - pZ) * 0.03; // Bigger as it gets closer
+            float st = smoothstep(stSize, 0.0, length(stP));
+            stars += st * pZ * (1.0 - portalPhase); // Fade out at the end
+        }
+        col += vec3(1.0, 0.9, 0.8) * stars;
+        
+        // Inner void revealing the mountain scene behind
+        // We blend the rendered mountain scene into the inner void
+        float voidM = smoothstep(0.1, 0.4, portalPhase) * smoothstep(ringR + 0.1, ringR - 0.1, length(p));
+        vec3 mtnCol = renderMountains(uv);
+        col = mix(col, mtnCol, voidM);
+    }
+    
+    return col;
+}
+
+
+// ============================================================
 // MAIN DISPATCH
 // ============================================================
 void main() {
@@ -704,7 +813,8 @@ void main() {
     uv.x += sin(uv.y * 28.0 + uTime * 5.0) * hw;
 
     vec3 col;
-    if      (uChapter == 0) col = renderMountains(uv);
+    if      (uChapter == -1) col = renderHero(uv);
+    else if (uChapter == 0) col = renderMountains(uv);
     else if (uChapter == 1) col = renderTemples(uv);
     else if (uChapter == 2) col = renderCulture(uv);
     else                    col = renderNature(uv);
