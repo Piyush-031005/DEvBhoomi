@@ -612,86 +612,72 @@ vec3 renderNature(vec2 uv) {
     float foam   = smoothstep(rvDist - 0.025 + foamMap, rvDist - 0.022 + foamMap, 0.0) * rvMask;
     col = mix(col, vec3(0.95, 0.97, 1.0), foam * 0.7);
 
-    // ---- Pine Forest (GPU Space Folding / Instancing) ----
-    float forestY = -0.06;
-    if (p.y > forestY - 0.1 && p.y < forestY + 0.25) {
-        // Domain repetition parameters
-        float treeW = 0.08;
+    // ---- Sacred Prayer Flags (Procedural Cloth Physics) ----
+    // We create multiple strings of prayer flags blowing violently in the alpine wind
+    float flagM = 0.0;
+    vec3 flagCol = vec3(0.0);
+    
+    for(int i = 0; i < 4; i++) {
+        float fi = float(i);
+        // Catenary curve for the string
+        float stringY = -0.05 + fi * 0.12 - pow(p.x * 1.5, 2.0) * 0.15;
         
-        // 3 Layers of depth for the forest
-        for(int layer = 0; layer < 3; layer++) {
-            float fl = float(layer);
-            float parallax = mouseForce * (0.3 + fl * 0.2);
-            vec2 treeP = p - vec2(parallax, forestY + fl * 0.02);
+        // Wind distortion applied to the string
+        float stringWind = sin(p.x * 5.0 + t * (2.0 + fi)) * 0.02 * uHover;
+        float finalStringY = stringY + stringWind;
+        
+        // String itself
+        float strDist = abs(p.y - finalStringY);
+        float strMask = smoothstep(0.003, 0.0, strDist);
+        col = mix(col, vec3(0.1), strMask * 0.8);
+        
+        // The flags hanging from the string
+        // Fold domain along X to create multiple flags
+        float flagW = 0.12;
+        float cellX = floor(p.x / flagW);
+        vec2 fP = p - vec2(0.0, finalStringY);
+        fP.x = mod(fP.x, flagW) - flagW * 0.5;
+        
+        // Only draw flags below the string
+        if (fP.y < 0.0 && fP.y > -0.15 && abs(cellX) < 6.0) {
+            // Wind flutter specific to this flag
+            float flutter = sin(uTime * 8.0 + cellX * 2.0 + fi) * 0.02 * (1.0 + fP.y * 10.0);
+            fP.x += flutter;
             
-            // X-axis folding
-            float cellX = floor(treeP.x / treeW);
-            treeP.x = mod(treeP.x, treeW) - treeW * 0.5;
+            // Box SDF for the flag
+            vec2 b = vec2(0.045, 0.075);
+            vec2 d = abs(fP - vec2(0.0, -0.075)) - b;
+            float flagSDF = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
             
-            // Per-instance random properties
-            float treeSeed = cellX * 13.37 + fl * 23.45;
-            float treeHash = hash1(treeSeed);
-            float ts = 0.5 + treeHash * 0.4; // Scale
-            float ty = sin(treeSeed * 5.0) * 0.01; // Y offset
+            float m = smoothstep(0.003, 0.0, flagSDF);
             
-            treeP -= vec2(0.0, ty);
-            treeP /= ts;
-            
-            float tree = opUnion(opUnion(
-                sdPineLayer(treeP + vec2(0.0, 0.0),  0.065, 0.160),
-                sdPineLayer(treeP + vec2(0.0, 0.095), 0.050, 0.130)),
-                opUnion(
-                sdPineLayer(treeP + vec2(0.0, 0.175), 0.038, 0.110),
-                sdBox(treeP + vec2(0.0, 0.055), vec2(0.007, 0.045))
-            ));
-            
-            float treeMask = smoothstep(0.004, 0.0, tree);
-            
-            // Shading and wind sway
-            float sway = sin(uTime * 0.8 + treeSeed * 5.0) * 0.005;
-            float pineShade = treeHash * 0.15;
-            vec3 pineCol = vec3(0.04, 0.12 + pineShade, 0.08);
-            
-            // Depth fade
-            pineCol = mix(pineCol, vec3(0.3, 0.4, 0.5), fl * 0.15);
-            col = mix(col, pineCol, treeMask * 0.98);
-            
-            // Snow on tips
-            float tipSnow = smoothstep(0.060, 0.075, treeP.y + 0.175) * treeMask;
-            col = mix(col, vec3(0.90, 0.93, 0.96), tipSnow * (0.8 - fl * 0.2));
+            if (m > 0.0) {
+                flagM = max(flagM, m);
+                
+                // Color based on Tibetan five colors: Blue, White, Red, Green, Yellow
+                float colorHash = mod(abs(cellX) + fi * 3.0, 5.0);
+                vec3 c = vec3(1.0);
+                if (colorHash < 1.0) c = vec3(0.1, 0.3, 0.8);      // Blue (Space)
+                else if (colorHash < 2.0) c = vec3(0.9, 0.9, 0.9); // White (Air)
+                else if (colorHash < 3.0) c = vec3(0.8, 0.1, 0.1); // Red (Fire)
+                else if (colorHash < 4.0) c = vec3(0.1, 0.6, 0.2); // Green (Water)
+                else c = vec3(0.9, 0.8, 0.1);                      // Yellow (Earth)
+                
+                // Fabric shading and wrinkles
+                float wrinkle = sin(fP.x * 80.0 + uTime * 5.0) * 0.1 * abs(fP.y);
+                float shade = 0.8 + 0.2 * sin(cellX * 10.0);
+                
+                flagCol = c * shade * (1.0 - wrinkle);
+                col = mix(col, flagCol, m);
+            }
         }
     }
-
-    // ---- Himalayan Sheep (5 grazing) ----
-    vec2 sp0 = vec2(-0.62, -0.26) + vec2(sin(uTime * 0.25) * 0.018, 0.0);
-    vec2 sp1 = vec2(-0.48, -0.28) + vec2(sin(uTime * 0.28 + 1.0) * 0.015, 0.0);
-    vec2 sp2 = vec2(-0.35, -0.25) + vec2(sin(uTime * 0.22 + 2.0) * 0.012, 0.0);
-    vec2 sp3 = vec2( 0.62, -0.24) + vec2(sin(uTime * 0.30 + 3.0) * 0.016, 0.0);
-    vec2 sp4 = vec2( 0.50, -0.27) + vec2(sin(uTime * 0.27 + 4.0) * 0.014, 0.0);
-
-    float sheep = opUnion(opUnion(sdSheepBody(p - sp0), sdSheepBody(p - sp1)),
-                  opUnion(sdSheepBody(p - sp2), opUnion(sdSheepBody(p - sp3), sdSheepBody(p - sp4))));
-    float sheepM = smoothstep(0.004, 0.0, sheep);
-    float sheepN = valueNoise((p) * 18.0) * 0.08;
-    col = mix(col, vec3(0.92 + sheepN, 0.90 + sheepN, 0.88 + sheepN), sheepM * 0.96);
-
-    // ---- Snow Leopard (right, partially hidden in rocks) ----
-    vec2 leopP = p - vec2(0.55, -0.16);
-    float leopard = sdSnowLeopard(leopP);
-    float leopM   = smoothstep(0.005, 0.0, leopard);
-    // Spot pattern
-    float spotH   = hash(floor(leopP * 14.0));
-    vec2  spotF   = fract(leopP * 14.0) - 0.5;
-    float spot    = step(0.65, spotH) * smoothstep(0.28, 0.0, length(spotF));
-    vec3  leopCol = mix(vec3(0.72, 0.70, 0.66), vec3(0.18, 0.14, 0.11), spot);
-    col = mix(col, leopCol, leopM * 0.92);
-    // Eyes glow with magic green
-    float eye1 = smoothstep(0.005, -0.002, sdCircle(leopP - vec2(0.095, 0.038), 0.007));
-    float eye2 = smoothstep(0.005, -0.002, sdCircle(leopP - vec2(0.112, 0.040), 0.007));
-    col = mix(col, vec3(0.40, 1.0, 0.50), max(eye1, eye2) * leopM);
-    // Add eye glow aura
-    col += vec3(0.1, 0.6, 0.2) * exp(-length(leopP - vec2(0.10, 0.039)) * 40.0) * leopM * 1.5;
-
+    
+    // Abstract geometric red sun/mandala in the background sky
+    float sun = sdCircle(p - vec2(-0.4, 0.3), 0.15);
+    float sunM = smoothstep(0.01, -0.01, sun);
+    col = mix(col, vec3(0.8, 0.15, 0.1), sunM * 0.8);
+    
     // ---- Global Bloom / Glow ----
     // Extract luminance
     float lum = dot(col, vec3(0.299, 0.587, 0.114));

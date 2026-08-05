@@ -63,14 +63,15 @@ const particlesMat = new THREE.PointsMaterial({
 });
 const starsMesh = new THREE.Points(particlesGeom, particlesMat);
 worldGroup.add(starsMesh);
+
 // --- Intro State ---
 const animState = {
-    introProgress: 0.0, // Drives the GLSL awakening sequence
+    introProgress: 0.0, 
     titleOpacity: 0.0,
     titleScale: 0.9,
-    brutalistOpacity: 0.0
+    brutalistOpacity: 0.0,
+    birdFlight: 0.0
 };
-
 // ============================================================
 // BRUTALIST SECTION — 4 Procedural Worlds, No Images
 // Everything is code: mountains, temples, culture, nature
@@ -194,7 +195,14 @@ function animate() {
     starsMesh.rotation.y = elapsedTime * 0.01;
     
     // Intro + Brutalist animations
+    
+    if (typeof mountainParticles !== "undefined" && mountainParticles) {
+        mountainParticles.material.uniforms.uTime.value = elapsedTime;
+        mountainParticles.material.uniforms.uFlightProgress.value = animState.birdFlight;
+        mountainParticles.material.uniforms.uOpacity.value = 1.0 - animState.brutalistOpacity;
+    }
     if (brutalistGroup && brutalistMaterial) {
+
         brutalistMaterial.uniforms.uTime.value = elapsedTime;
         brutalistMaterial.uniforms.uIntroProgress.value = animState.introProgress;
         
@@ -250,34 +258,29 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // 1. The Awakening (0 to 2)
-    masterTl.to(animState, {
-        brutalistOpacity: 1.0, // Fade in the GLSL canvas completely
-        duration: 0.2,
-    }, 0)
-    .to(animState, {
-        introProgress: 1.0, // Drives the darkness -> heartbeat -> portal math
-        duration: 2.0,
-        ease: "power2.inOut"
-    }, 0)
-    // 2. The Divine Word Appears (1.5 to 2.5)
-    .to("#devbhoomi-title", {
+
+    // 1. Title fades in immediately
+    masterTl.to("#devbhoomi-title", {
         opacity: 1,
         scale: 1,
-        duration: 1.0,
-        ease: "power3.out"
-    }, 1.5)
+        duration: 0.5,
+        ease: "power2.out"
+    }, 0.2)
     
-    // 3. The Transition to Editorial (2.5 to 3.5)
-    // Title fades out
-    .to("#devbhoomi-title", { opacity: 0, scale: 1.1, duration: 0.8 }, 2.5)
+    // 2. Birds fly to camera
+    .to(animState, {
+        birdFlight: 1.0,
+        duration: 1.5,
+        ease: "power1.inOut"
+    }, 0.6)
     
-    // Reveal brutalist UI shell
-    .to('#br-shell', { opacity: 1, duration: 1.0, ease: 'power2.inOut' }, 3.0)
-    .add(() => { document.getElementById('br-shell')?.classList.add('active'); }, 3.5)
-    
-    // Switch GLSL to Chapter 0 (Panchachuli) smoothly
-    .add(() => { switchBrutalistChapter(0); }, 2.8);
+    // 3. Transition to Editorial exactly as birds hit screen
+    .to("#devbhoomi-title", { opacity: 0, scale: 1.1, duration: 0.3 }, 1.6)
+    .add(() => { if (typeof mountainParticles !== "undefined" && mountainParticles) mountainParticles.visible = false; }, 2.0)
+    .to(animState, { brutalistOpacity: 1.0, duration: 0.5, ease: "power2.inOut" }, 1.8)
+    .to('#br-shell', { opacity: 1, duration: 0.5, ease: 'power2.inOut' }, 1.8)
+    .add(() => { document.getElementById('br-shell')?.classList.add('active'); }, 1.9)
+    .add(() => { switchBrutalistChapter(0); }, 1.8);
 
     // ============================================================
     // BRUTALIST UI SCROLL LOGIC
