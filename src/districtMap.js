@@ -59,34 +59,34 @@ export function initDistrictMap() {
     blueRimLight.position.set(-40, 40, 20); // Shine from top-left-front
     scene.add(blueRimLight);
 
-    // MATERIALS - Blend of Obsidian Glass and Stone
+    // MATERIALS - Blend of White Frosted Glass and Red Glowing Edges
     const mapMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0x22222a,          // Lighter dark base so it's visible
-        emissive: 0x000000,
-        roughness: 0.25,          // Slightly polished
-        metalness: 0.6,           // Lowered metalness to allow diffuse color to show
-        clearcoat: 0.8,           // Strong glassy outer layer
+        color: 0xffffff,          // Pure white base
+        emissive: 0x330000,       // Deep red inner glow
+        roughness: 0.1,           // Very smooth
+        metalness: 0.1,           // More glass-like than metal
+        clearcoat: 1.0,           // Maximum gloss
         clearcoatRoughness: 0.1,
-        transmission: 0.3,        // Slight glass transmission
-        thickness: 2.0,
+        transmission: 0.8,        // Highly transparent glass
+        thickness: 3.0,
         transparent: true,
-        opacity: 0.95
+        opacity: 0.85             // Semi-transparent
     });
 
     const highlightMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0xe8190a,          // Red highlight
-        emissive: 0x330000,
-        roughness: 0.2,
-        metalness: 0.9,
+        color: 0xffffff,          // White highlight
+        emissive: 0xff0000,       // Bright red glow on hover
+        roughness: 0.1,
+        metalness: 0.2,
         clearcoat: 1.0,
         transparent: true,
         opacity: 1.0
     });
 
     const lineMaterial = new THREE.LineBasicMaterial({ 
-        color: 0xffffff, 
+        color: 0xff0000,          // Bright red edges
         transparent: true, 
-        opacity: 0.15 
+        opacity: 0.6              // Highly visible lines
     });
 
     const mapGroup = new THREE.Group();
