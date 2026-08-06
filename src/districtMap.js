@@ -150,28 +150,34 @@ export function initDistrictMap() {
                 const lowerName = name.toLowerCase();
 
                 let category = 'default';
-                let baseHeight = 5 + Math.random() * 5;
+                let baseHeight = 2; // Flat base for all districts
 
-                if (['pithoragarh', 'chamoli', 'uttarkashi', 'rudraprayag', 'bageshwar'].some(d => lowerName.includes(d))) {
+                if (['pithoragarh', 'chamoli', 'uttarkashi'].some(d => lowerName.includes(d))) {
                     category = 'himalayas';
-                    baseHeight = 15 + Math.random() * 10; // Tall peaks, but not excessively huge
                 } else if (['haridwar', 'udham singh nagar'].some(d => lowerName.includes(d))) {
                     category = 'plains';
-                    baseHeight = 2 + Math.random() * 1; // Flat plains
                 } else if (lowerName.includes('dehradun')) {
                     category = 'capital';
-                    baseHeight = 8 + Math.random() * 3; // Mid level city
+                } else if (['rudraprayag', 'pauri garhwal'].some(d => lowerName.includes(d))) {
+                    category = 'temples'; // Custom category for shrines
                 }
                 
                 const processPolygon = (coords) => {
                     const shape = new THREE.Shape();
                     const points = [];
+                    let localMinX = Infinity, localMaxX = -Infinity, localMinY = Infinity, localMaxY = -Infinity;
+
                     coords.forEach((coord, i) => {
                         const x = (coord[0] - centerX) * scaleFactor;
                         const y = (coord[1] - centerY) * scaleFactor;
                         points.push(new THREE.Vector3(x, y, 0));
                         if (i === 0) shape.moveTo(x, y);
                         else shape.lineTo(x, y);
+
+                        localMinX = Math.min(localMinX, x);
+                        localMaxX = Math.max(localMaxX, x);
+                        localMinY = Math.min(localMinY, y);
+                        localMaxY = Math.max(localMaxY, y);
                     });
                     
                     const extrudeSettings = {
@@ -179,17 +185,78 @@ export function initDistrictMap() {
                         bevelEnabled: true,
                         bevelSegments: 2,
                         steps: 1,
-                        bevelSize: 0.2,
-                        bevelThickness: 0.2
+                        bevelSize: 0.1,
+                        bevelThickness: 0.1
                     };
                     
                     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-                    
-                    // Do NOT translate -baseHeight! The extrusion goes from Z=0 to Z=depth.
-                    // When rotated by -Math.PI/2, this correctly translates to Y=0 to Y=depth (upwards).
-                    
-                    const materialToUse = materials[category];
+                    const materialToUse = materials[category] || materials['default'];
                     const mesh = new THREE.Mesh(geometry, materialToUse);
+                    
+                    // --- SPAWN CUSTOM 3D MODELS ON TOP ---
+                    // We spawn them at Z = baseHeight so they sit on top of the map
+                    const spawnAreaX = (localMaxX - localMinX) * 0.5;
+                    const spawnAreaY = (localMaxY - localMinY) * 0.5;
+                    const cx = (localMinX + localMaxX) / 2;
+                    const cy = (localMinY + localMaxY) / 2;
+
+                    if (category === 'himalayas') {
+                        // Spawn 4-6 Snowy Peaks
+                        const numPeaks = 4 + Math.floor(Math.random() * 3);
+                        for(let i=0; i<numPeaks; i++) {
+                            const peakHeight = 8 + Math.random() * 12;
+                            const peakGeo = new THREE.ConeGeometry(2 + Math.random()*2, peakHeight, 4);
+                            peakGeo.rotateX(Math.PI / 2); // Point upwards in Z
+                            const peakMesh = new THREE.Mesh(peakGeo, materials.himalayas);
+                            peakMesh.position.set(
+                                cx + (Math.random() - 0.5) * spawnAreaX,
+                                cy + (Math.random() - 0.5) * spawnAreaY,
+                                baseHeight + peakHeight/2
+                            );
+                            mesh.add(peakMesh);
+                        }
+                    } 
+                    else if (category === 'capital') {
+                        // Spawn 3-5 Modern Buildings/Schools
+                        const numBuildings = 3 + Math.floor(Math.random() * 3);
+                        for(let i=0; i<numBuildings; i++) {
+                            const bHeight = 4 + Math.random() * 4;
+                            const bGeo = new THREE.BoxGeometry(1.5, 1.5, bHeight);
+                            const bMesh = new THREE.Mesh(bGeo, materials.capital);
+                            bMesh.position.set(
+                                cx + (Math.random() - 0.5) * spawnAreaX * 0.6,
+                                cy + (Math.random() - 0.5) * spawnAreaY * 0.6,
+                                baseHeight + bHeight/2
+                            );
+                            bMesh.rotation.z = Math.random() * Math.PI;
+                            mesh.add(bMesh);
+                        }
+                    }
+                    else if (category === 'temples' || name.toLowerCase().includes('haridwar')) {
+                        // Spawn 2-3 Temples (Box base + Cone roof)
+                        const numTemples = 2 + Math.floor(Math.random() * 2);
+                        for(let i=0; i<numTemples; i++) {
+                            const tGroup = new THREE.Group();
+                            // Base
+                            const baseGeo = new THREE.BoxGeometry(2, 2, 2);
+                            const baseMesh = new THREE.Mesh(baseGeo, materials.default);
+                            baseMesh.position.z = 1;
+                            tGroup.add(baseMesh);
+                            // Roof
+                            const roofGeo = new THREE.ConeGeometry(1.8, 2.5, 4);
+                            roofGeo.rotateX(Math.PI / 2);
+                            const roofMesh = new THREE.Mesh(roofGeo, materials.capital); // Golden roof
+                            roofMesh.position.z = 3;
+                            tGroup.add(roofMesh);
+
+                            tGroup.position.set(
+                                cx + (Math.random() - 0.5) * spawnAreaX * 0.7,
+                                cy + (Math.random() - 0.5) * spawnAreaY * 0.7,
+                                baseHeight
+                            );
+                            mesh.add(tGroup);
+                        }
+                    }
                     mesh.castShadow = true;
                     mesh.receiveShadow = true;
                     mesh.userData = { 
