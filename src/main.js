@@ -489,7 +489,7 @@ document.addEventListener("DOMContentLoaded", () => {
         scrollTrigger: {
             trigger: "#app",
             start: "top top",
-            end: "bottom bottom",
+            end: "+=200%", // Exactly matches the 200vh height of acts 1-4 combined
             scrub: 1,
             onUpdate: (self) => {
                 // Remove uScrollProgress if it was used for smokeMat

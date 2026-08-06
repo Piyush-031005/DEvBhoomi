@@ -19,8 +19,8 @@ export function initDistrictMap() {
     scene.fog = new THREE.FogExp2(0x050101, 0.015);
 
     const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-    // Position camera to look down at the map at an angle
-    camera.position.set(0, -60, 80);
+    // Position camera to look down at the map at an angle (Y is UP)
+    camera.position.set(0, 80, 80);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(container.clientWidth, container.clientHeight);
@@ -99,7 +99,7 @@ export function initDistrictMap() {
 
     // GEOJSON PARSING & EXTRUSION
     // We loaded uttarakhand_districts.json in public folder
-    fetch('/uttarakhand_districts.json')
+    fetch('./uttarakhand_districts.json')
         .then(res => res.json())
         .then(data => {
             // Calculate bounding box to center the map
