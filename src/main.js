@@ -241,9 +241,13 @@ let maskModel = null;
 const loader = new GLTFLoader();
 
 // Dramatic Brutalist Lighting
-const maskLight = new THREE.DirectionalLight('#ff1a2b', 5.0); // Intense red rim light
+const maskLight = new THREE.DirectionalLight('#00BFFF', 5.0); // Premium Sky Blue rim light
 maskLight.position.set(5, 5, -5);
 scene.add(maskLight);
+
+const goldLight = new THREE.DirectionalLight('#FFD700', 2.5); // Warm Gold accent light
+goldLight.position.set(-5, -2, 5);
+scene.add(goldLight);
 
 const maskFill = new THREE.DirectionalLight('#ffffff', 1.0); // Soft white fill
 maskFill.position.set(-5, 0, 10);
@@ -261,9 +265,9 @@ loader.load('/mask.glb', (gltf) => {
         if (child.isMesh) {
             // Apply Brutalist dark metallic theme
             if (child.material) {
-                child.material.color.setHex(0xdddddd); // Matte light-grey
-                child.material.roughness = 0.8;
-                child.material.metalness = 0.1;
+                child.material.color.setHex(0x050505); // Dark Obsidian
+                child.material.roughness = 0.15;
+                child.material.metalness = 0.9;
                 child.material.transparent = true;
                 child.material.opacity = animState.maskOpacity;
                 child.material.depthWrite = false;
@@ -284,9 +288,11 @@ window.addEventListener('resize', () => {
 
 // Interactive Mask Mouse Control
 let mouseX = 0;
+let mouseY = 0;
 window.addEventListener('mousemove', (e) => {
-    // Map mouse X to -1.0 to 1.0 range
+    // Map mouse to -1.0 to 1.0 range
     mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
 });
 
 // ============================================================
@@ -419,10 +425,14 @@ function animate() {
         
         // Smoothly interpolate current rotation to target rotation
         maskModel.rotation.y += (targetRotY - maskModel.rotation.y) * 0.1;
-        maskModel.rotation.x = Math.cos(elapsedTime * 0.3) * 0.05;
+        maskModel.rotation.x = Math.cos(elapsedTime * 0.3) * 0.05 + (mouseY * 0.2); // Look up/down slightly
         
-        // Scale and opacity driven by GSAP
-        maskModel.scale.set(animState.maskScale, animState.maskScale, animState.maskScale);
+        // Y-axis limited tracking
+        let targetPosY = mouseY * 0.8;
+        maskModel.position.y += (targetPosY - maskModel.position.y) * 0.1;
+        
+        // Scale (stretched wider on X) and opacity driven by GSAP
+        maskModel.scale.set(animState.maskScale * 1.4, animState.maskScale, animState.maskScale);
         
         // Traverse and update opacity
         maskModel.traverse((child) => {

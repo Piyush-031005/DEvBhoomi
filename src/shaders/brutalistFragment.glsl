@@ -1,7 +1,3 @@
-// ============================================================
-// DEVBHOOMI — High-End Cinematic Brutalist Shaders
-// ============================================================
-
 uniform float uTime;
 uniform float uOpacity;
 uniform vec2  uMouse;
@@ -10,286 +6,106 @@ uniform float uScrollVelocity;
 uniform int   uChapter;
 uniform float uIntroProgress;
 
+uniform sampler2D tImg1;
+uniform sampler2D tImg2;
+uniform sampler2D tImg3;
+uniform sampler2D tImg4;
+
 varying vec2 vUv;
 
 // ============================================================
 // MATH UTILITIES
 // ============================================================
-
-#define PI 3.14159265359
-
 float hash(vec2 p) {
-    p = fract(p * vec2(127.1, 311.7));
-    p += dot(p, p + 19.19);
-    return fract(p.x * p.y);
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-mat2 rot(float a) {
-    float s = sin(a), c = cos(a);
-    return mat2(c, -s, s, c);
-}
-
-// 3D Noise for raymarching
-float noise3(vec3 p) {
-    vec3 i = floor(p);
-    vec3 f = fract(p);
-    f = f*f*(3.0-2.0*f);
+// 2D Noise
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
     
-    float n = i.x + i.y*157.0 + 113.0*i.z;
-    return mix(mix(mix( hash(vec2(n+  0.0, 0.0)), hash(vec2(n+  1.0, 0.0)),f.x),
-                   mix( hash(vec2(n+157.0, 0.0)), hash(vec2(n+158.0, 0.0)),f.x),f.y),
-               mix(mix( hash(vec2(n+113.0, 0.0)), hash(vec2(n+114.0, 0.0)),f.x),
-                   mix( hash(vec2(n+270.0, 0.0)), hash(vec2(n+271.0, 0.0)),f.x),f.y),f.z);
-}
-
-// ============================================================
-// CHAPTER 0 — PAHAD (Tech Monolith Mountain)
-// Raymarched Wireframe / Glitch Geometry
-// ============================================================
-
-float sdBox( vec3 p, vec3 b ) {
-  vec3 q = abs(p) - b;
-  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
-}
-
-float mapCh0(vec3 p) {
-    // A massive abstract mountain monolith
-    p.y -= -1.0;
-    
-    // Glitch effect based on time
-    float g = step(0.98, sin(uTime * 10.0)) * 0.2 * sin(p.y * 10.0 + uTime*50.0);
-    p.x += g;
-    
-    float d = sdBox(p, vec3(2.0, 3.0, 2.0));
-    
-    // Add geometric cuts (Boolean subtraction) to make it look like a high-tech mountain
-    vec3 q = p;
-    q.xz *= rot(PI/4.0);
-    float cut1 = sdBox(q - vec3(0, 1.0, 2.0), vec3(3.0, 4.0, 1.0));
-    d = max(d, -cut1);
-    
-    float cut2 = sdBox(p - vec3(0, 2.5, 0), vec3(4.0, 1.0, 4.0));
-    d = max(d, -cut2);
-    
-    return d;
-}
-
-vec3 renderCh0(vec2 uv) {
-    vec3 ro = vec3(0.0, 0.0, -8.0);
-    vec3 rd = normalize(vec3(uv, 1.5));
-    
-    // Rotate camera slowly
-    ro.xz *= rot(uTime * 0.1);
-    rd.xz *= rot(uTime * 0.1);
-    
-    // Mouse parallax
-    ro.xy += (uMouse - 0.5) * 2.0;
-    
-    float t = 0.0;
-    float d = 0.0;
-    vec3 p;
-    
-    // Raymarch
-    for(int i=0; i<64; i++) {
-        p = ro + rd * t;
-        d = mapCh0(p);
-        if(d < 0.001 || t > 20.0) break;
-        t += d;
-    }
-    
-    vec3 col = vec3(0.02, 0.02, 0.03); // Background
-    
-    if(t < 20.0) {
-        // Wireframe / scanline effect on the monolith
-        float scanline = sin(p.y * 50.0 - uTime * 5.0) * 0.5 + 0.5;
-        float edge = smoothstep(0.0, 0.05, abs(d)); // Approximation of edges
-        
-        vec3 baseColor = vec3(0.8, 0.1, 0.1); // Aggressive Brutalist Red
-        
-        // Add noise texture
-        float n = noise3(p * 5.0);
-        
-        col = baseColor * (scanline * 0.8 + 0.2) * (n * 0.5 + 0.5);
-        
-        // Glow at the edges
-        col += vec3(1.0, 0.2, 0.2) * (1.0 - smoothstep(0.0, 0.5, length(p.xy)));
-    }
-    
-    // Add some floating data particles
-    float particles = noise3(vec3(uv * 20.0, uTime * 0.5));
-    if(particles > 0.8) col += vec3(0.5, 0.0, 0.0) * (particles - 0.8) * 5.0;
-    
-    return col;
-}
-
-// ============================================================
-// CHAPTER 1 — MANDIR (Sacred Portals)
-// Glowing abstract portal with volumetric light rays
-// ============================================================
-
-vec3 renderCh1(vec2 uv) {
-    vec3 col = vec3(0.0);
-    
-    // Center the portal, slightly offset by mouse
-    vec2 p = uv - (uMouse - 0.5) * 0.2;
-    
-    // Create an abstract glowing rectangle (portal)
-    vec2 d = abs(p) - vec2(0.2, 0.5);
-    float box = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
-    
-    // Inner void
-    float innerBox = length(max(abs(p) - vec2(0.15, 0.45), 0.0));
-    
-    // Portal Frame
-    float frame = smoothstep(0.02, 0.0, abs(box));
-    col += vec3(0.9, 0.1, 0.1) * frame * 2.0; // Red frame
-    
-    // Portal Glow (Volumetric light rays)
-    float glow = 0.0;
-    for(float i=0.0; i<10.0; i++) {
-        vec2 rayUV = p;
-        rayUV *= rot(sin(uTime * 0.2 + i) * 0.1); // Swaying rays
-        float ray = max(0.0, 1.0 - abs(rayUV.x) * (10.0 + i * 2.0));
-        ray *= max(0.0, 1.0 - rayUV.y * 2.0); // Fade upwards
-        glow += ray * 0.05 * (sin(uTime * 2.0 + i) * 0.5 + 0.5);
-    }
-    
-    col += vec3(1.0, 0.3, 0.1) * glow;
-    
-    // Inner portal energy
-    if(innerBox <= 0.0) {
-        float energy = noise3(vec3(p * 5.0, uTime));
-        col = mix(col, vec3(0.8, 0.0, 0.0), energy * 0.5);
-    }
-    
-    // Ground reflection
-    if(p.y < -0.5) {
-        float ref = smoothstep(-0.5, -0.8, p.y);
-        col += vec3(0.8, 0.1, 0.1) * ref * 0.2 * noise3(vec3(p * 10.0, uTime));
-    }
-    
-    return col;
-}
-
-
-// ============================================================
-// CHAPTER 2 — SANSKRITI (Divine Presence)
-// Rotating, highly complex geometric mandala of glowing energy
-// ============================================================
-
-vec3 renderCh2(vec2 uv) {
-    vec2 p = uv;
-    p -= (uMouse - 0.5) * 0.1;
-    
-    vec3 col = vec3(0.0);
-    
-    // Create multiple rotating layers of geometry
-    for(float i=1.0; i<=4.0; i++) {
-        vec2 q = p;
-        q *= rot(uTime * 0.2 * (i > 2.0 ? -1.0 : 1.0) / i);
-        
-        // Polar coordinates
-        float a = atan(q.y, q.x);
-        float r = length(q);
-        
-        // Mandala petals / geometry
-        float segments = 8.0 * i;
-        float petal = cos(a * segments) * 0.1 * sin(uTime + i);
-        
-        float circle = abs(r - (0.2 * i) - petal);
-        
-        float intensity = 0.01 / max(circle, 0.001); // Glow math
-        
-        // Color palette: Brutalist Red and White
-        vec3 layerColor = mix(vec3(1.0, 0.1, 0.1), vec3(0.9, 0.9, 0.9), mod(i, 2.0));
-        
-        col += layerColor * intensity * 0.5;
-    }
-    
-    // Center bindu (energy core)
-    float core = 0.02 / max(length(p), 0.001);
-    col += vec3(1.0, 0.0, 0.0) * core;
-    
-    return col;
-}
-
-
-// ============================================================
-// CHAPTER 3 — PRAKRITI (The Wild)
-// Matrix-like digital fluid simulation / Data Rain
-// ============================================================
-
-vec3 renderCh3(vec2 uv) {
-    vec3 col = vec3(0.0);
-    
-    // Digital rain effect
-    vec2 p = uv * 5.0; // Scale up for "columns"
-    
-    // Create discrete columns
-    float colIndex = floor(p.x);
-    
-    // Speed varies per column
-    float speed = hash(vec2(colIndex, 1.0)) * 2.0 + 1.0;
-    
-    // Drop position
-    float yOffset = uTime * speed;
-    float drop = fract(p.y + yOffset);
-    
-    // Randomize drop length
-    float dropLength = hash(vec2(colIndex, 2.0)) * 0.5 + 0.2;
-    
-    // Render drop
-    float intensity = smoothstep(1.0 - dropLength, 1.0, drop);
-    intensity *= step(0.1, hash(vec2(colIndex, floor(p.y + yOffset)))); // "Characters"
-    
-    // Mouse interaction: push drops away
-    float distToMouse = length(uv - uMouse + 0.5);
-    float repulsion = smoothstep(0.2, 0.0, distToMouse);
-    intensity *= (1.0 - repulsion);
-    
-    // Color: Brutalist Red Digital Rain
-    col = vec3(0.9, 0.1, 0.1) * intensity;
-    
-    // Add bright head to the drop
-    if(drop > 0.95) col = vec3(1.0, 1.0, 1.0);
-    
-    // Background fluid noise representing nature
-    float fluid = noise3(vec3(uv * 3.0, uTime * 0.2));
-    col += vec3(0.1, 0.0, 0.0) * fluid;
-    
-    return col;
+    float res = mix(
+        mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+        mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x),
+        f.y
+    );
+    return res;
 }
 
 // ============================================================
 // MAIN COMPOSITOR
 // ============================================================
 void main() {
-    // Normalize UVs (-1 to 1, aspect corrected)
-    vec2 p = (vUv - 0.5) * 2.0;
-    p.x *= 1.777; // Assuming roughly 16:9 aspect
+    vec2 uv = vUv;
     
-    vec3 finalColor = vec3(0.0);
+    // 1. Calculate Distortion (Liquid / RGB Split) based on Scroll & Hover
+    // Mouse distance for liquid ripple
+    float dist = distance(uv, uMouse);
+    float ripple = sin(dist * 20.0 - uTime * 5.0) * 0.02 * exp(-dist * 5.0) * uHover;
     
-    if (uChapter == 0) {
-        finalColor = renderCh0(p);
-    } else if (uChapter == 1) {
-        finalColor = renderCh1(p);
-    } else if (uChapter == 2) {
-        finalColor = renderCh2(p);
-    } else if (uChapter == 3) {
-        finalColor = renderCh3(p);
-    } else {
-        // Hero / Intro (Solid Dark)
-        finalColor = vec3(0.04, 0.04, 0.05);
-    }
+    // Scroll distortion using noise
+    float n = noise(uv * 10.0 + uTime * 0.5) * 0.05 * abs(uScrollVelocity);
+    
+    // Total displacement
+    vec2 disp = vec2(ripple + n, ripple - n);
+    
+    // RGB Split amount
+    float split = 0.02 * uHover + 0.05 * abs(uScrollVelocity);
+    
+    // 2. Sample Textures with Displacement
+    vec4 tex1, tex2, tex3, tex4;
+    
+    // Red Channel (Offset -split)
+    float r1 = texture2D(tImg1, uv + disp - vec2(split, 0.0)).r;
+    float r2 = texture2D(tImg2, uv + disp - vec2(split, 0.0)).r;
+    float r3 = texture2D(tImg3, uv + disp - vec2(split, 0.0)).r;
+    float r4 = texture2D(tImg4, uv + disp - vec2(split, 0.0)).r;
+    
+    // Green Channel (Center)
+    float g1 = texture2D(tImg1, uv + disp).g;
+    float g2 = texture2D(tImg2, uv + disp).g;
+    float g3 = texture2D(tImg3, uv + disp).g;
+    float g4 = texture2D(tImg4, uv + disp).g;
+    
+    // Blue Channel (Offset +split)
+    float b1 = texture2D(tImg1, uv + disp + vec2(split, 0.0)).b;
+    float b2 = texture2D(tImg2, uv + disp + vec2(split, 0.0)).b;
+    float b3 = texture2D(tImg3, uv + disp + vec2(split, 0.0)).b;
+    float b4 = texture2D(tImg4, uv + disp + vec2(split, 0.0)).b;
+    
+    tex1 = vec4(r1, g1, b1, 1.0);
+    tex2 = vec4(r2, g2, b2, 1.0);
+    tex3 = vec4(r3, g3, b3, 1.0);
+    tex4 = vec4(r4, g4, b4, 1.0);
+    
+    // 3. Select Chapter
+    vec4 finalTex = tex1;
+    if (uChapter == 1) finalTex = tex2;
+    else if (uChapter == 2) finalTex = tex3;
+    else if (uChapter == 3) finalTex = tex4;
+    
+    // 4. Color Grading (High Contrast Brutalist Cyan/Red Filter)
+    // Convert to grayscale for contrast map
+    float gray = dot(finalTex.rgb, vec3(0.299, 0.587, 0.114));
+    
+    // Map darks to deep red/black, highlights to cyan/white
+    vec3 grade1 = mix(vec3(0.05, 0.0, 0.05), vec3(0.9, 0.1, 0.1), smoothstep(0.0, 0.4, gray));
+    vec3 grade2 = mix(grade1, vec3(0.0, 1.0, 1.0), smoothstep(0.4, 0.8, gray)); // Cyan highlights
+    vec3 grade3 = mix(grade2, vec3(1.0), smoothstep(0.8, 1.0, gray));
+    
+    // Blend original with stylized grade
+    vec3 finalColor = mix(finalTex.rgb, grade3, 0.5 + uHover * 0.3);
     
     // Add cinematic grain
-    float grain = hash(vUv * uTime) * 0.05;
+    float grain = hash(uv * uTime) * 0.05;
     finalColor += grain;
     
     // Vignette
-    float vig = length(vUv - 0.5) * 2.0;
+    float vig = length(uv - 0.5) * 2.0;
     finalColor *= smoothstep(1.5, 0.5, vig);
     
+    // Fade to black if intro not ready or opacity is low
     gl_FragColor = vec4(finalColor, uOpacity);
 }

@@ -1,9 +1,9 @@
 :root {
   --c-obsidian: #0a0a0a;
   --c-polar: #ffffff;
-  --c-red: #e8190a;
+  --c-blue: #00BFFF;
+  --c-gold: #FFD700;
   --c-gold: #cfb53b;
-  --c-fog: #717b8b;
   --c-warm: #f5f0e8;
 
   --f-editorial: 'Cormorant Garamond', serif;
@@ -182,7 +182,7 @@ body {
   font-family: var(--f-condensed);
   font-size: clamp(3rem, 6vw, 7rem);
   font-weight: 900;
-  color: var(--c-red);
+  color: var(--c-blue);
   line-height: 1;
   letter-spacing: -0.02em;
 }
@@ -222,7 +222,7 @@ body {
 .br-divider {
   width: 80px;
   height: 2px;
-  background: var(--c-red);
+  background: var(--c-gold);
   margin: 2.5rem 0 2rem;
 }
 
@@ -364,11 +364,11 @@ body {
 }
 
 .br-progress-tick.active {
-  color: var(--c-red);
+  color: var(--c-gold);
 }
 
 .br-progress-tick.active::before {
-  background: var(--c-red);
+  background: var(--c-blue);
   width: 32px;
 }
 
@@ -378,7 +378,7 @@ body {
   left: 0;
   right: 0;
   height: 3px;
-  background: var(--c-red);
+  background: var(--c-blue);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
