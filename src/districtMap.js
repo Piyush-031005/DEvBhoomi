@@ -16,11 +16,12 @@ export function initDistrictMap() {
     // SCENE SETUP
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x050101);
-    scene.fog = new THREE.FogExp2(0x050101, 0.015);
+    // Use linear fog so the map doesn't get completely hidden at a distance
+    scene.fog = new THREE.Fog(0x050101, 100, 350); 
 
     const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-    // Position camera closer and slightly lower so the map fills the screen by default
-    camera.position.set(0, 90, 110);
+    // Position camera closer so it's perfectly visible
+    camera.position.set(0, 70, 90);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(container.clientWidth, container.clientHeight);
