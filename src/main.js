@@ -21,11 +21,11 @@ const lenis = new Lenis({
   smooth: true,
 });
 
-function raf(time) {
-  lenis.raf(time);
-  requestAnimationFrame(raf);
-}
-requestAnimationFrame(raf);
+lenis.on('scroll', ScrollTrigger.update);
+gsap.ticker.add((time) => {
+  lenis.raf(time * 1000);
+});
+gsap.ticker.lagSmoothing(0);
 
 // --- Three.js Setup ---
 const canvasContainer = document.getElementById('canvas-container');
@@ -245,7 +245,7 @@ const maskLight = new THREE.DirectionalLight('#ff1a2b', 5.0); // Intense red rim
 maskLight.position.set(5, 5, -5);
 scene.add(maskLight);
 
-const cyanLight = new THREE.DirectionalLight('#00ffff', 2.5); // Neon Cyan accent light
+const cyanLight = new THREE.DirectionalLight('#ffffff', 3.0); // Bright White Cream accent light
 cyanLight.position.set(-5, -2, 5);
 scene.add(cyanLight);
 
@@ -265,9 +265,9 @@ loader.load('/mask.glb', (gltf) => {
         if (child.isMesh) {
             // Apply Brutalist dark metallic theme
             if (child.material) {
-                child.material.color.setHex(0xdfc27d); // Premium Pale Gold
-                child.material.roughness = 0.2;
-                child.material.metalness = 1.0;
+                child.material.color.setHex(0xf5f5dc); // White Cream
+                child.material.roughness = 0.3;
+                child.material.metalness = 0.5;
                 child.material.transparent = true;
                 child.material.opacity = animState.maskOpacity;
                 child.material.depthWrite = false;
@@ -537,7 +537,8 @@ document.addEventListener("DOMContentLoaded", () => {
     ScrollTrigger.create({
         trigger: '#brutalist-act',
         start: 'top top',
-        end: '+=400%', // 4 chapters, pin for 400vh
+        end: '+=1000%', // 4 chapters, pin for 1000vh so they HOLD much longer
+        snap: 1 / 3, // Snap to each chapter
         pin: true,
         onUpdate: (self) => {
             // self.progress goes from 0 to 1
