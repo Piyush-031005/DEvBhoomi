@@ -19,8 +19,8 @@ export function initDistrictMap() {
     scene.fog = new THREE.FogExp2(0x050101, 0.015);
 
     const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-    // Position camera higher and further back because we are increasing the map size
-    camera.position.set(0, 140, 160);
+    // Position camera closer and slightly lower so the map fills the screen by default
+    camera.position.set(0, 90, 110);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(container.clientWidth, container.clientHeight);
@@ -34,8 +34,8 @@ export function initDistrictMap() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.maxPolarAngle = Math.PI / 2.2; // Don't go below ground
-    controls.minDistance = 50;
-    controls.maxDistance = 250;
+    controls.minDistance = 30;
+    controls.maxDistance = 200;
     // Auto rotation (slow)
     controls.autoRotate = true;
     controls.autoRotateSpeed = 0.5;
@@ -83,7 +83,7 @@ export function initDistrictMap() {
             flatShading: true
         }),
         default: new THREE.MeshStandardMaterial({
-            color: 0xaaaaaa,          // Light grey stone
+            color: 0x888888,          // Darker grey stone so it doesn't overpower the others
             emissive: 0x330000,       // Deep red theme glow
             roughness: 0.9,
             metalness: 0.1,
@@ -143,24 +143,24 @@ export function initDistrictMap() {
 
             const centerX = (minX + maxX) / 2;
             const centerY = (minY + maxY) / 2;
-            const scaleFactor = 38; // Increased scale factor by almost 2x for a larger map
+            const scaleFactor = 28; // Reduced slightly for better framing
 
             data.features.forEach((feature, index) => {
                 const name = feature.properties.NAME_2 || feature.properties.dt_name || feature.properties.DISTRICT || `District ${index+1}`;
                 const lowerName = name.toLowerCase();
 
                 let category = 'default';
-                let baseHeight = 10 + Math.random() * 10;
+                let baseHeight = 5 + Math.random() * 5;
 
                 if (['pithoragarh', 'chamoli', 'uttarkashi', 'rudraprayag', 'bageshwar'].some(d => lowerName.includes(d))) {
                     category = 'himalayas';
-                    baseHeight = 30 + Math.random() * 20; // Very tall peaks
+                    baseHeight = 15 + Math.random() * 10; // Tall peaks, but not excessively huge
                 } else if (['haridwar', 'udham singh nagar'].some(d => lowerName.includes(d))) {
                     category = 'plains';
-                    baseHeight = 2 + Math.random() * 3; // Flat plains
+                    baseHeight = 2 + Math.random() * 1; // Flat plains
                 } else if (lowerName.includes('dehradun')) {
                     category = 'capital';
-                    baseHeight = 15 + Math.random() * 5; // Mid level city
+                    baseHeight = 8 + Math.random() * 3; // Mid level city
                 }
                 
                 const processPolygon = (coords) => {
@@ -185,8 +185,8 @@ export function initDistrictMap() {
                     
                     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
                     
-                    // Shift so bottom is at z=0 (and keep original X/Y relative to the map center)
-                    geometry.translate(0, 0, -baseHeight);
+                    // Do NOT translate -baseHeight! The extrusion goes from Z=0 to Z=depth.
+                    // When rotated by -Math.PI/2, this correctly translates to Y=0 to Y=depth (upwards).
                     
                     const materialToUse = materials[category];
                     const mesh = new THREE.Mesh(geometry, materialToUse);
