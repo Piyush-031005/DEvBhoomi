@@ -241,13 +241,13 @@ let maskModel = null;
 const loader = new GLTFLoader();
 
 // Dramatic Brutalist Lighting
-const maskLight = new THREE.DirectionalLight('#00BFFF', 5.0); // Premium Sky Blue rim light
+const maskLight = new THREE.DirectionalLight('#ff1a2b', 5.0); // Intense red rim light
 maskLight.position.set(5, 5, -5);
 scene.add(maskLight);
 
-const goldLight = new THREE.DirectionalLight('#FFD700', 2.5); // Warm Gold accent light
-goldLight.position.set(-5, -2, 5);
-scene.add(goldLight);
+const cyanLight = new THREE.DirectionalLight('#00ffff', 2.5); // Neon Cyan accent light
+cyanLight.position.set(-5, -2, 5);
+scene.add(cyanLight);
 
 const maskFill = new THREE.DirectionalLight('#ffffff', 1.0); // Soft white fill
 maskFill.position.set(-5, 0, 10);
