@@ -5,6 +5,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
 import { initSacredData } from './sacredData.js';
+import { initDistrictMap } from './districtMap.js';
 
 import brutalistVertexShader  from './shaders/brutalistVertex.glsl?raw';
 import brutalistFragmentShader from './shaders/brutalistFragment.glsl?raw';
@@ -437,6 +438,10 @@ function animate() {
         
         // Y-axis limited tracking
         let targetPosY = mouseY * 0.8;
+        // Shift mask to the right side to prevent overlap with left text
+        let targetPosX = 4.5 + (mouseX * 0.5); 
+        
+        maskModel.position.x += (targetPosX - maskModel.position.x) * 0.1;
         maskModel.position.y += (targetPosY - maskModel.position.y) * 0.1;
         
         // Scale (stretched wider on X) and opacity driven by GSAP
@@ -650,4 +655,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ── Sacred Topography Scanner (Section 5) ──
     initSacredData();
+
+    // ── Uttarakhand 3D District Map (Section 6) ──
+    initDistrictMap();
 });

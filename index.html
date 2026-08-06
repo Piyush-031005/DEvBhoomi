@@ -289,6 +289,44 @@
         <!-- END STICKY -->
       </section>
 
+      <!-- ============================================================ -->
+      <!-- Act 7: UTTARAKHAND 3D DISTRICT MAP                           -->
+      <!-- Interactive 3D glass/stone extrusion map of districts        -->
+      <!-- ============================================================ -->
+      <section id="district-map-section" style="height: 100vh; position: relative; background: #000; overflow: hidden;">
+        
+        <!-- Three.js Canvas Container -->
+        <div id="district-map-container" style="position: absolute; inset: 0; width: 100%; height: 100%;"></div>
+
+        <!-- UI Overlay -->
+        <div class="map-ui">
+          <div class="map-title-block">
+            <span class="map-eyebrow">ELEVATION MAP</span>
+            <h2 class="map-title">UTTARAKHAND<br><span>DISTRICTS</span></h2>
+            <p class="map-desc">Drag to rotate • Scroll to zoom • Hover for details</p>
+          </div>
+
+          <!-- District Info Panel (Hidden until hover) -->
+          <div id="district-info-panel" class="district-info-panel">
+            <div class="di-box">
+              <span class="di-name" id="di-name">DISTRICT NAME</span>
+              <span class="di-name-skt" id="di-skt">जिला</span>
+              <div class="di-stats">
+                <div class="di-stat">
+                  <span class="di-label">ELEVATION</span>
+                  <span class="di-val" id="di-elev">--</span>
+                </div>
+                <div class="di-stat">
+                  <span class="di-label">AREA</span>
+                  <span class="di-val" id="di-area">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
     </main>
 
     <script type="module" src="/src/main.js"></script>

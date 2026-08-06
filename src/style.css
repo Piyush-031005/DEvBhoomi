@@ -745,3 +745,122 @@ body {
   color: rgba(255,255,255,0.3);
   text-transform: uppercase;
 }
+
+/* ================================================================ */
+/* 3D DISTRICT MAP SECTION                                          */
+/* ================================================================ */
+
+.map-ui {
+  position: absolute;
+  inset: 0;
+  pointer-events: none; /* Let clicks pass through to canvas */
+  z-index: 10;
+  padding: 40px;
+}
+
+.map-title-block {
+  position: absolute;
+  top: 40px;
+  left: 40px;
+}
+
+.map-eyebrow {
+  display: block;
+  font-family: 'Syne', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  color: #fff;
+  opacity: 0.5;
+  margin-bottom: 0.5rem;
+}
+
+.map-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 4rem;
+  line-height: 0.85;
+  color: #fff;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.5rem 0;
+}
+
+.map-title span {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.4);
+}
+
+.map-desc {
+  font-family: 'Syne', monospace;
+  font-size: 0.75rem;
+  color: #fff;
+  opacity: 0.4;
+  letter-spacing: 0.1em;
+}
+
+/* Hover Panel */
+.district-info-panel {
+  position: absolute;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.district-info-panel.visible {
+  opacity: 1;
+  transform: translateY(-50%) translateX(-20px);
+}
+
+.di-box {
+  background: rgba(10, 10, 12, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 2px solid #fff;
+  padding: 24px;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+}
+
+.di-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.5rem;
+  color: #fff;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.di-name-skt {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 20px;
+}
+
+.di-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.di-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 8px;
+}
+
+.di-label {
+  font-family: 'Syne', monospace;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.1em;
+}
+
+.di-val {
+  font-family: 'Syne', monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+}
