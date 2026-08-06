@@ -41,31 +41,31 @@ export function initDistrictMap() {
     controls.autoRotateSpeed = 0.5;
 
     // LIGHTING - Dramatic, contrasty, highlighting the "glass/stone" edges
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.0); // Increased ambient to ensure visibility
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-    dirLight.position.set(-20, -50, 60);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
+    dirLight.position.set(-20, 80, 40); // Move light ABOVE the ground (positive Y)
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 2048;
     dirLight.shadow.mapSize.height = 2048;
     scene.add(dirLight);
 
-    const redRimLight = new THREE.DirectionalLight(0xe8190a, 2.0);
-    redRimLight.position.set(40, 50, 10);
+    const redRimLight = new THREE.DirectionalLight(0xe8190a, 3.0);
+    redRimLight.position.set(40, 50, -20); // Shine from top-right-back
     scene.add(redRimLight);
 
-    const blueRimLight = new THREE.DirectionalLight(0x4466ff, 1.0);
-    blueRimLight.position.set(-40, 20, 5);
+    const blueRimLight = new THREE.DirectionalLight(0x4466ff, 2.0);
+    blueRimLight.position.set(-40, 40, 20); // Shine from top-left-front
     scene.add(blueRimLight);
 
     // MATERIALS - Blend of Obsidian Glass and Stone
     const mapMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0x111115,          // Dark base
+        color: 0x22222a,          // Lighter dark base so it's visible
         emissive: 0x000000,
         roughness: 0.25,          // Slightly polished
-        metalness: 0.8,           // Metallic stone feel
-        clearcoat: 0.5,           // Glassy outer layer
+        metalness: 0.6,           // Lowered metalness to allow diffuse color to show
+        clearcoat: 0.8,           // Strong glassy outer layer
         clearcoatRoughness: 0.1,
         transmission: 0.3,        // Slight glass transmission
         thickness: 2.0,

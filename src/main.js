@@ -594,11 +594,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Create ONE big pinned section that covers all 4 chapters
-    // 4 chapters × 200vh each = 800vh of scroll distance
+    // Reduced to 400vh for much faster switching
     ScrollTrigger.create({
         trigger: '#brutalist-act',
         start: 'top top',
-        end: '+=800%',
+        end: '+=400%',
         pin: true,
         onEnter: () => activateChapter(0),
         onUpdate: (self) => {
