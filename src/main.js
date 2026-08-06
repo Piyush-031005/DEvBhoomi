@@ -552,7 +552,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const oldBody = oldEl.querySelector('.br-body');
                     
                     gsap.to(oldWords, { y: '-110%', duration: 0.5, ease: 'power4.in', stagger: 0.04, overwrite: true });
-                    if (oldBody) gsap.to(oldBody, { opacity: 0, y: -20, duration: 0.35, overwrite: true });
+                    if (oldBody) gsap.to(oldBody, { opacity: 0, y: -10, duration: 0.4, ease: 'power2.in', overwrite: true });
                     gsap.to(oldEl, { 
                         opacity: 0, 
                         duration: 0.4, 
@@ -587,7 +587,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (newNumEl) gsap.fromTo(newNumEl, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6, ease: 'power3.out' });
                 
-                if (newBody) gsap.fromTo(newBody, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.9, delay: 0.25, ease: 'power2.out', overwrite: true });
+                if (newBody) gsap.fromTo(newBody, 
+                    { opacity: 0, y: 20 }, 
+                    { opacity: 1, y: 0, duration: 1.0, delay: 0.3, ease: 'expo.out', overwrite: true }
+                );
                 
                 if (newDivider) {
                     gsap.fromTo(newDivider, { width: 0 }, { width: '80px', duration: 0.7, delay: 0.2, ease: 'power3.out' });
