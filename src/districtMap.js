@@ -19,8 +19,8 @@ export function initDistrictMap() {
     scene.fog = new THREE.FogExp2(0x050101, 0.015);
 
     const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-    // Position camera to look down at the map at an angle (Y is UP)
-    camera.position.set(0, 80, 80);
+    // Position camera higher and further back because we are increasing the map size
+    camera.position.set(0, 140, 160);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(container.clientWidth, container.clientHeight);
@@ -34,59 +34,52 @@ export function initDistrictMap() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.maxPolarAngle = Math.PI / 2.2; // Don't go below ground
-    controls.minDistance = 30;
-    controls.maxDistance = 150;
+    controls.minDistance = 50;
+    controls.maxDistance = 250;
     // Auto rotation (slow)
     controls.autoRotate = true;
     controls.autoRotateSpeed = 0.5;
 
-    // LIGHTING - Dramatic, contrasty, highlighting the "glass/stone" edges
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.0); // Increased ambient to ensure visibility
+    // LIGHTING - Strong lighting for the solid stone
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
-    dirLight.position.set(-20, 80, 40); // Move light ABOVE the ground (positive Y)
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    dirLight.position.set(-20, 100, 50); 
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 2048;
     dirLight.shadow.mapSize.height = 2048;
     scene.add(dirLight);
 
-    const redRimLight = new THREE.DirectionalLight(0xe8190a, 3.0);
-    redRimLight.position.set(40, 50, -20); // Shine from top-right-back
+    const redRimLight = new THREE.DirectionalLight(0xff0000, 3.5);
+    redRimLight.position.set(60, 40, -30); 
     scene.add(redRimLight);
 
-    const blueRimLight = new THREE.DirectionalLight(0x4466ff, 2.0);
-    blueRimLight.position.set(-40, 40, 20); // Shine from top-left-front
+    const blueRimLight = new THREE.DirectionalLight(0x4466ff, 1.5);
+    blueRimLight.position.set(-60, 40, 30); 
     scene.add(blueRimLight);
 
-    // MATERIALS - Blend of White Frosted Glass and Red Glowing Edges
-    const mapMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0xffffff,          // Pure white base
-        emissive: 0x330000,       // Deep red inner glow
-        roughness: 0.1,           // Very smooth
-        metalness: 0.1,           // More glass-like than metal
-        clearcoat: 1.0,           // Maximum gloss
-        clearcoatRoughness: 0.1,
-        transmission: 0.8,        // Highly transparent glass
-        thickness: 3.0,
-        transparent: true,
-        opacity: 0.85             // Semi-transparent
+    // MATERIALS - Highly visible White/Red Stone (No transmission so it doesn't disappear into black)
+    const mapMaterial = new THREE.MeshStandardMaterial({
+        color: 0xeeeeee,          // Bright white/grey stone base
+        emissive: 0x220000,       // Faint red glow
+        roughness: 0.9,           // Rough stone
+        metalness: 0.1,
+        flatShading: true         // Gives a faceted, carved mountain look
     });
 
-    const highlightMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0xffffff,          // White highlight
-        emissive: 0xff0000,       // Bright red glow on hover
-        roughness: 0.1,
-        metalness: 0.2,
-        clearcoat: 1.0,
-        transparent: true,
-        opacity: 1.0
+    const highlightMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0xff0000,       // Glowing red when hovered
+        roughness: 0.5,
+        metalness: 0.3,
+        flatShading: true
     });
 
     const lineMaterial = new THREE.LineBasicMaterial({ 
         color: 0xff0000,          // Bright red edges
         transparent: true, 
-        opacity: 0.6              // Highly visible lines
+        opacity: 0.8              // Highly visible lines
     });
 
     const mapGroup = new THREE.Group();
@@ -127,13 +120,13 @@ export function initDistrictMap() {
 
             const centerX = (minX + maxX) / 2;
             const centerY = (minY + maxY) / 2;
-            const scaleFactor = 20; // Scale degrees to 3D units
+            const scaleFactor = 38; // Increased scale factor by almost 2x for a larger map
 
             data.features.forEach((feature, index) => {
                 const name = feature.properties.NAME_2 || feature.properties.dt_name || feature.properties.DISTRICT || `District ${index+1}`;
                 
-                // Randomize height slightly to simulate topography, or use real data if available
-                const baseHeight = 2 + Math.random() * 6;
+                // Dramatically randomized height to simulate mountain blocks
+                const baseHeight = 5 + Math.random() * 25;
                 
                 const processPolygon = (coords) => {
                     const shape = new THREE.Shape();
