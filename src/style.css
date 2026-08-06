@@ -141,9 +141,47 @@ body {
   align-items: center;
   z-index: 10;
   pointer-events: none;
-  /* Start hidden — GSAP controls visibility */
   opacity: 0;
   visibility: hidden;
+  /* Pure code-generated grain background */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23g)' opacity='0.055'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/* Chapter 01 — Deep Crimson Mountain Night */
+#br-ch-01 {
+  background-color: #070102;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 70% 40%, rgba(40,5,5,0.9) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 50% at 20% 80%, rgba(80,10,10,0.4) 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23g)' opacity='0.055'/%3E%3C/svg%3E");
+}
+
+/* Chapter 02 — Sacred Ember (temple glow) */
+#br-ch-02 {
+  background-color: #060201;
+  background-image:
+    radial-gradient(ellipse 60% 70% at 60% 50%, rgba(50,15,0,0.95) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 30% at 10% 20%, rgba(100,25,5,0.3) 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23g)' opacity='0.055'/%3E%3C/svg%3E");
+}
+
+/* Chapter 03 — Midnight Indigo (cosmic / divine) */
+#br-ch-03 {
+  background-color: #020207;
+  background-image:
+    radial-gradient(ellipse 70% 65% at 50% 45%, rgba(8,5,30,0.98) 0%, transparent 70%),
+    radial-gradient(ellipse 30% 40% at 85% 10%, rgba(30,5,60,0.4) 0%, transparent 50%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23g)' opacity='0.055'/%3E%3C/svg%3E");
+}
+
+/* Chapter 04 — Aged Forest / Wild Earth */
+#br-ch-04 {
+  background-color: #030603;
+  background-image:
+    radial-gradient(ellipse 65% 60% at 55% 55%, rgba(5,18,5,0.96) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 35% at 15% 70%, rgba(8,25,8,0.5) 0%, transparent 55%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23g)' opacity='0.055'/%3E%3C/svg%3E");
 }
 
 .br-chapter.active-ch {
@@ -520,3 +558,190 @@ body {
   opacity: 0;
 }
 
+/* ================================================================ */
+/* SACRED TOPOGRAPHY — DEVBHOOMI DECODED                            */
+/* Pure code-generated section. HUD overlaid on Canvas2D.           */
+/* ================================================================ */
+
+/* Sticky wrapper — fills 100vh while section scrolls */
+.sd-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: #050101;
+}
+
+/* Canvas fills entire sticky container */
+#sd-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* HUD overlay — everything above canvas */
+.sd-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── Corner reticles (top-left, top-right, etc.) ── */
+.sd-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: rgba(232,25,10,0.55);
+  border-style: solid;
+}
+.sd-corner.tl { top: 16px; left: 16px;  border-width: 1.5px 0 0 1.5px; }
+.sd-corner.tr { top: 16px; right: 16px; border-width: 1.5px 1.5px 0 0; }
+.sd-corner.bl { bottom: 16px; left: 16px;  border-width: 0 0 1.5px 1.5px; }
+.sd-corner.br { bottom: 16px; right: 16px; border-width: 0 1.5px 1.5px 0; }
+
+/* ── Title block ── */
+.sd-title-block {
+  position: absolute;
+  top: 28px;
+  left: 44px;
+}
+.sd-eyebrow {
+  display: block;
+  font-family: 'Syne', monospace;
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  color: rgba(232,25,10,0.8);
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+.sd-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 400;
+  line-height: 0.88;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.sd-title span {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(232,25,10,0.7);
+}
+
+/* ── Peak callouts ── */
+.sd-callout {
+  position: absolute;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.sd-callout.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+.sd-callout-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 0.5px solid rgba(232,25,10,0.3);
+  padding: 6px 10px;
+  background: rgba(6,1,1,0.75);
+  backdrop-filter: blur(4px);
+  min-width: 110px;
+}
+.sd-callout--right .sd-callout-box { margin-left: 18px; }
+.sd-callout--left  .sd-callout-box { margin-right: 18px; text-align: right; }
+
+.sd-callout-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  color: #ffffff;
+}
+.sd-callout-name-skt {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.5);
+}
+.sd-callout-elev {
+  font-family: 'Syne', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e8190a;
+  letter-spacing: 0.08em;
+}
+.sd-callout-sub {
+  font-family: 'Syne', monospace;
+  font-size: 0.55rem;
+  font-weight: 300;
+  letter-spacing: 0.18em;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+}
+
+/* ── Scan progress bar ── */
+.sd-scanbar {
+  position: absolute;
+  bottom: 28px;
+  left: 44px;
+  right: 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sd-scanbar-label {
+  font-family: 'Syne', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.22em;
+  color: rgba(232,25,10,0.7);
+  text-transform: uppercase;
+}
+.sd-scanbar-track {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  position: relative;
+  overflow: hidden;
+}
+.sd-scanbar-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0%;
+  background: #e8190a;
+  box-shadow: 0 0 8px #e8190a;
+  transition: width 0.05s linear;
+}
+
+/* ── Data counters ── */
+.sd-counters {
+  position: absolute;
+  bottom: 55px;
+  right: 44px;
+  display: flex;
+  gap: 2.5rem;
+}
+.sd-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+.sd-counter-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  line-height: 1;
+  font-feature-settings: "tnum";
+}
+.sd-counter-label {
+  font-family: 'Syne', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+}

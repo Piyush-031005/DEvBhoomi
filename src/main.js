@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
+import { initSacredData } from './sacredData.js';
 
 import brutalistVertexShader  from './shaders/brutalistVertex.glsl?raw';
 import brutalistFragmentShader from './shaders/brutalistFragment.glsl?raw';
@@ -646,4 +647,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     });
+
+    // ── Sacred Topography Scanner (Section 5) ──
+    initSacredData();
 });

@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,700;0,900;1,700&family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index-yjJ5gryp.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-C0Xob3XL.css">
+    <script type="module" crossorigin src="/assets/index-CP_cWhe7.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-5bDbkwse.css">
   </head>
   <body>
     <div id="canvas-container"></div>
@@ -89,16 +89,6 @@
 
         <!-- CHAPTER 01 — THE MOUNTAINS -->
         <div class="br-chapter" id="br-ch-01">
-          <!-- Full-bleed editorial photo with brutalist treatment -->
-          <div class="br-ch-photo-bg">
-            <img src="/img1.jpeg" alt="Himalayas" class="br-ch-photo" />
-            <div class="br-ch-photo-overlay"></div>
-            <!-- Red vertical bars (Kedarnath poster style) -->
-            <div class="br-red-bar" style="left: 12%; width: 3.5%;"></div>
-            <div class="br-red-bar" style="right: 18%; width: 2%;"></div>
-            <!-- Grain texture -->
-            <div class="br-grain"></div>
-          </div>
           <div class="br-grid">
             <div class="br-col-index">
               <span class="br-chapter-label">CHAPTER</span>
@@ -123,16 +113,6 @@
 
         <!-- CHAPTER 02 — THE TEMPLES -->
         <div class="br-chapter" id="br-ch-02">
-          <div class="br-ch-photo-bg">
-            <img src="/img2.jpeg" alt="Kedarnath Temple" class="br-ch-photo" />
-            <div class="br-ch-photo-overlay"></div>
-            <div class="br-red-bar" style="left: 30%; width: 4%;"></div>
-            <div class="br-red-bar" style="right: 8%; width: 2.5%;"></div>
-            <div class="br-grain"></div>
-            <!-- Horizontal red accent block (like Kedarnath poster) -->
-            <div class="br-red-block" style="top: 15%; right: 5%; width: 60px; height: 60px;"></div>
-            <div class="br-red-block" style="top: 35%; right: 5%; width: 30px; height: 30px;"></div>
-          </div>
           <div class="br-grid">
             <div class="br-col-index">
               <span class="br-chapter-label">CHAPTER</span>
@@ -156,12 +136,6 @@
 
         <!-- CHAPTER 03 — DIVINE PRESENCE -->
         <div class="br-chapter" id="br-ch-03">
-          <div class="br-ch-photo-bg">
-            <img src="/img3.jpeg" alt="Uttarakhand People" class="br-ch-photo" />
-            <div class="br-ch-photo-overlay"></div>
-            <div class="br-red-bar" style="left: 50%; width: 5%;"></div>
-            <div class="br-grain"></div>
-          </div>
           <div class="br-grid">
             <div class="br-col-index">
               <span class="br-chapter-label">CHAPTER</span>
@@ -185,13 +159,6 @@
 
         <!-- CHAPTER 04 — THE WILD -->
         <div class="br-chapter" id="br-ch-04">
-          <div class="br-ch-photo-bg">
-            <img src="/smoking-man.jpeg" alt="Uttarakhand Nature" class="br-ch-photo" />
-            <div class="br-ch-photo-overlay"></div>
-            <div class="br-red-bar" style="left: 20%; width: 3%;"></div>
-            <div class="br-red-bar" style="right: 12%; width: 2%;"></div>
-            <div class="br-grain"></div>
-          </div>
           <div class="br-grid">
             <div class="br-col-index">
               <span class="br-chapter-label">CHAPTER</span>
@@ -216,6 +183,114 @@
       </section>
 
     
+
+      <!-- ============================================================ -->
+      <!-- Act 6: DEVBHOOMI DECODED — Sacred Topography Scanner         -->
+      <!-- Pure code-generated. No images. Only math and the mountains. -->
+      <!-- ============================================================ -->
+      <section id="sacred-data" style="height: 250vh; position: relative;">
+        <!-- Sticky viewport wrapper -->
+        <div class="sd-sticky">
+
+          <!-- CANVAS — the procedural mountain / scan / trishul -->
+          <canvas id="sd-canvas"></canvas>
+
+          <!-- HUD Overlay -->
+          <div class="sd-hud">
+
+            <!-- Corner reticles (4 corners, like Blue Flax poster) -->
+            <div class="sd-corner tl"></div>
+            <div class="sd-corner tr"></div>
+            <div class="sd-corner bl"></div>
+            <div class="sd-corner br"></div>
+
+            <!-- Title block — top left -->
+            <div class="sd-title-block">
+              <span class="sd-eyebrow">TOPOGRAPHIC SCAN  ·  30°22'N  79°21'E</span>
+              <h2 class="sd-title">देवभूमि<br><span>DECODED</span></h2>
+            </div>
+
+            <!-- Peak callouts — positioned absolutely over canvas -->
+            <div class="sd-callout sd-callout--right" data-idx="0" style="left:12%; bottom:52%;">
+              <div class="sd-callout-box">
+                <span class="sd-callout-name">NANDA DEVI</span>
+                <span class="sd-callout-name-skt">नन्दा देवी</span>
+                <span class="sd-callout-elev">7,816 M</span>
+                <span class="sd-callout-sub">HIGHEST IN INDIA</span>
+              </div>
+            </div>
+
+            <div class="sd-callout sd-callout--left" data-idx="1" style="left:30%; bottom:40%;">
+              <div class="sd-callout-box">
+                <span class="sd-callout-name">KEDARNATH</span>
+                <span class="sd-callout-name-skt">केदारनाथ</span>
+                <span class="sd-callout-elev">3,584 M</span>
+                <span class="sd-callout-sub">CHAR DHAM CIRCUIT</span>
+              </div>
+            </div>
+
+            <div class="sd-callout sd-callout--right" data-idx="2" style="left:50%; bottom:55%;">
+              <div class="sd-callout-box">
+                <span class="sd-callout-name">TRISHUL</span>
+                <span class="sd-callout-name-skt">त्रिशूल</span>
+                <span class="sd-callout-elev">7,120 M</span>
+                <span class="sd-callout-sub">SHIVA'S TRIDENT</span>
+              </div>
+            </div>
+
+            <div class="sd-callout sd-callout--left" data-idx="3" style="left:70%; bottom:48%;">
+              <div class="sd-callout-box">
+                <span class="sd-callout-name">PANCHACHULI</span>
+                <span class="sd-callout-name-skt">पञ्चचूली</span>
+                <span class="sd-callout-elev">6,904 M</span>
+                <span class="sd-callout-sub">THE FIVE FIRES</span>
+              </div>
+            </div>
+
+            <div class="sd-callout sd-callout--right" data-idx="4" style="left:88%; bottom:38%;">
+              <div class="sd-callout-box">
+                <span class="sd-callout-name">BADRINATH</span>
+                <span class="sd-callout-name-skt">बद्रीनाथ</span>
+                <span class="sd-callout-elev">3,133 M</span>
+                <span class="sd-callout-sub">VAIKUNTHA DHAM</span>
+              </div>
+            </div>
+
+            <!-- Scan progress bar — bottom -->
+            <div class="sd-scanbar">
+              <span class="sd-scanbar-label">SCANNING TERRAIN</span>
+              <div class="sd-scanbar-track">
+                <div class="sd-scanbar-fill" id="sd-scanbar-fill"></div>
+              </div>
+            </div>
+
+            <!-- Data counters — bottom right -->
+            <div class="sd-counters">
+              <div class="sd-counter">
+                <span class="sd-counter-val" id="sd-c-0">000</span>
+                <span class="sd-counter-label">GLACIERS</span>
+              </div>
+              <div class="sd-counter">
+                <span class="sd-counter-val" id="sd-c-1">00</span>
+                <span class="sd-counter-label">SACRED RIVERS</span>
+              </div>
+              <div class="sd-counter">
+                <span class="sd-counter-val" id="sd-c-2">00</span>
+                <span class="sd-counter-label">PEAKS &gt; 6000M</span>
+              </div>
+              <div class="sd-counter">
+                <span class="sd-counter-val" id="sd-c-3">0</span>
+                <span class="sd-counter-label">CHAR DHAMS</span>
+              </div>
+            </div>
+
+          </div>
+          <!-- END HUD -->
+
+        </div>
+        <!-- END STICKY -->
+      </section>
+
     </main>
 
   </body>
