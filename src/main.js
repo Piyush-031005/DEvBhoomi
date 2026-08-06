@@ -579,6 +579,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 const counter = document.getElementById('br-chapter-counter');
                 if (counter) counter.textContent = `${chNum} / 04`;
 
+                // Ensure container is fully visible
+                gsap.set(newEl, { opacity: 1 });
+                if (newBody) gsap.set(newBody, { opacity: 1, y: 0 });
+                
                 // GSAP Typography Slam
                 gsap.killTweensOf(newWords);
                 gsap.fromTo(newWords, { y: '110%' }, {
