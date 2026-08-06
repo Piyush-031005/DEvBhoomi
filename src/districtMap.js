@@ -59,14 +59,37 @@ export function initDistrictMap() {
     blueRimLight.position.set(-60, 40, 30); 
     scene.add(blueRimLight);
 
-    // MATERIALS - Highly visible White/Red Stone (No transmission so it doesn't disappear into black)
-    const mapMaterial = new THREE.MeshStandardMaterial({
-        color: 0xeeeeee,          // Bright white/grey stone base
-        emissive: 0x220000,       // Faint red glow
-        roughness: 0.9,           // Rough stone
-        metalness: 0.1,
-        flatShading: true         // Gives a faceted, carved mountain look
-    });
+    // THEMATIC MATERIALS
+    const materials = {
+        himalayas: new THREE.MeshStandardMaterial({
+            color: 0xffffff,          // Pure white snow
+            emissive: 0x002244,       // Icy blue faint glow
+            roughness: 0.8,
+            metalness: 0.1,
+            flatShading: true
+        }),
+        plains: new THREE.MeshStandardMaterial({
+            color: 0x00bcd4,          // Cyan/Water color
+            emissive: 0x003344,       // Deep water glow
+            roughness: 0.2,           // Smoother for water feel
+            metalness: 0.6,
+            flatShading: true
+        }),
+        capital: new THREE.MeshStandardMaterial({
+            color: 0xffb300,          // Golden/Amber
+            emissive: 0x442200,       // Warm glow
+            roughness: 0.6,
+            metalness: 0.3,
+            flatShading: true
+        }),
+        default: new THREE.MeshStandardMaterial({
+            color: 0xaaaaaa,          // Light grey stone
+            emissive: 0x330000,       // Deep red theme glow
+            roughness: 0.9,
+            metalness: 0.1,
+            flatShading: true
+        })
+    };
 
     const highlightMaterial = new THREE.MeshStandardMaterial({
         color: 0xffffff,
@@ -124,9 +147,21 @@ export function initDistrictMap() {
 
             data.features.forEach((feature, index) => {
                 const name = feature.properties.NAME_2 || feature.properties.dt_name || feature.properties.DISTRICT || `District ${index+1}`;
-                
-                // Dramatically randomized height to simulate mountain blocks
-                const baseHeight = 5 + Math.random() * 25;
+                const lowerName = name.toLowerCase();
+
+                let category = 'default';
+                let baseHeight = 10 + Math.random() * 10;
+
+                if (['pithoragarh', 'chamoli', 'uttarkashi', 'rudraprayag', 'bageshwar'].some(d => lowerName.includes(d))) {
+                    category = 'himalayas';
+                    baseHeight = 30 + Math.random() * 20; // Very tall peaks
+                } else if (['haridwar', 'udham singh nagar'].some(d => lowerName.includes(d))) {
+                    category = 'plains';
+                    baseHeight = 2 + Math.random() * 3; // Flat plains
+                } else if (lowerName.includes('dehradun')) {
+                    category = 'capital';
+                    baseHeight = 15 + Math.random() * 5; // Mid level city
+                }
                 
                 const processPolygon = (coords) => {
                     const shape = new THREE.Shape();
@@ -134,12 +169,9 @@ export function initDistrictMap() {
                     coords.forEach((coord, i) => {
                         const x = (coord[0] - centerX) * scaleFactor;
                         const y = (coord[1] - centerY) * scaleFactor;
-                        if (i === 0) {
-                            shape.moveTo(x, y);
-                        } else {
-                            shape.lineTo(x, y);
-                        }
-                        points.push(new THREE.Vector3(x, y, baseHeight + 0.1));
+                        points.push(new THREE.Vector3(x, y, 0));
+                        if (i === 0) shape.moveTo(x, y);
+                        else shape.lineTo(x, y);
                     });
                     
                     const extrudeSettings = {
@@ -147,15 +179,17 @@ export function initDistrictMap() {
                         bevelEnabled: true,
                         bevelSegments: 2,
                         steps: 1,
-                        bevelSize: 0.1,
-                        bevelThickness: 0.1
+                        bevelSize: 0.2,
+                        bevelThickness: 0.2
                     };
-
+                    
                     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-                    // Shift so bottom is at z=0
+                    
+                    // Shift so bottom is at z=0 (and keep original X/Y relative to the map center)
                     geometry.translate(0, 0, -baseHeight);
                     
-                    const mesh = new THREE.Mesh(geometry, mapMaterial.clone());
+                    const materialToUse = materials[category];
+                    const mesh = new THREE.Mesh(geometry, materialToUse);
                     mesh.castShadow = true;
                     mesh.receiveShadow = true;
                     mesh.userData = { 
