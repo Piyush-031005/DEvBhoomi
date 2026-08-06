@@ -305,36 +305,32 @@ let brutalistMouse = new THREE.Vector2(0, 0);
 let targetBrutalistHover = 0;
 let brutalistReady = false;
 
-// Build the full-screen procedural plane immediately (no async texture load needed!)
+// Build the full-screen dark procedural plane (NO images — pure dark cinematic bg)
 {
     brutalistGroup = new THREE.Group();
     brutalistGroup.position.set(0, 0, 10);
     brutalistGroup.visible = false;
     worldGroup.add(brutalistGroup);
 
-    // Full-screen plane at z=10 (camera at z=22, FOV=60 → visible area ≈ 27.7 × 15.6 units)
+    // Full-screen plane at z=10
     const geom = new THREE.PlaneGeometry(30, 17, 1, 1);
 
-    // Load textures for chapters
-    const tLoader = new THREE.TextureLoader();
-    const tex1 = tLoader.load('/img1.jpeg');
-    const tex2 = tLoader.load('/img2.jpeg');
-    const tex3 = tLoader.load('/img3.jpeg');
-    const tex4 = tLoader.load('/smoking-man.jpeg'); // Fallback for missing img4
+    // Dummy textures — shader uses them for noise only, not displayed as images
+    const blankTex = new THREE.Texture();
     
     brutalistMaterial = new THREE.ShaderMaterial({
         uniforms: {
             uTime: { value: 0 },
-            uChapter: { value: -1 }, // -1 = Hero Intro, 0, 1, 2, 3 = Editorial Chapters
-            uOpacity: { value: 0 }, // Crossfade opacity
-            uIntroProgress: { value: 0 }, // 0 to 1 for the Awakening
+            uChapter: { value: 0 },
+            uOpacity: { value: 0 },
+            uIntroProgress: { value: 0 },
             uMouse: { value: new THREE.Vector2(0.5, 0.5) },
-            uHover: { value: 0 }, // 0 to 1 smooth
+            uHover: { value: 0 },
             uScrollVelocity: { value: 0 },
-            tImg1: { value: tex1 },
-            tImg2: { value: tex2 },
-            tImg3: { value: tex3 },
-            tImg4: { value: tex4 }
+            tImg1: { value: blankTex },
+            tImg2: { value: blankTex },
+            tImg3: { value: blankTex },
+            tImg4: { value: blankTex }
         },
         vertexShader:   brutalistVertexShader,
         fragmentShader: brutalistFragmentShader,
@@ -535,91 +531,79 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // ============================================================
     // BRUTALIST UI SCROLL LOGIC
-    // Single pinned container controls 4 layered chapters
+    // Each chapter gets its OWN ScrollTrigger so it pins independently
+    // and the text stays PERMANENTLY on screen until you scroll away.
     // ============================================================
-    const chapters = [
-        { id: 'br-ch-01', chIdx: 0 },
-        { id: 'br-ch-02', chIdx: 1 },
-        { id: 'br-ch-03', chIdx: 2 },
-        { id: 'br-ch-04', chIdx: 3 },
-    ];
-    let currentCh = -1;
 
+    function activateChapter(idx) {
+        const chIds = ['br-ch-01', 'br-ch-02', 'br-ch-03', 'br-ch-04'];
+        
+        // Hide all other chapters instantly
+        chIds.forEach((id, i) => {
+            if (i === idx) return;
+            const el = document.getElementById(id);
+            if (!el) return;
+            // Kill ALL tweens on this element and its children
+            gsap.killTweensOf(el);
+            el.querySelectorAll('*').forEach(child => gsap.killTweensOf(child));
+            gsap.set(el, { opacity: 0 });
+            el.classList.remove('active-ch');
+        });
+
+        const chEl = document.getElementById(chIds[idx]);
+        if (!chEl) return;
+        
+        // Target the INNER spans for animation (the br-word is the clip container)
+        const wordInners = chEl.querySelectorAll('.br-word');
+        const body       = chEl.querySelector('.br-body');
+        const divider    = chEl.querySelector('.br-divider');
+        const numEl      = chEl.querySelector('.br-chapter-num');
+
+        // Kill any lingering tweens on THIS chapter
+        gsap.killTweensOf(chEl);
+        chEl.querySelectorAll('*').forEach(child => gsap.killTweensOf(child));
+
+        // Make PERMANENTLY visible — set opacity to 1, never auto-revert
+        chEl.classList.add('active-ch');
+        gsap.set(chEl, { opacity: 1, clearProps: 'visibility' });
+
+        // Reset word positions to hidden below
+        gsap.set(wordInners, { y: '110%' });
+        if (body) gsap.set(body, { opacity: 0, y: 20 });
+
+        // Slam words up into view and keep them there
+        gsap.to(wordInners, {
+            y: '0%', duration: 0.9, ease: 'power4.out', stagger: 0.08
+        });
+        if (body) gsap.to(body, { opacity: 1, y: 0, duration: 0.8, delay: 0.35, ease: 'expo.out' });
+        if (divider) gsap.fromTo(divider, { width: 0 }, { width: '80px', duration: 0.7, delay: 0.2, ease: 'power3.out' });
+        if (numEl) gsap.fromTo(numEl, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5, ease: 'power3.out' });
+
+        // Update progress rail
+        document.querySelectorAll('.br-progress-tick').forEach((t, ti) => {
+            t.classList.toggle('active', ti === idx);
+        });
+        const counter = document.getElementById('br-chapter-counter');
+        if (counter) counter.textContent = `${String(idx + 1).padStart(2, '0')} / 04`;
+    }
+
+    // Create ONE big pinned section that covers all 4 chapters
+    // 4 chapters × 200vh each = 800vh of scroll distance
     ScrollTrigger.create({
         trigger: '#brutalist-act',
         start: 'top top',
-        end: '+=1000%', // 4 chapters, pin for 1000vh so they HOLD much longer
-        snap: 1 / 3, // Snap to each chapter
+        end: '+=800%',
         pin: true,
+        onEnter: () => activateChapter(0),
         onUpdate: (self) => {
-            // self.progress goes from 0 to 1
-            // Convert to chapter index (0, 1, 2, 3)
-            let idx = Math.min(3, Math.floor(self.progress * 4));
-            
-            if (idx !== currentCh) {
-                // Fade out old
-                if (currentCh >= 0) {
-                    const oldEl = document.getElementById(chapters[currentCh].id);
-                    const oldWords = oldEl.querySelectorAll('.br-word');
-                    const oldBody = oldEl.querySelector('.br-body');
-                    
-                    gsap.to(oldWords, { y: '-110%', duration: 0.5, ease: 'power4.in', stagger: 0.04, overwrite: true });
-                    if (oldBody) gsap.to(oldBody, { opacity: 0, y: -10, duration: 0.4, ease: 'power2.in', overwrite: true });
-                    gsap.to(oldEl, { 
-                        opacity: 0, 
-                        duration: 0.4,
-                        overwrite: true,
-                        onComplete: () => oldEl.classList.remove('active-ch') 
-                    });
-                }
-                
-                // Fade in new
-                const newEl = document.getElementById(chapters[idx].id);
-                newEl.classList.add('active-ch');
-                const newWords = newEl.querySelectorAll('.br-word');
-                const newBody = newEl.querySelector('.br-body');
-                const newDivider = newEl.querySelector('.br-divider');
-                const newNumEl = newEl.querySelector('.br-chapter-num');
-
-                // Switch WebGL Shader chapter
-                switchBrutalistChapter(chapters[idx].chIdx);
-
-                // Update UI Rail
-                document.querySelectorAll('.br-progress-tick').forEach((t, ti) => {
-                    t.classList.toggle('active', ti === idx);
-                });
-                const chNum = String(idx + 1).padStart(2, '0');
-                const counter = document.getElementById('br-chapter-counter');
-                if (counter) counter.textContent = `${chNum} / 04`;
-
-                // Kill any running fade-out tweens on the new element so it doesn't vanish!
-                gsap.killTweensOf(newEl);
-                if (newBody) gsap.killTweensOf(newBody);
-                
-                // Ensure container is fully visible
-                gsap.set(newEl, { opacity: 1 });
-                if (newBody) gsap.set(newBody, { opacity: 1, y: 0 });
-                
-                // GSAP Typography Slam
-                gsap.killTweensOf(newWords);
-                gsap.fromTo(newWords, { y: '110%' }, {
-                    y: '0%', duration: 0.85, ease: 'power4.out', stagger: 0.07, overwrite: true
-                });
-
-                if (newNumEl) gsap.fromTo(newNumEl, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6, ease: 'power3.out' });
-                
-                if (newBody) gsap.fromTo(newBody, 
-                    { opacity: 0, y: 20 }, 
-                    { opacity: 1, y: 0, duration: 1.0, delay: 0.3, ease: 'expo.out', overwrite: true }
-                );
-                
-                if (newDivider) {
-                    gsap.fromTo(newDivider, { width: 0 }, { width: '80px', duration: 0.7, delay: 0.2, ease: 'power3.out' });
-                }
-                
-                gsap.to(newEl, { opacity: 1, duration: 0.5, ease: 'power2.out' });
-
-                currentCh = idx;
+            // Determine which of the 4 chapters is active based on scroll progress
+            const idx = Math.min(3, Math.floor(self.progress * 4));
+            // Only re-trigger when chapter changes
+            const counter = document.getElementById('br-chapter-counter');
+            const currentLabel = counter ? counter.textContent : '01 / 04';
+            const expectedLabel = `${String(idx + 1).padStart(2, '0')} / 04`;
+            if (currentLabel !== expectedLabel) {
+                activateChapter(idx);
             }
         }
     });

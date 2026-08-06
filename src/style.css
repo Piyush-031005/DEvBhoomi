@@ -5,7 +5,9 @@
   --c-cyan: #00ffff;
   --c-gold: #cfb53b;
   --c-warm: #f5f0e8;
+  --c-fog: rgba(255,255,255,0.45);
 
+  --f-brand: 'Bebas Neue', sans-serif;
   --f-editorial: 'Cormorant Garamond', serif;
   --f-condensed: 'Syne', sans-serif;
   --f-hero: 'Cormorant Garamond', serif;
@@ -196,23 +198,28 @@ body {
 /* Each word of the headline animates in independently */
 .br-headline {
   font-family: var(--f-condensed);
-  font-size: clamp(5rem, 13vw, 16rem);
+  font-size: clamp(3.5rem, 9vw, 11rem);
   font-weight: 800;
-  line-height: 0.85;
+  line-height: 0.9;
   text-transform: uppercase;
   letter-spacing: -0.02em;
   display: flex;
   flex-wrap: wrap;
-  gap: 0 0.2em;
-  overflow: hidden;
+  gap: 0 0.15em;
+  /* NO overflow hidden — it clips the words as they slide up */
 }
 
 .br-word {
   display: inline-block;
-  margin-right: 0.15em;
+  overflow: hidden; /* clip container clips each word individually */
   color: var(--c-polar);
+}
+
+/* Inner span that animates — wraps content to allow clip */
+.br-word-inner {
+  display: block;
   transform: translateY(110%);
-  transition: none; /* GSAP handles this */
+  transition: none;
 }
 
 .br-word.outline {
@@ -288,7 +295,17 @@ body {
   backdrop-filter: blur(8px);
 }
 
-.br-topbar-brand { font-family: var(--f-brand); font-size: 1.5rem; font-weight: 800; letter-spacing: 0.2em; color: #ffffff; text-transform: uppercase; }
+.br-topbar-brand {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 400;
+  letter-spacing: 0.35em;
+  color: #ffffff;
+  text-transform: uppercase;
+  /* Subtle red underline accent */
+  border-bottom: 2px solid var(--c-red);
+  padding-bottom: 1px;
+}
 
 .br-topbar-right {
   display: flex;
