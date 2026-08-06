@@ -20,7 +20,7 @@ float hash(vec2 p) {
     return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-// 2D Noise
+// 2D Noise for smooth liquid displacement
 float noise(vec2 p) {
     vec2 i = floor(p);
     vec2 f = fract(p);
@@ -38,74 +38,62 @@ float noise(vec2 p) {
 // MAIN COMPOSITOR
 // ============================================================
 void main() {
+    // 1. Maintain Aspect Ratio (Assume roughly 16:9 screen)
     vec2 uv = vUv;
+    vec2 p = uv * 2.0 - 1.0;
     
-    // 1. Calculate Distortion (Liquid / RGB Split) based on Scroll & Hover
+    // 2. Smooth Liquid Displacement
     // Mouse distance for liquid ripple
     float dist = distance(uv, uMouse);
-    float ripple = sin(dist * 20.0 - uTime * 5.0) * 0.02 * exp(-dist * 5.0) * uHover;
+    float ripple = sin(dist * 10.0 - uTime * 2.0) * 0.03 * exp(-dist * 4.0) * uHover;
     
-    // Scroll distortion using noise
-    float n = noise(uv * 10.0 + uTime * 0.5) * 0.05 * abs(uScrollVelocity);
+    // Scroll distortion using large-scale noise (organic flow)
+    float scrollWarp = noise(uv * 3.0 + uTime * 0.2) * 0.1 * abs(uScrollVelocity);
     
-    // Total displacement
-    vec2 disp = vec2(ripple + n, ripple - n);
+    // Add a very subtle continuous breathing warp
+    float breath = noise(uv * 2.0 - uTime * 0.1) * 0.01;
     
-    // RGB Split amount
-    float split = 0.02 * uHover + 0.05 * abs(uScrollVelocity);
+    // Total smooth displacement
+    vec2 disp = vec2(ripple + scrollWarp + breath, -ripple - scrollWarp + breath);
     
-    // 2. Sample Textures with Displacement
-    vec4 tex1, tex2, tex3, tex4;
+    // 3. Sample Textures (NO RGB SPLIT)
+    vec2 finalUV = uv + disp;
+    // Clamp to avoid edge wrapping
+    finalUV = clamp(finalUV, 0.001, 0.999);
     
-    // Red Channel (Offset -split)
-    float r1 = texture2D(tImg1, uv + disp - vec2(split, 0.0)).r;
-    float r2 = texture2D(tImg2, uv + disp - vec2(split, 0.0)).r;
-    float r3 = texture2D(tImg3, uv + disp - vec2(split, 0.0)).r;
-    float r4 = texture2D(tImg4, uv + disp - vec2(split, 0.0)).r;
+    vec4 tex1 = texture2D(tImg1, finalUV);
+    vec4 tex2 = texture2D(tImg2, finalUV);
+    vec4 tex3 = texture2D(tImg3, finalUV);
+    vec4 tex4 = texture2D(tImg4, finalUV);
     
-    // Green Channel (Center)
-    float g1 = texture2D(tImg1, uv + disp).g;
-    float g2 = texture2D(tImg2, uv + disp).g;
-    float g3 = texture2D(tImg3, uv + disp).g;
-    float g4 = texture2D(tImg4, uv + disp).g;
-    
-    // Blue Channel (Offset +split)
-    float b1 = texture2D(tImg1, uv + disp + vec2(split, 0.0)).b;
-    float b2 = texture2D(tImg2, uv + disp + vec2(split, 0.0)).b;
-    float b3 = texture2D(tImg3, uv + disp + vec2(split, 0.0)).b;
-    float b4 = texture2D(tImg4, uv + disp + vec2(split, 0.0)).b;
-    
-    tex1 = vec4(r1, g1, b1, 1.0);
-    tex2 = vec4(r2, g2, b2, 1.0);
-    tex3 = vec4(r3, g3, b3, 1.0);
-    tex4 = vec4(r4, g4, b4, 1.0);
-    
-    // 3. Select Chapter
+    // 4. Smooth Crossfade Transition (Interpolate based on uScrollVelocity or just use hard cut since GSAP fades opacity)
     vec4 finalTex = tex1;
     if (uChapter == 1) finalTex = tex2;
     else if (uChapter == 2) finalTex = tex3;
     else if (uChapter == 3) finalTex = tex4;
     
-    // 4. Color Grading (High Contrast Brutalist Cyan/Red Filter)
-    // Convert to grayscale for contrast map
-    float gray = dot(finalTex.rgb, vec3(0.299, 0.587, 0.114));
+    // 5. Premium Color Grading (Sky Blue & Gold Theme)
+    // Desaturate slightly and map darks to rich blacks
+    float luminance = dot(finalTex.rgb, vec3(0.299, 0.587, 0.114));
     
-    // Map darks to deep red/black, highlights to cyan/white
-    vec3 grade1 = mix(vec3(0.05, 0.0, 0.05), vec3(0.9, 0.1, 0.1), smoothstep(0.0, 0.4, gray));
-    vec3 grade2 = mix(grade1, vec3(0.0, 1.0, 1.0), smoothstep(0.4, 0.8, gray)); // Cyan highlights
-    vec3 grade3 = mix(grade2, vec3(1.0), smoothstep(0.8, 1.0, gray));
+    // Cinematic contrast
+    vec3 grade = mix(vec3(0.02, 0.03, 0.05), finalTex.rgb, smoothstep(0.0, 0.8, luminance + 0.2));
     
-    // Blend original with stylized grade
-    vec3 finalColor = mix(finalTex.rgb, grade3, 0.5 + uHover * 0.3);
+    // Subtle dual-tone tint: Sky Blue shadows, Gold highlights
+    vec3 shadowTint = vec3(0.0, 0.75, 1.0) * 0.1; // Sky blue
+    vec3 highlightTint = vec3(1.0, 0.84, 0.0) * 0.1; // Gold
     
+    grade += shadowTint * (1.0 - luminance);
+    grade += highlightTint * luminance;
+    
+    // 6. Polish
     // Add cinematic grain
-    float grain = hash(uv * uTime) * 0.05;
-    finalColor += grain;
+    float grain = hash(uv * uTime) * 0.03;
+    grade += grain;
     
-    // Vignette
-    float vig = length(uv - 0.5) * 2.0;
-    finalColor *= smoothstep(1.5, 0.5, vig);
+    // Smooth Vignette
+    float vig = length(uv - 0.5) * 1.5;
+    grade *= smoothstep(1.2, 0.2, vig);
     
-    // Fade to black if intro not ready or opacity is low
-    gl_FragColor = vec4(finalColor, uOpacity);
+    gl_FragColor = vec4(grade, uOpacity);
 }
