@@ -315,6 +315,13 @@ let brutalistReady = false;
     // Full-screen plane at z=10 (camera at z=22, FOV=60 → visible area ≈ 27.7 × 15.6 units)
     const geom = new THREE.PlaneGeometry(30, 17, 1, 1);
 
+    // Load textures for chapters
+    const tLoader = new THREE.TextureLoader();
+    const tex1 = tLoader.load('/img1.jpeg');
+    const tex2 = tLoader.load('/img2.jpeg');
+    const tex3 = tLoader.load('/img3.jpeg');
+    const tex4 = tLoader.load('/smoking-man.jpeg'); // Fallback for missing img4
+    
     brutalistMaterial = new THREE.ShaderMaterial({
         uniforms: {
             uTime: { value: 0 },
@@ -323,7 +330,11 @@ let brutalistReady = false;
             uIntroProgress: { value: 0 }, // 0 to 1 for the Awakening
             uMouse: { value: new THREE.Vector2(0.5, 0.5) },
             uHover: { value: 0 }, // 0 to 1 smooth
-            uScrollVelocity: { value: 0 }
+            uScrollVelocity: { value: 0 },
+            tImg1: { value: tex1 },
+            tImg2: { value: tex2 },
+            tImg3: { value: tex3 },
+            tImg4: { value: tex4 }
         },
         vertexShader:   brutalistVertexShader,
         fragmentShader: brutalistFragmentShader,
@@ -556,7 +567,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (oldBody) gsap.to(oldBody, { opacity: 0, y: -10, duration: 0.4, ease: 'power2.in', overwrite: true });
                     gsap.to(oldEl, { 
                         opacity: 0, 
-                        duration: 0.4, 
+                        duration: 0.4,
+                        overwrite: true,
                         onComplete: () => oldEl.classList.remove('active-ch') 
                     });
                 }
@@ -580,6 +592,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 const counter = document.getElementById('br-chapter-counter');
                 if (counter) counter.textContent = `${chNum} / 04`;
 
+                // Kill any running fade-out tweens on the new element so it doesn't vanish!
+                gsap.killTweensOf(newEl);
+                if (newBody) gsap.killTweensOf(newBody);
+                
                 // Ensure container is fully visible
                 gsap.set(newEl, { opacity: 1 });
                 if (newBody) gsap.set(newBody, { opacity: 1, y: 0 });

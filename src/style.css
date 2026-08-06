@@ -208,7 +208,8 @@ body {
 }
 
 .br-word {
-  display: block;
+  display: inline-block;
+  margin-right: 0.15em;
   color: var(--c-polar);
   transform: translateY(110%);
   transition: none; /* GSAP handles this */
