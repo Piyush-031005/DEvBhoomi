@@ -41,54 +41,91 @@ export function initDistrictMap() {
     controls.autoRotate = true;
     controls.autoRotateSpeed = 0.5;
 
-    // LIGHTING - Strong lighting for the solid stone
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    // LIGHTING - Shaded Relief (High Contrast, Low Angle)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3); // Very low ambient to allow deep shadows
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
-    dirLight.position.set(-20, 100, 50); 
+    const dirLight = new THREE.DirectionalLight(0xffffff, 3.5); // Intense main light
+    dirLight.position.set(-80, 40, 80); // Grazing angle to highlight bump map ridges
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 2048;
     dirLight.shadow.mapSize.height = 2048;
     scene.add(dirLight);
 
-    const redRimLight = new THREE.DirectionalLight(0xff0000, 3.5);
-    redRimLight.position.set(60, 40, -30); 
+    const redRimLight = new THREE.DirectionalLight(0xff4444, 1.5);
+    redRimLight.position.set(80, 20, -50); // Low angle back rim light
     scene.add(redRimLight);
 
-    const blueRimLight = new THREE.DirectionalLight(0x4466ff, 1.5);
-    blueRimLight.position.set(-60, 40, 30); 
+    const blueRimLight = new THREE.DirectionalLight(0x4488ff, 1.0);
+    blueRimLight.position.set(-80, 20, -50); 
     scene.add(blueRimLight);
 
-    // THEMATIC MATERIALS
+    // --- PROCEDURAL TERRAIN TEXTURE ---
+    function generateTerrainTexture() {
+        const size = 512;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, size, size);
+        
+        // Draw 50,000 overlapping soft ellipses to create organic cloudy heightmap
+        for(let i=0; i<50000; i++) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.15})`;
+            const w = Math.random() * 15 + 2;
+            const h = Math.random() * 15 + 2;
+            ctx.beginPath();
+            ctx.ellipse(Math.random() * size, Math.random() * size, w, h, Math.random() * Math.PI, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(4, 4); // Scale the terrain frequency
+        return texture;
+    }
+    
+    const terrainTexture = generateTerrainTexture();
+
+    // THEMATIC MATERIALS (Photorealistic Shaded Relief)
     const materials = {
         himalayas: new THREE.MeshStandardMaterial({
-            color: 0xffffff,          // Pure white snow
-            emissive: 0x002244,       // Icy blue faint glow
-            roughness: 0.8,
-            metalness: 0.1,
-            flatShading: true
+            color: 0xe0e8f0,          // Glacier White/Blue
+            bumpMap: terrainTexture,
+            bumpScale: 1.5,           // Extreme bumps for himalayas
+            roughness: 0.9,
+            metalness: 0.1
         }),
         plains: new THREE.MeshStandardMaterial({
-            color: 0x00bcd4,          // Cyan/Water color
-            emissive: 0x003344,       // Deep water glow
-            roughness: 0.2,           // Smoother for water feel
-            metalness: 0.6,
-            flatShading: true
+            color: 0x1a3c40,          // Deep Teal / River valley
+            bumpMap: terrainTexture,
+            bumpScale: 0.2,           // Very subtle bumps for plains
+            roughness: 0.7,
+            metalness: 0.2
         }),
         capital: new THREE.MeshStandardMaterial({
-            color: 0xffb300,          // Golden/Amber
-            emissive: 0x442200,       // Warm glow
-            roughness: 0.6,
-            metalness: 0.3,
-            flatShading: true
+            color: 0x8b5a2b,          // Bronze / Earthy Gold
+            bumpMap: terrainTexture,
+            bumpScale: 0.8,           // Medium bumps
+            roughness: 0.8,
+            metalness: 0.15
+        }),
+        temples: new THREE.MeshStandardMaterial({
+            color: 0x6b2b2b,          // Deep Crimson/Earth
+            bumpMap: terrainTexture,
+            bumpScale: 1.0,
+            roughness: 0.85,
+            metalness: 0.1
         }),
         default: new THREE.MeshStandardMaterial({
-            color: 0x888888,          // Darker grey stone so it doesn't overpower the others
-            emissive: 0x330000,       // Deep red theme glow
+            color: 0x4a5d4e,          // Earthy Forest Green
+            bumpMap: terrainTexture,
+            bumpScale: 0.8,
             roughness: 0.9,
-            metalness: 0.1,
-            flatShading: true
+            metalness: 0.1
         })
     };
 
@@ -194,70 +231,6 @@ export function initDistrictMap() {
                     const materialToUse = materials[category] || materials['default'];
                     const mesh = new THREE.Mesh(geometry, materialToUse);
                     
-                    // --- SPAWN CUSTOM 3D MODELS ON TOP ---
-                    // We spawn them at Z = baseHeight so they sit on top of the map
-                    const spawnAreaX = (localMaxX - localMinX) * 0.5;
-                    const spawnAreaY = (localMaxY - localMinY) * 0.5;
-                    const cx = (localMinX + localMaxX) / 2;
-                    const cy = (localMinY + localMaxY) / 2;
-
-                    if (category === 'himalayas') {
-                        // Spawn 4-6 Snowy Peaks
-                        const numPeaks = 4 + Math.floor(Math.random() * 3);
-                        for(let i=0; i<numPeaks; i++) {
-                            const peakHeight = 8 + Math.random() * 12;
-                            const peakGeo = new THREE.ConeGeometry(2 + Math.random()*2, peakHeight, 4);
-                            peakGeo.rotateX(Math.PI / 2); // Point upwards in Z
-                            const peakMesh = new THREE.Mesh(peakGeo, materials.himalayas);
-                            peakMesh.position.set(
-                                cx + (Math.random() - 0.5) * spawnAreaX,
-                                cy + (Math.random() - 0.5) * spawnAreaY,
-                                baseHeight + peakHeight/2
-                            );
-                            mesh.add(peakMesh);
-                        }
-                    } 
-                    else if (category === 'capital') {
-                        // Spawn 3-5 Modern Buildings/Schools
-                        const numBuildings = 3 + Math.floor(Math.random() * 3);
-                        for(let i=0; i<numBuildings; i++) {
-                            const bHeight = 4 + Math.random() * 4;
-                            const bGeo = new THREE.BoxGeometry(1.5, 1.5, bHeight);
-                            const bMesh = new THREE.Mesh(bGeo, materials.capital);
-                            bMesh.position.set(
-                                cx + (Math.random() - 0.5) * spawnAreaX * 0.6,
-                                cy + (Math.random() - 0.5) * spawnAreaY * 0.6,
-                                baseHeight + bHeight/2
-                            );
-                            bMesh.rotation.z = Math.random() * Math.PI;
-                            mesh.add(bMesh);
-                        }
-                    }
-                    else if (category === 'temples' || name.toLowerCase().includes('haridwar')) {
-                        // Spawn 2-3 Temples (Box base + Cone roof)
-                        const numTemples = 2 + Math.floor(Math.random() * 2);
-                        for(let i=0; i<numTemples; i++) {
-                            const tGroup = new THREE.Group();
-                            // Base
-                            const baseGeo = new THREE.BoxGeometry(2, 2, 2);
-                            const baseMesh = new THREE.Mesh(baseGeo, materials.default);
-                            baseMesh.position.z = 1;
-                            tGroup.add(baseMesh);
-                            // Roof
-                            const roofGeo = new THREE.ConeGeometry(1.8, 2.5, 4);
-                            roofGeo.rotateX(Math.PI / 2);
-                            const roofMesh = new THREE.Mesh(roofGeo, materials.capital); // Golden roof
-                            roofMesh.position.z = 3;
-                            tGroup.add(roofMesh);
-
-                            tGroup.position.set(
-                                cx + (Math.random() - 0.5) * spawnAreaX * 0.7,
-                                cy + (Math.random() - 0.5) * spawnAreaY * 0.7,
-                                baseHeight
-                            );
-                            mesh.add(tGroup);
-                        }
-                    }
                     mesh.castShadow = true;
                     mesh.receiveShadow = true;
                     mesh.userData = { 
