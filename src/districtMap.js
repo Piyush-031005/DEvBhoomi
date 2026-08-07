@@ -538,7 +538,7 @@ export function initDistrictMap() {
 
         if (isMapLoaded) {
             raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(districtMeshes);
+            const intersects = raycaster.intersectObjects(districtMeshes, false); // ONLY intersect main district meshes, not their children!
 
             if (intersects.length > 0) {
                 const object = intersects[0].object;
