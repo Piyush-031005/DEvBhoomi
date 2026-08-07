@@ -231,6 +231,88 @@ export function initDistrictMap() {
                     const materialToUse = materials[category] || materials['default'];
                     const mesh = new THREE.Mesh(geometry, materialToUse);
                     
+                    // --- PREMIUM 3D DATA VIZ ELEMENTS ---
+                    const spawnAreaX = (localMaxX - localMinX) * 0.5;
+                    const spawnAreaY = (localMaxY - localMinY) * 0.5;
+                    const cx = (localMinX + localMaxX) / 2;
+                    const cy = (localMinY + localMaxY) / 2;
+
+                    if (category === 'himalayas') {
+                        // Jagged Crystal Mountains
+                        const numPeaks = 5 + Math.floor(Math.random() * 4);
+                        for(let i=0; i<numPeaks; i++) {
+                            const peakHeight = 8 + Math.random() * 15;
+                            // Icosahedron heavily scaled on Y creates a jagged, premium crystal mountain look
+                            const peakGeo = new THREE.IcosahedronGeometry(2 + Math.random()*1.5, 0); 
+                            peakGeo.scale(1, 1, peakHeight / 2); // Scale along Z since map is rotated
+                            const peakMat = new THREE.MeshStandardMaterial({
+                                color: 0xffffff, emissive: 0x224466, roughness: 0.2, metalness: 0.8, flatShading: true
+                            });
+                            const peakMesh = new THREE.Mesh(peakGeo, peakMat);
+                            peakMesh.position.set(
+                                cx + (Math.random() - 0.5) * spawnAreaX,
+                                cy + (Math.random() - 0.5) * spawnAreaY,
+                                baseHeight + peakHeight/4
+                            );
+                            peakMesh.rotation.z = Math.random() * Math.PI;
+                            mesh.add(peakMesh);
+                        }
+                    } 
+                    else if (category === 'capital') {
+                        // Data Spikes / Modern Architecture (Thin glowing bars)
+                        const numBuildings = 15 + Math.floor(Math.random() * 10);
+                        for(let i=0; i<numBuildings; i++) {
+                            const bHeight = 2 + Math.random() * 10;
+                            const bGeo = new THREE.BoxGeometry(0.3, 0.3, bHeight);
+                            const bMat = new THREE.MeshStandardMaterial({
+                                color: 0xffaa00, emissive: 0xff5500, roughness: 0.1, metalness: 0.9
+                            });
+                            const bMesh = new THREE.Mesh(bGeo, bMat);
+                            bMesh.position.set(
+                                cx + (Math.random() - 0.5) * spawnAreaX * 0.6,
+                                cy + (Math.random() - 0.5) * spawnAreaY * 0.6,
+                                baseHeight + bHeight/2
+                            );
+                            mesh.add(bMesh);
+                        }
+                    }
+                    else if (category === 'plains' && name.toLowerCase().includes('haridwar')) {
+                        // Winding Glowing River
+                        const curvePoints = [];
+                        for(let i=0; i<5; i++) {
+                            curvePoints.push(new THREE.Vector3(
+                                cx + (i/5 - 0.5) * spawnAreaX * 1.5,
+                                cy + Math.sin(i * 1.5) * spawnAreaY * 0.5,
+                                baseHeight + 0.5
+                            ));
+                        }
+                        const riverCurve = new THREE.CatmullRomCurve3(curvePoints);
+                        const riverGeo = new THREE.TubeGeometry(riverCurve, 20, 0.6, 8, false);
+                        const riverMat = new THREE.MeshStandardMaterial({
+                            color: 0x00ffff, emissive: 0x0088ff, roughness: 0.1, metalness: 1.0
+                        });
+                        const riverMesh = new THREE.Mesh(riverGeo, riverMat);
+                        mesh.add(riverMesh);
+                    }
+                    else if (category === 'temples') {
+                        // Stylized Floating Shrines (Golden octahedrons)
+                        const numTemples = 2 + Math.floor(Math.random() * 2);
+                        for(let i=0; i<numTemples; i++) {
+                            const tGeo = new THREE.OctahedronGeometry(2, 0);
+                            tGeo.scale(1, 1, 1.5);
+                            const tMat = new THREE.MeshStandardMaterial({
+                                color: 0xffdd00, emissive: 0x884400, roughness: 0.3, metalness: 0.8, flatShading: true
+                            });
+                            const tMesh = new THREE.Mesh(tGeo, tMat);
+                            tMesh.position.set(
+                                cx + (Math.random() - 0.5) * spawnAreaX * 0.7,
+                                cy + (Math.random() - 0.5) * spawnAreaY * 0.7,
+                                baseHeight + 3 // Floating slightly
+                            );
+                            mesh.add(tMesh);
+                        }
+                    }
+
                     mesh.castShadow = true;
                     mesh.receiveShadow = true;
                     mesh.userData = { 
