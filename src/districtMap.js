@@ -42,29 +42,27 @@ export function initDistrictMap() {
     controls.autoRotate = true;
     controls.autoRotateSpeed = 0.5;
 
-    // LIGHTING - Optimised for Glass Red (warm key, cool fill, crimson rim)
-    const ambientLight = new THREE.AmbientLight(0xffd0d0, 0.4); // Warm red ambient
+    // LIGHTING - Optimised for Candy-Apple Lacquer (crisp key + warm rim for sheen)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 4.0); // Strong white key light
-    dirLight.position.set(-80, 60, 80); // Grazing angle to exaggerate glass bumps
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    scene.add(dirLight);
+    // Strong top-left key light — creates the bright specular highlight on glossy surface
+    const keyLight = new THREE.DirectionalLight(0xffffff, 5.0);
+    keyLight.position.set(-60, 120, 60);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 2048;
+    keyLight.shadow.mapSize.height = 2048;
+    scene.add(keyLight);
 
-    const crimsonRimLight = new THREE.DirectionalLight(0xff0022, 3.0); // Strong red rim glow
-    crimsonRimLight.position.set(80, 10, -60);
-    scene.add(crimsonRimLight);
+    // Warm red fill from below-right — gives the deep glow inside the red
+    const fillLight = new THREE.DirectionalLight(0xff2200, 2.5);
+    fillLight.position.set(80, -20, 40);
+    scene.add(fillLight);
 
-    const pinkFillLight = new THREE.DirectionalLight(0xff88aa, 1.5); // Soft pink fill
-    pinkFillLight.position.set(-60, 30, 60); 
-    scene.add(pinkFillLight);
-
-    // Point light from below for that internal glow effect on glass
-    const glowLight = new THREE.PointLight(0xff0000, 2.0, 200);
-    glowLight.position.set(0, -20, 10);
-    scene.add(glowLight);
+    // Cool back rim light — separates the map from background with a bright edge
+    const rimLight = new THREE.DirectionalLight(0xffffff, 3.0);
+    rimLight.position.set(0, 80, -80);
+    scene.add(rimLight);
 
     // --- PROCEDURAL TERRAIN TEXTURE ---
     function generateTerrainTexture() {
@@ -96,55 +94,51 @@ export function initDistrictMap() {
     
     const terrainTexture = generateTerrainTexture();
 
-    // UNIFIED GLASS RED MATERIAL (inspired by glossy gem / raspberry glass)
-    const glassRedMat = new THREE.MeshPhysicalMaterial({
-        color: 0xbb0000,          // Deep Ruby Red
-        emissive: 0x330000,       // Inner glow
-        emissiveIntensity: 0.4,
-        roughness: 0.05,          // Almost mirror-smooth
-        metalness: 0.0,
-        transmission: 0.3,        // Slight glass transparency
-        thickness: 4.0,           // Glass depth for refraction
-        clearcoat: 1.0,           // Full clearcoat gloss (like wet nail polish)
-        clearcoatRoughness: 0.05, // Very glossy clearcoat
-        ior: 1.8,                 // High refractive index (denser than water, gem-like)
+    // CANDY-APPLE LACQUER RED — Shiny, solid, like polished red ceramic/glass
+    // NO transmission (transmission makes it absorb the dark background)
+    const lacquerRedMat = new THREE.MeshPhysicalMaterial({
+        color: 0xcc0011,          // Vivid candy-apple red
+        emissive: 0x440000,       // Deep inner warmth
+        emissiveIntensity: 0.3,
+        roughness: 0.04,          // Extremely glossy — mirror-like surface
+        metalness: 0.0,           // Not metallic, more like lacquer/ceramic
+        transmission: 0.0,        // OPAQUE — no dark-background bleed
+        clearcoat: 1.0,           // Full clearcoat for wet/glossy look
+        clearcoatRoughness: 0.03, // Smooth clearcoat = crisp specular highlights
         bumpMap: terrainTexture,
-        bumpScale: 0.8
+        bumpScale: 0.6            // Subtle organic terrain surface detail
     });
 
-    // Slightly different tones for visual variety while keeping the Red Glass theme
-    const glassDarkRedMat = new THREE.MeshPhysicalMaterial({
-        color: 0x880000,
-        emissive: 0x220000,
-        emissiveIntensity: 0.3,
-        roughness: 0.08,
+    // Darker variant for shadowed/Himalayan districts
+    const lacquerDarkRedMat = new THREE.MeshPhysicalMaterial({
+        color: 0x990008,          // Deeper burgundy-red
+        emissive: 0x330000,
+        emissiveIntensity: 0.25,
+        roughness: 0.06,
         metalness: 0.0,
-        transmission: 0.2,
-        thickness: 3.0,
+        transmission: 0.0,
         clearcoat: 1.0,
-        clearcoatRoughness: 0.08,
-        ior: 1.7,
+        clearcoatRoughness: 0.05,
         bumpMap: terrainTexture,
-        bumpScale: 1.2
+        bumpScale: 1.0            // More bump for mountain districts
     });
 
     const materials = {
-        himalayas: glassDarkRedMat,
-        plains: glassRedMat,
-        capital: glassRedMat,
-        temples: glassDarkRedMat,
-        default: glassRedMat
+        himalayas: lacquerDarkRedMat,
+        plains: lacquerRedMat,
+        capital: lacquerRedMat,
+        temples: lacquerDarkRedMat,
+        default: lacquerRedMat
     };
 
     const highlightMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0xff4466,          // Bright hot pink/red when hovered
-        emissive: 0xff0033,
-        emissiveIntensity: 0.8,
-        roughness: 0.02,
+        color: 0xff5577,          // Bright hot pink highlight on hover
+        emissive: 0xff1133,
+        emissiveIntensity: 1.0,
+        roughness: 0.03,
         metalness: 0.0,
         clearcoat: 1.0,
-        clearcoatRoughness: 0.02,
-        transmission: 0.1
+        clearcoatRoughness: 0.02
     });
 
     const lineMaterial = new THREE.LineBasicMaterial({ 
@@ -241,86 +235,73 @@ export function initDistrictMap() {
                     const materialToUse = materials[category] || materials['default'];
                     const mesh = new THREE.Mesh(geometry, materialToUse);
                     
-                    // --- PREMIUM 3D DATA VIZ ELEMENTS ---
+                    // --- SUBTLE TERRAIN MARKERS (not cartoonish, very small) ---
                     const spawnAreaX = (localMaxX - localMinX) * 0.5;
                     const spawnAreaY = (localMaxY - localMinY) * 0.5;
                     const cx = (localMinX + localMaxX) / 2;
                     const cy = (localMinY + localMaxY) / 2;
 
                     if (category === 'himalayas') {
-                        // Jagged Crystal Mountains
-                        const numPeaks = 5 + Math.floor(Math.random() * 4);
+                        // Subtle white snow-cap markers — very thin, small cones
+                        const numPeaks = 6 + Math.floor(Math.random() * 4);
+                        const snowMat = new THREE.MeshPhysicalMaterial({
+                            color: 0xffffff, emissive: 0xaabbcc,
+                            emissiveIntensity: 0.3, roughness: 0.3, metalness: 0.0,
+                            clearcoat: 0.8
+                        });
                         for(let i=0; i<numPeaks; i++) {
-                            const peakHeight = 8 + Math.random() * 15;
-                            // Icosahedron heavily scaled on Y creates a jagged, premium crystal mountain look
-                            const peakGeo = new THREE.IcosahedronGeometry(2 + Math.random()*1.5, 0); 
-                            peakGeo.scale(1, 1, peakHeight / 2); // Scale along Z since map is rotated
-                            const peakMat = new THREE.MeshStandardMaterial({
-                                color: 0xffffff, emissive: 0x224466, roughness: 0.2, metalness: 0.8, flatShading: true
-                            });
-                            const peakMesh = new THREE.Mesh(peakGeo, peakMat);
+                            // Very slim, short — like tiny pins on a map
+                            const h = 1.5 + Math.random() * 2.0;
+                            const r = 0.2 + Math.random() * 0.3;
+                            const peakGeo = new THREE.ConeGeometry(r, h, 5);
+                            peakGeo.rotateX(Math.PI / 2);
+                            const peakMesh = new THREE.Mesh(peakGeo, snowMat);
                             peakMesh.position.set(
-                                cx + (Math.random() - 0.5) * spawnAreaX,
-                                cy + (Math.random() - 0.5) * spawnAreaY,
-                                baseHeight + peakHeight/4
+                                cx + (Math.random() - 0.5) * spawnAreaX * 0.9,
+                                cy + (Math.random() - 0.5) * spawnAreaY * 0.9,
+                                baseHeight + h / 2
                             );
-                            peakMesh.rotation.z = Math.random() * Math.PI;
                             mesh.add(peakMesh);
                         }
-                    } 
+                    }
                     else if (category === 'capital') {
-                        // Data Spikes / Modern Architecture (Thin glowing bars)
-                        const numBuildings = 15 + Math.floor(Math.random() * 10);
+                        // Very thin golden city spikes — like data viz pins
+                        const numBuildings = 12 + Math.floor(Math.random() * 8);
+                        const cityMat = new THREE.MeshPhysicalMaterial({
+                            color: 0xffcc44, emissive: 0xaa6600,
+                            emissiveIntensity: 0.6, roughness: 0.1, metalness: 0.5,
+                            clearcoat: 1.0
+                        });
                         for(let i=0; i<numBuildings; i++) {
-                            const bHeight = 2 + Math.random() * 10;
-                            const bGeo = new THREE.BoxGeometry(0.3, 0.3, bHeight);
-                            const bMat = new THREE.MeshStandardMaterial({
-                                color: 0xffaa00, emissive: 0xff5500, roughness: 0.1, metalness: 0.9
-                            });
-                            const bMesh = new THREE.Mesh(bGeo, bMat);
+                            const h = 1.0 + Math.random() * 4.0;
+                            const bGeo = new THREE.BoxGeometry(0.15, 0.15, h);
+                            const bMesh = new THREE.Mesh(bGeo, cityMat);
                             bMesh.position.set(
-                                cx + (Math.random() - 0.5) * spawnAreaX * 0.6,
-                                cy + (Math.random() - 0.5) * spawnAreaY * 0.6,
-                                baseHeight + bHeight/2
+                                cx + (Math.random() - 0.5) * spawnAreaX * 0.5,
+                                cy + (Math.random() - 0.5) * spawnAreaY * 0.5,
+                                baseHeight + h / 2
                             );
                             mesh.add(bMesh);
                         }
                     }
-                    else if (category === 'plains' && name.toLowerCase().includes('haridwar')) {
-                        // Winding Glowing River
+                    else if (name.toLowerCase().includes('haridwar')) {
+                        // Slim glowing river ribbon — very thin and organic
                         const curvePoints = [];
-                        for(let i=0; i<5; i++) {
+                        for(let i=0; i<8; i++) {
                             curvePoints.push(new THREE.Vector3(
-                                cx + (i/5 - 0.5) * spawnAreaX * 1.5,
-                                cy + Math.sin(i * 1.5) * spawnAreaY * 0.5,
-                                baseHeight + 0.5
+                                cx + (i/7 - 0.5) * spawnAreaX * 1.8,
+                                cy + Math.sin(i * 0.9) * spawnAreaY * 0.35,
+                                baseHeight + 0.3
                             ));
                         }
                         const riverCurve = new THREE.CatmullRomCurve3(curvePoints);
-                        const riverGeo = new THREE.TubeGeometry(riverCurve, 20, 0.6, 8, false);
-                        const riverMat = new THREE.MeshStandardMaterial({
-                            color: 0x00ffff, emissive: 0x0088ff, roughness: 0.1, metalness: 1.0
+                        const riverGeo = new THREE.TubeGeometry(riverCurve, 30, 0.18, 6, false);
+                        const riverMat = new THREE.MeshPhysicalMaterial({
+                            color: 0x88ddff, emissive: 0x0055aa,
+                            emissiveIntensity: 0.8, roughness: 0.0, metalness: 0.0,
+                            clearcoat: 1.0, transmission: 0.4, ior: 1.33
                         });
-                        const riverMesh = new THREE.Mesh(riverGeo, riverMat);
-                        mesh.add(riverMesh);
-                    }
-                    else if (category === 'temples') {
-                        // Stylized Floating Shrines (Golden octahedrons)
-                        const numTemples = 2 + Math.floor(Math.random() * 2);
-                        for(let i=0; i<numTemples; i++) {
-                            const tGeo = new THREE.OctahedronGeometry(2, 0);
-                            tGeo.scale(1, 1, 1.5);
-                            const tMat = new THREE.MeshStandardMaterial({
-                                color: 0xffdd00, emissive: 0x884400, roughness: 0.3, metalness: 0.8, flatShading: true
-                            });
-                            const tMesh = new THREE.Mesh(tGeo, tMat);
-                            tMesh.position.set(
-                                cx + (Math.random() - 0.5) * spawnAreaX * 0.7,
-                                cy + (Math.random() - 0.5) * spawnAreaY * 0.7,
-                                baseHeight + 3 // Floating slightly
-                            );
-                            mesh.add(tMesh);
-                        }
+                        mesh.add(new THREE.Mesh(riverGeo, riverMat));
                     }
 
                     mesh.castShadow = true;
