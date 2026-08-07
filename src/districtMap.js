@@ -34,13 +34,22 @@ export function initDistrictMap() {
     // CONTROLS
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2.2; // Don't go below ground
-    controls.minDistance = 30;
-    controls.maxDistance = 200;
-    // Auto rotation (slow)
+    controls.dampingFactor = 0.07;
+    controls.maxPolarAngle = Math.PI / 2.1;
+    controls.minDistance = 25;
+    controls.maxDistance = 220;
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.5;
+    controls.autoRotateSpeed = 0.4;
+
+    // Fix: pause autoRotate while user is dragging
+    let autoRotateTimer = null;
+    renderer.domElement.addEventListener('pointerdown', () => {
+        controls.autoRotate = false;
+        if (autoRotateTimer) clearTimeout(autoRotateTimer);
+    });
+    renderer.domElement.addEventListener('pointerup', () => {
+        autoRotateTimer = setTimeout(() => { controls.autoRotate = true; }, 3000);
+    });
 
     // LIGHTING - Optimised for Candy-Apple Lacquer (crisp key + warm rim for sheen)
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
@@ -154,6 +163,74 @@ export function initDistrictMap() {
     const centerOffset = new THREE.Vector3();
     let isMapLoaded = false;
     const districtMeshes = [];
+
+    // ============================================================
+    // SNOW PARTICLE SYSTEM (sits above the map)
+    // ============================================================
+    const snowCount = 1800;
+    const snowPositions = new Float32Array(snowCount * 3);
+    const snowVelocities = new Float32Array(snowCount); // Y velocity per flake
+    const snowSpread = 80;
+
+    for (let i = 0; i < snowCount; i++) {
+        snowPositions[i * 3 + 0] = (Math.random() - 0.5) * snowSpread * 2;
+        snowPositions[i * 3 + 1] = (Math.random() - 0.5) * snowSpread * 1.2;
+        snowPositions[i * 3 + 2] = Math.random() * 30 + 3; // above map
+        snowVelocities[i] = 0.02 + Math.random() * 0.06;   // fall speed
+    }
+
+    const snowGeo = new THREE.BufferGeometry();
+    snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPositions, 3));
+
+    const snowMat = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 0.35,
+        transparent: true,
+        opacity: 0.7,
+        depthWrite: false,
+        sizeAttenuation: true
+    });
+
+    const snowParticles = new THREE.Points(snowGeo, snowMat);
+    scene.add(snowParticles);
+
+    function animateSnow() {
+        const pos = snowGeo.attributes.position.array;
+        for (let i = 0; i < snowCount; i++) {
+            pos[i * 3 + 2] -= snowVelocities[i]; // fall downward (Z axis since map is flat)
+            pos[i * 3 + 0] += Math.sin(Date.now() * 0.0005 + i) * 0.008; // gentle drift
+            // Reset snowflake when it falls below the map
+            if (pos[i * 3 + 2] < -5) {
+                pos[i * 3 + 2] = 35;
+                pos[i * 3 + 0] = (Math.random() - 0.5) * snowSpread * 2;
+                pos[i * 3 + 1] = (Math.random() - 0.5) * snowSpread * 1.2;
+            }
+        }
+        snowGeo.attributes.position.needsUpdate = true;
+    }
+
+    // ============================================================
+    // ATMOSPHERIC LAYERS (fog planes for depth)
+    // ============================================================
+    function createFogPlane(y, opacity) {
+        const fogGeo = new THREE.PlaneGeometry(200, 100);
+        const fogMat = new THREE.MeshBasicMaterial({
+            color: 0x0a0505,
+            transparent: true,
+            opacity,
+            depthWrite: false,
+            side: THREE.DoubleSide
+        });
+        const fog = new THREE.Mesh(fogGeo, fogMat);
+        fog.rotation.x = Math.PI / 2;
+        fog.position.set(0, y, 1.5);
+        return fog;
+    }
+
+    // Subtle dark fog layers at different heights for depth
+    scene.add(createFogPlane(-25, 0.25));
+    scene.add(createFogPlane(-15, 0.15));
+
 
     // GEOJSON PARSING & EXTRUSION
     // We loaded uttarakhand_districts.json in public folder
@@ -341,6 +418,61 @@ export function initDistrictMap() {
     // RAYCASTER FOR HOVER
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2(-1, -1);
+    // ============================================================
+    // DISTRICT DNA PARTICLE BURST
+    // Each district has a unique identity color when hovered
+    // ============================================================
+    const dnaColors = {
+        pithoragarh: 0x00e5ff,   // Glacier cyan
+        chamoli:     0xffffff,   // Pure ice white
+        uttarkashi:  0x88ddff,   // Cold blue
+        rudraprayag: 0xff2244,   // Sacred crimson
+        haridwar:    0xffaa00,   // Ganga gold / fire
+        dehradun:    0xffcc44,   // Warm amber city
+        nainital:    0x44aaff,   // Lake blue
+        almora:      0xff6688,   // Copper pink folk art
+        bageshwar:   0xff44cc,   // Temple magenta
+        champawat:   0xffdd00,   // Ancient gold
+        tehri:       0x44ff88,   // Dam green-teal
+        pauri:       0xaa44ff,   // Forest purple
+        'udham singh nagar': 0xd4b886, // Terai sand
+    };
+
+    function spawnDNAParticles(mesh) {
+        const name = (mesh.userData.name || '').toLowerCase();
+        let color = 0xffffff;
+        for (const key of Object.keys(dnaColors)) {
+            if (name.includes(key)) { color = dnaColors[key]; break; }
+        }
+
+        const count = 80;
+        const burstGeo = new THREE.BufferGeometry();
+        const positions = new Float32Array(count * 3);
+        const mx = mesh.position.x, my = mesh.position.y, mz = mesh.position.z + 3;
+
+        for (let i = 0; i < count; i++) {
+            positions[i*3]   = mx + (Math.random() - 0.5) * 20;
+            positions[i*3+1] = my + (Math.random() - 0.5) * 12;
+            positions[i*3+2] = mz + Math.random() * 8;
+        }
+
+        burstGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const burstMat = new THREE.PointsMaterial({
+            color, size: 0.5, transparent: true, opacity: 0.9,
+            depthWrite: false, sizeAttenuation: true
+        });
+        const burst = new THREE.Points(burstGeo, burstMat);
+        scene.add(burst);
+
+        // Animate opacity out and remove
+        gsap.to(burstMat, { opacity: 0, duration: 1.8, ease: 'power2.in',
+            onComplete: () => { scene.remove(burst); burstGeo.dispose(); burstMat.dispose(); }
+        });
+    }
+
+    // ============================================================
+    // ANIMATE LOOP
+    // ============================================================
     let hoveredMesh = null;
     
     // UI Elements
@@ -401,13 +533,16 @@ export function initDistrictMap() {
                     hoveredMesh = object;
                     // Apply highlight and lift up slightly
                     hoveredMesh.material = highlightMaterial;
-                    gsap.to(hoveredMesh.position, { z: 1.5, duration: 0.4, ease: 'back.out(1.5)' });
+                    gsap.to(hoveredMesh.position, { z: 2.5, duration: 0.5, ease: 'back.out(2)' });
                     
                     // Update UI
                     uiName.textContent = hoveredMesh.userData.name;
                     uiElev.textContent = hoveredMesh.userData.elevation;
                     uiArea.textContent = hoveredMesh.userData.area;
                     uiPanel.classList.add('visible');
+
+                    // District DNA — unique hover particle burst
+                    spawnDNAParticles(hoveredMesh);
                 }
             } else {
                 if (hoveredMesh) {
@@ -419,6 +554,7 @@ export function initDistrictMap() {
             }
         }
 
+        animateSnow();
         renderer.render(scene, camera);
     }
     
