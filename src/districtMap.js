@@ -8,7 +8,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { openDistrictView } from './districtView.js';
+import { districtData } from './districtData.js';
 
 export function initDistrictMap() {
     const container = document.getElementById('district-map-container');
@@ -103,33 +105,40 @@ export function initDistrictMap() {
     
     const terrainTexture = generateTerrainTexture();
 
-    // CANDY-APPLE LACQUER RED — Shiny, solid, like polished red ceramic/glass
-    // NO transmission (transmission makes it absorb the dark background)
+    // GLASS UI — Transparent glowing red glass 
     const lacquerRedMat = new THREE.MeshPhysicalMaterial({
-        color: 0xcc0011,          // Vivid candy-apple red
-        emissive: 0x440000,       // Deep inner warmth
-        emissiveIntensity: 0.3,
-        roughness: 0.04,          // Extremely glossy — mirror-like surface
-        metalness: 0.0,           // Not metallic, more like lacquer/ceramic
-        transmission: 0.0,        // OPAQUE — no dark-background bleed
-        clearcoat: 1.0,           // Full clearcoat for wet/glossy look
-        clearcoatRoughness: 0.03, // Smooth clearcoat = crisp specular highlights
+        color: 0xff4444,          // Light tint
+        emissive: 0x550011,       // Deep inner glow
+        emissiveIntensity: 0.2,
+        roughness: 0.1,           // Very smooth
+        metalness: 0.1,           
+        transmission: 0.9,        // High transmission = GLASS!
+        opacity: 1.0,
+        transparent: true,
+        ior: 1.5,                 // Glass index of refraction
+        thickness: 2.0,           // Refract the terrain underneath
+        clearcoat: 1.0,           // Glossy reflections
+        clearcoatRoughness: 0.05, 
         bumpMap: terrainTexture,
-        bumpScale: 0.6            // Subtle organic terrain surface detail
+        bumpScale: 0.2
     });
 
     // Darker variant for shadowed/Himalayan districts
     const lacquerDarkRedMat = new THREE.MeshPhysicalMaterial({
-        color: 0x990008,          // Deeper burgundy-red
+        color: 0xff0022,          
         emissive: 0x330000,
-        emissiveIntensity: 0.25,
-        roughness: 0.06,
-        metalness: 0.0,
-        transmission: 0.0,
+        emissiveIntensity: 0.15,
+        roughness: 0.15,
+        metalness: 0.1,
+        transmission: 0.85,
+        opacity: 1.0,
+        transparent: true,
+        ior: 1.5,
+        thickness: 2.5,
         clearcoat: 1.0,
-        clearcoatRoughness: 0.05,
+        clearcoatRoughness: 0.1,
         bumpMap: terrainTexture,
-        bumpScale: 1.0            // More bump for mountain districts
+        bumpScale: 0.4
     });
 
     const materials = {
@@ -141,19 +150,24 @@ export function initDistrictMap() {
     };
 
     const highlightMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0xff5577,          // Bright hot pink highlight on hover
-        emissive: 0xff1133,
-        emissiveIntensity: 1.0,
-        roughness: 0.03,
-        metalness: 0.0,
+        color: 0xffffff,          // White highlight on hover
+        emissive: 0x00ffff,       // Cyan glow
+        emissiveIntensity: 1.5,
+        roughness: 0.1,
+        metalness: 0.1,
+        transmission: 0.8,
+        opacity: 1.0,
+        transparent: true,
+        ior: 1.5,
+        thickness: 2.0,
         clearcoat: 1.0,
-        clearcoatRoughness: 0.02
+        clearcoatRoughness: 0.05
     });
 
     const lineMaterial = new THREE.LineBasicMaterial({ 
-        color: 0xff0000,          // Bright red edges
+        color: 0x00ffff,          // Glowing cyan glass edges
         transparent: true, 
-        opacity: 0.8              // Highly visible lines
+        opacity: 0.6              
     });
 
     const mapGroup = new THREE.Group();
@@ -383,12 +397,24 @@ export function initDistrictMap() {
 
                     mesh.castShadow = true;
                     mesh.receiveShadow = true;
+                    let matchedKey = 'default';
+                    if (lowerName.includes('udham')) matchedKey = 'udham singh nagar';
+                    else if (lowerName.includes('tehri')) matchedKey = 'tehri garhwal';
+                    else if (lowerName.includes('pauri')) matchedKey = 'pauri garhwal';
+                    else {
+                        for (const key in districtData) {
+                            if (lowerName.includes(key)) { matchedKey = key; break; }
+                        }
+                    }
+                    
+                    const actualData = districtData[matchedKey] || districtData['default'];
+
                     mesh.userData = { 
-                        name: name,
+                        name: actualData.name,
                         originalHeight: baseHeight,
                         originalMat: mesh.material,
-                        area: Math.floor(800 + Math.random() * 4000) + ' sq km', // Mock data
-                        elevation: Math.floor(1000 + Math.random() * 5000) + ' m'
+                        area: actualData.area, 
+                        elevation: actualData.altitude
                     };
 
                     mapGroup.add(mesh);
@@ -434,6 +460,38 @@ export function initDistrictMap() {
             isMapLoaded = true;
         })
         .catch(err => console.error("Error loading GeoJSON map data", err));
+
+    // LOAD REAL 3D TERRAIN UNDERNEATH
+    const loader = new GLTFLoader();
+    loader.load('/models/snowy_mountain_v2_-_terrain.glb', (gltf) => {
+        const terrainModel = gltf.scene;
+        
+        // Scale and position the terrain to fit exactly under the glass map
+        terrainModel.scale.set(0.8, 0.8, 0.8);
+        terrainModel.position.set(-5, -15, -5); 
+        // Adjust these offsets to center it beneath the glass outline
+        
+        // Add a cool blue/cyan tint to the terrain material to match the Devbhoomi aesthetic
+        terrainModel.traverse((child) => {
+            if (child.isMesh && child.material) {
+                child.material = new THREE.MeshStandardMaterial({
+                    color: 0x113355, 
+                    roughness: 0.8,
+                    metalness: 0.2,
+                    bumpMap: terrainTexture,
+                    bumpScale: 2.0
+                });
+            }
+        });
+        
+        // Animate terrain entry
+        terrainModel.position.y = -50;
+        gsap.to(terrainModel.position, { y: -15, duration: 2.5, ease: 'power3.out', delay: 0.5 });
+        
+        scene.add(terrainModel);
+    }, undefined, (error) => {
+        console.error("Error loading terrain model", error);
+    });
 
     // RAYCASTER FOR HOVER
     const raycaster = new THREE.Raycaster();
