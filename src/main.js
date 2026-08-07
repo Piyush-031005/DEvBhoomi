@@ -14,6 +14,44 @@ import atmosFragmentShader    from './shaders/atmosFragment.glsl?raw';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// --- Custom Cursor Logic ---
+const cursor = document.getElementById('custom-cursor');
+const cursorRing = document.getElementById('custom-cursor-ring');
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
+let ringX = mouseX;
+let ringY = mouseY;
+
+window.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
+function updateCursor() {
+  if (cursor && cursorRing) {
+    cursor.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
+    // Lerp the ring for smooth trailing
+    ringX += (mouseX - ringX) * 0.15;
+    ringY += (mouseY - ringY) * 0.15;
+    cursorRing.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+  }
+  requestAnimationFrame(updateCursor);
+}
+requestAnimationFrame(updateCursor);
+
+// Add hover state to body when hovering interactive elements
+document.addEventListener('mouseover', (e) => {
+  if (e.target.closest('button, a, .district-info-panel, .map-ui')) {
+    document.body.classList.add('hover-active');
+  }
+});
+document.addEventListener('mouseout', (e) => {
+  if (e.target.closest('button, a, .district-info-panel, .map-ui')) {
+    document.body.classList.remove('hover-active');
+  }
+});
+
+
 // Initialize Lenis
 const lenis = new Lenis({
   duration: 1.5,

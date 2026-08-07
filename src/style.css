@@ -994,3 +994,75 @@ body {
   color: var(--district-color);
   line-height: 1;
 }
+
+/* ============================================================ */
+/* POLISH — Custom Cursor & Breathing Animation                 */
+/* ============================================================ */
+
+/* Hide default cursor on map container */
+#district-map-container {
+  cursor: none !important;
+}
+#district-map-container canvas {
+  cursor: none !important;
+}
+
+/* Custom Cursor Dot */
+.custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: difference;
+  transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+              height 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+              background 0.3s ease;
+}
+
+/* Custom Cursor Ring (Trails slightly behind) */
+.custom-cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+              height 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+              border-color 0.3s ease, transform 0.1s ease-out;
+}
+
+/* Cursor Hover State */
+body.hover-active .custom-cursor {
+  width: 6px;
+  height: 6px;
+  background: var(--district-color, #ff2244);
+}
+body.hover-active .custom-cursor-ring {
+  width: 60px;
+  height: 60px;
+  border-color: var(--district-color, #ff2244);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Map UI Panel Breathing Glow Animation */
+@keyframes breathingGlow {
+  0% { box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), 0 0 10px var(--district-color); }
+  50% { box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), 0 0 25px var(--district-color); }
+  100% { box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), 0 0 10px var(--district-color); }
+}
+
+.district-info-panel.visible .di-box {
+  animation: breathingGlow 3s infinite ease-in-out;
+  border-color: var(--district-color);
+}
