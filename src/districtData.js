@@ -2,127 +2,239 @@ export const districtData = {
     "pithoragarh": {
         name: "Pithoragarh",
         hindi: "पिथौरागढ़",
-        color: "#00d2ff", // Light Blue
-        theme: "Snow & Himalayas",
-        altitude: "1,645 m",
+        color: "#00e5ff",
+        theme: "Border · Glaciers · Ancient Trade",
+        altitude: "1,814 m",
         area: "7,090 sq km",
-        description: "Known as the 'Little Kashmir', Pithoragarh is the easternmost district of Uttarakhand. It is a spectacular gateway to the Himalayas, offering breathtaking views of the snow-capped peaks like Nanda Devi and Panchachuli."
+        population: "4,83,439",
+        highestPeak: "Panchachuli (6,904 m)",
+        majorRiver: "Kali (Sharda)",
+        folkDance: "Jhora-Chanchri",
+        nationalPark: "Askot Wildlife Sanctuary",
+        bestSeason: "Apr – Jun / Sep – Nov",
+        craft: "Woollen shawls, Pashmina",
+        soul: "Geometry · Wind · Ice · Military · Trade Routes",
+        description: "The easternmost district, known as 'Little Kashmir'. Gateway to Nepal and Tibet via ancient trade routes. Home to the magnificent Panchachuli Peaks and the Kali River forming the Nepal border."
     },
     "haridwar": {
         name: "Haridwar",
         hindi: "हरिद्वार",
-        color: "#ffd700", // Gold
-        theme: "Spiritual Energy",
+        color: "#ffaa00",
+        theme: "Flow · Fire · Faith · Footsteps",
         altitude: "314 m",
         area: "2,360 sq km",
-        description: "One of the holiest cities in India, Haridwar is where the Ganges river exits the Himalayan foothills. It is famous for its vibrant Ganga Aarti and as a site for the Kumbh Mela."
+        population: "18,90,422",
+        highestPeak: "Shiwalik Hills (~700 m)",
+        majorRiver: "Ganga (Ganges)",
+        folkDance: "Langvir Nritya",
+        nationalPark: "Rajaji National Park",
+        bestSeason: "Oct – Mar",
+        craft: "Brass idols, Rudraksha malas",
+        soul: "Orange particles · Ripple patterns · Flame shaders · Faith",
+        description: "Where the Ganga exits the Himalayas and touches the plains. Site of the sacred Har Ki Pauri ghat and the world-famous Ganga Aarti. One of four Kumbh Mela sites in India, attracting millions of pilgrims."
     },
     "dehradun": {
         name: "Dehradun",
         hindi: "देहरादून",
-        color: "#ff5e00", // Vibrant Orange
-        theme: "Capital & Education",
-        altitude: "630 m",
+        color: "#ffcc44",
+        theme: "Capital · Education · Forest",
+        altitude: "640 m",
         area: "3,088 sq km",
-        description: "The capital city nestled in the Doon Valley, famous for its elite boarding schools, military academies, and picturesque landscapes connecting the plains to the mountains."
+        population: "16,96,694",
+        highestPeak: "Mussoorie Ridge (~2,000 m)",
+        majorRiver: "Asan, Bindal, Song",
+        folkDance: "Barada Nati",
+        nationalPark: "Rajaji National Park",
+        bestSeason: "Mar – Jun / Sep – Nov",
+        craft: "Lacquerware, Basketry",
+        soul: "Golden grid · Order · Institutions · Amber warmth",
+        description: "Capital of Uttarakhand, nestled in the Doon Valley between the Ganga and Yamuna. Home to elite schools (Doon School, Welham), IMA, ONGC, and FRI. Famous for its basmati rice and litchi orchards."
     },
     "almora": {
         name: "Almora",
         hindi: "अल्मोड़ा",
-        color: "#ff007f", // Deep Pink
-        theme: "Cultural Heritage",
+        color: "#ff6688",
+        theme: "Aipan · Copper · Folk Rhythm",
         altitude: "1,638 m",
-        area: "3,139 sq km",
-        description: "The cultural heart of the Kumaon region. Almora is known for its rich heritage, ancient temples, unique handicrafts, and a historic cantonment surrounded by pine and fir trees."
+        area: "3,144 sq km",
+        population: "6,22,506",
+        highestPeak: "Binsar (2,412 m)",
+        majorRiver: "Kosi (Kausiki), Ramganga",
+        folkDance: "Jhora, Chhapeli, Choliya",
+        nationalPark: "Binsar Wildlife Sanctuary",
+        bestSeason: "Mar – Jun / Sep – Nov",
+        craft: "Aipan folk art, Copper utensils, Angora wool",
+        soul: "Procedural Aipan patterns · Copper textures · Circular motion",
+        description: "Cultural heart of the Kumaon hills. Famous for Aipan GI-certified ritual folk art. Swami Vivekananda and Edwin Evans visited here. Known for Kasar Devi ridge — a spiritual vortex described by Carl Jung."
     },
     "nainital": {
         name: "Nainital",
         hindi: "नैनीताल",
-        color: "#00ff73", // Deep Green
-        theme: "Lakes & Forests",
+        color: "#44aaff",
+        theme: "Lake · Fog · Hills · Reflection",
         altitude: "2,084 m",
         area: "4,251 sq km",
-        description: "The Lake District of India. Built around the eye-shaped Naini Lake, this charming hill station is engulfed by deeply forested mountains and offers a magical colonial-era vibe."
+        population: "9,54,605",
+        highestPeak: "Naina Peak (2,615 m)",
+        majorRiver: "Naini Lake → Balaya River",
+        folkDance: "Hurka Baul",
+        nationalPark: "Jim Corbett National Park",
+        bestSeason: "Mar – Jun / Sep – Oct",
+        craft: "Candles, Wax works, Walnut furniture",
+        soul: "Water ripple shader · Fog · Lake reflections · Colonial blue",
+        description: "The 'Lake District of India'. Built around the eye-shaped Naini Lake, believed to be one of the 64 Shakti Peethas. Jim Corbett National Park — India's oldest — lies within Nainital district."
     },
     "rudraprayag": {
         name: "Rudraprayag",
         hindi: "रुद्रप्रयाग",
-        color: "#ff003c", // Crimson Red
-        theme: "Divine Convergence",
+        color: "#ff2244",
+        theme: "Confluence · Kedarnath · Sacred Fire",
         altitude: "895 m",
         area: "1,984 sq km",
-        description: "Home to the revered Kedarnath temple, Rudraprayag marks the spectacular confluence of the Alaknanda and Mandakini rivers, pulsing with spiritual energy."
+        population: "2,42,285",
+        highestPeak: "Kedarnath Peak (6,940 m)",
+        majorRiver: "Alaknanda + Mandakini confluence",
+        folkDance: "Pandav Nritya",
+        nationalPark: "Kedarnath Wildlife Sanctuary",
+        bestSeason: "May – Jun / Sep – Oct",
+        craft: "Temple bells, Woollen textiles",
+        soul: "Deep red pulse · Sacred confluence lines · Divine crimson",
+        description: "Where the Alaknanda and Mandakini rivers merge. Home to the Kedarnath Jyotirlinga — one of the twelve most sacred Shiva shrines in India at 3,583 m altitude. A district of deep spiritual resonance."
     },
     "udham singh nagar": {
         name: "Udham Singh Nagar",
         hindi: "ऊधम सिंह नगर",
-        color: "#d4b886", // Beige/Sand
-        theme: "Agriculture & Industry",
-        altitude: "200 m",
-        area: "2,542 sq km",
-        description: "The food bowl of Uttarakhand. A bustling industrial and agricultural hub in the Terai region, characterized by its flat plains and rapid economic growth."
+        color: "#d4b886",
+        theme: "Terai · Agriculture · Industry",
+        altitude: "244 m",
+        area: "2,908 sq km",
+        population: "16,48,902",
+        highestPeak: "Shiwalik foothills (~800 m)",
+        majorRiver: "Sharda, Kichha, Dhela",
+        folkDance: "Rana Tharu tribal dances",
+        nationalPark: "Jim Corbett (border)",
+        bestSeason: "Oct – Mar",
+        craft: "Tharu tribal weaving, Sugar industry",
+        soul: "Flat golden plains · Agricultural amber · Terai earth",
+        description: "The food bowl and industrial engine of Uttarakhand. Covers the fertile Terai belt. Named after freedom fighter Udham Singh. Houses Pantnagar University — Asia's first agricultural university."
     },
     "chamoli": {
         name: "Chamoli",
         hindi: "चमोली",
-        color: "#ffffff", // Ice White
-        theme: "Glaciers & Meadows",
+        color: "#ffffff",
+        theme: "Verticality · Ice · Silence · Altitude",
         altitude: "1,300 m",
         area: "8,030 sq km",
-        description: "A district of epic proportions. Home to the legendary Valley of Flowers, Badrinath temple, and some of the highest, most imposing glacial peaks in the Indian Himalayas."
+        population: "3,91,605",
+        highestPeak: "Nanda Devi (7,816 m) — India's highest",
+        majorRiver: "Alaknanda, Birhi Ganga",
+        folkDance: "Ramman (UNESCO Intangible Heritage)",
+        nationalPark: "Nanda Devi & Valley of Flowers (UNESCO World Heritage)",
+        bestSeason: "May – Jun / Sep – Oct",
+        craft: "Pashmina shawls, Handmade woollens",
+        soul: "Giant white space · Vertical typography · Falling snow · Cold silence",
+        description: "Home to India's highest peak — Nanda Devi. Contains the legendary Valley of Flowers National Park and Badrinath, one of the Char Dham. The Ramman festival here is UNESCO-listed intangible cultural heritage."
     },
     "uttarkashi": {
         name: "Uttarkashi",
         hindi: "उत्तरकाशी",
-        color: "#00e5ff", // Cyan
-        theme: "Origin of Rivers",
+        color: "#88ddff",
+        theme: "Source · Glaciers · Rivers Born",
         altitude: "1,158 m",
         area: "8,016 sq km",
-        description: "The source of the holy Ganga (Gangotri) and Yamuna (Yamunotri) rivers. It features rugged terrain, high-altitude trekking routes, and pristine spiritual isolation."
+        population: "3,30,086",
+        highestPeak: "Bandarpunch (6,316 m)",
+        majorRiver: "Bhagirathi (Ganga origin), Yamuna origin",
+        folkDance: "Thadya, Jhumaila",
+        nationalPark: "Gangotri National Park, Govind Pashu Vihar",
+        bestSeason: "May – Jun / Sep – Oct",
+        craft: "Handloomed woollens, Medicinal herbs",
+        soul: "Cold cyan · Glacier silence · River birth · Ice cracks",
+        description: "Birthplace of two of India's holiest rivers — the Ganga at Gangotri and the Yamuna at Yamunotri. Gangotri Glacier is one of the largest in the Himalayas. Nehru Institute of Mountaineering is based here."
     },
     "pauri garhwal": {
         name: "Pauri Garhwal",
         hindi: "पौड़ी गढ़वाल",
-        color: "#aa00ff", // Purple
-        theme: "Panoramic Mountains",
+        color: "#aa44ff",
+        theme: "Panorama · Forest · Temple Silhouettes",
         altitude: "1,814 m",
         area: "5,329 sq km",
-        description: "Offers the most expansive and stunning panoramic views of the snow-clad Himalayan peaks. It is a serene landscape dotted with dense forests and ancient temples."
+        population: "6,87,271",
+        highestPeak: "Kedarkantha visible range",
+        majorRiver: "Alaknanda, Nayar",
+        folkDance: "Langvir Nritya, Chauphula",
+        nationalPark: "Jim Corbett (eastern zone)",
+        bestSeason: "Mar – Jun / Sep – Nov",
+        craft: "Ring (Ring Patti), Woollen rugs",
+        soul: "Purple forest depth · Temple silhouettes · Panoramic ridgelines",
+        description: "Birthplace of freedom fighter Veer Chandra Singh Garhwali. Offers the most sweeping Himalayan panorama in Uttarakhand, with over 20 snow-capped peaks visible from Pauri town including Nanda Devi and Trishul."
     },
     "tehri garhwal": {
         name: "Tehri Garhwal",
         hindi: "टिहरी गढ़वाल",
-        color: "#aaff00", // Lime Green
-        theme: "The Great Dam",
+        color: "#44ff88",
+        theme: "Dam · Reservoir · Submerged History",
         altitude: "1,750 m",
-        area: "3,680 sq km",
-        description: "Famous for the colossal Tehri Dam, the highest dam in India. The district offers a stunning contrast between massive engineering feats and pure natural beauty."
+        area: "4,080 sq km",
+        population: "6,18,931",
+        highestPeak: "Surkanda Devi (3,030 m)",
+        majorRiver: "Bhagirathi + Bhilangna → Tehri Reservoir",
+        folkDance: "Pandav Nritya, Thadya",
+        nationalPark: "Tehri Lake (largest artificial lake)",
+        bestSeason: "Apr – Jun / Sep – Oct",
+        craft: "Handloom weaving, Carved wooden items",
+        soul: "Teal-green water · Drowned history · Engineering + Nature",
+        description: "Site of the Tehri Dam — India's highest (260.5 m) and the Tehri Reservoir (52 sq km). The old town of Tehri lies submerged beneath the reservoir. Surroundings offer trekking, camping, and water sports."
     },
     "bageshwar": {
         name: "Bageshwar",
         hindi: "बागेश्वर",
-        color: "#ff00d4", // Magenta
-        theme: "Temple Valleys",
+        color: "#ff44cc",
+        theme: "Temple · Confluence · Himalayan Soul",
         altitude: "1,004 m",
         area: "2,246 sq km",
-        description: "Situated at the confluence of the Saryu and Gomti rivers, it is a land steeped in myth and legend, known for the ancient Bagnath Temple and access to the Pindari Glacier."
+        population: "2,59,898",
+        highestPeak: "Kafni Glacier peaks (~6,000 m)",
+        majorRiver: "Saryu + Gomti confluence",
+        folkDance: "Chhapeli, Jhora",
+        nationalPark: "Pindari Glacier trekking zone",
+        bestSeason: "Mar – Jun / Sep – Nov",
+        craft: "Aipan art, Woollen shawls",
+        soul: "Magenta temple glow · River confluence · Ancient stone",
+        description: "A sacred district where the Saryu and Gomti rivers meet at Bageshwar town. The ancient Bagnath Shiva temple is the district's spiritual center. Gateway to Pindari, Kafni and Sundardhunga glaciers."
     },
     "champawat": {
         name: "Champawat",
         hindi: "चम्पावत",
-        color: "#ffcc00", // Deep Yellow
-        theme: "Ancient History",
+        color: "#ffdd00",
+        theme: "Ancient Capital · Chand Dynasty · Stone",
         altitude: "1,615 m",
         area: "1,766 sq km",
-        description: "The ancient capital of the Chand dynasty. Champawat holds incredible historical significance with medieval architecture, intricate temples, and deeply rooted local folklore."
+        population: "2,59,648",
+        highestPeak: "Adjacent Pithoragarh peaks",
+        majorRiver: "Lohawati, Sarju",
+        folkDance: "Choliya, Jhora",
+        nationalPark: "Shuklaphanta (border zone)",
+        bestSeason: "Mar – Jun / Sep – Nov",
+        craft: "Stone carving, Copper work, Baleshwar temple architecture",
+        soul: "Deep yellow ancient gold · Medieval geometry · Stone carved data",
+        description: "Ancient capital of the Chand dynasty, rulers of Kumaon for centuries. The intricately carved Baleshwar temple complex dates to the 10th-12th century. Jim Corbett's famous man-eating leopard was from Champawat."
     },
     "default": {
         name: "Uttarakhand",
         hindi: "उत्तराखण्ड",
         color: "#ffffff",
-        theme: "Devbhoomi",
-        altitude: "---",
+        theme: "Devbhoomi — Land of the Gods",
+        altitude: "avg. 1,200 m",
         area: "53,483 sq km",
-        description: "Select a district to explore."
+        population: "1,00,86,292",
+        highestPeak: "Nanda Devi (7,816 m)",
+        majorRiver: "Ganga, Yamuna, Alaknanda",
+        folkDance: "Chholia, Jhora, Langvir",
+        nationalPark: "Jim Corbett, Valley of Flowers, Nanda Devi",
+        bestSeason: "Mar – Jun / Sep – Nov",
+        craft: "Aipan, Pashmina, Copper, Woollens",
+        soul: "Snow · Temple · River · Forest · Wind · Bell",
+        description: "The 27th state of India, formed 9 November 2000. 86% mountainous, 65% forested. Source of the Ganga and Yamuna. Home to Char Dham, two UNESCO World Heritage Sites, and infinite stories."
     }
 };

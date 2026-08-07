@@ -66,6 +66,17 @@ export function openDistrictView(districtKey) {
     document.getElementById('dv-desc').innerText = data.description;
     document.getElementById('dv-alt').innerText = data.altitude;
     document.getElementById('dv-area').innerText = data.area;
+    
+    // New fields
+    document.getElementById('dv-pop').innerText = data.population || '---';
+    document.getElementById('dv-peak').innerText = data.highestPeak || '---';
+    document.getElementById('dv-river').innerText = data.majorRiver || '---';
+    document.getElementById('dv-dance').innerText = data.folkDance || '---';
+    document.getElementById('dv-park').innerText = data.nationalPark || '---';
+    document.getElementById('dv-season').innerText = data.bestSeason || '---';
+    document.getElementById('dv-craft').innerText = data.craft || '---';
+    document.getElementById('dv-soul').innerText = data.soul || '---';
+
 
     // Set unique district color as CSS var + particle atmosphere
     overlay.style.setProperty('--district-color', data.color);
