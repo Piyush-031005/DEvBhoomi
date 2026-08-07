@@ -329,6 +329,37 @@
 
     </main>
 
-    <script type="module" src="/src/main.js"></script>
-  </body>
+    <!-- DISTRICT DYNAMIC VIEW (Initially Hidden) -->
+  <div id="district-view" class="district-overlay">
+    <div class="district-header">
+      <button id="back-to-map-btn" class="back-btn">
+        <span class="arrow">←</span> BACK TO MAP
+      </button>
+      <div class="district-hero-text">
+        <h1 id="dv-name">DISTRICT</h1>
+        <h2 id="dv-hindi">ज़िला</h2>
+      </div>
+    </div>
+    
+    <div class="district-content">
+      <div class="dv-left">
+        <h3 id="dv-theme">THEME</h3>
+        <p id="dv-desc">Description goes here...</p>
+      </div>
+      <div class="dv-right">
+        <div class="data-row">
+          <span class="data-label">ELEVATION</span>
+          <span class="data-value" id="dv-alt">0 m</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">AREA</span>
+          <span class="data-value" id="dv-area">0 sq km</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VITE MAIN JS -->
+  <script type="module" src="/src/main.js"></script>
+</body>
 </html>

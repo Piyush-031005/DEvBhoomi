@@ -853,6 +853,7 @@ body {
 
 .di-label {
   font-family: 'Syne', monospace;
+  font-family: 'Syne', monospace;
   font-size: 0.65rem;
   color: rgba(255, 255, 255, 0.4);
   letter-spacing: 0.1em;
@@ -863,4 +864,133 @@ body {
   font-size: 0.9rem;
   font-weight: 700;
   color: #fff;
+}
+
+/* ============================================================
+   DISTRICT DYNAMIC VIEW OVERLAY (Phase 2)
+   ============================================================ */
+.district-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #050101; /* Pure black base */
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 40px 60px;
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.8s cubic-bezier(0.87, 0, 0.13, 1), visibility 0.8s;
+  /* CSS Variables set dynamically via JS */
+  --district-color: #ffffff;
+}
+
+.district-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+  visibility: visible;
+}
+
+.district-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 40px;
+}
+
+.back-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-family: 'Syne', monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  padding: 12px 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 40px;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background: #fff;
+  color: #000;
+}
+
+.district-hero-text h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 8rem;
+  line-height: 0.8;
+  color: #fff;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.district-hero-text h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3rem;
+  color: var(--district-color);
+  margin: 0;
+  margin-top: -10px;
+}
+
+.district-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 40px;
+}
+
+.dv-left {
+  max-width: 600px;
+}
+
+.dv-left h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.2rem;
+  color: var(--district-color);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.dv-left p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+.dv-right {
+  display: flex;
+  gap: 60px;
+}
+
+.dv-right .data-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dv-right .data-label {
+  font-family: 'Syne', monospace;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.1em;
+}
+
+.dv-right .data-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 3rem;
+  color: var(--district-color);
+  line-height: 1;
 }

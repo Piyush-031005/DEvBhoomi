@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { openDistrictView } from './districtView.js';
 
 export function initDistrictMap() {
     const container = document.getElementById('district-map-container');
@@ -431,6 +432,24 @@ export function initDistrictMap() {
         renderer.render(scene, camera);
     }
     
+    // CLICK TO OPEN DISTRICT VIEW
+    window.addEventListener('click', () => {
+        if (hoveredMesh && isMapLoaded) {
+            // Find key by lowercasing the name
+            const key = hoveredMesh.userData.name.toLowerCase().replace(/ /g, ' '); // Keep spaces for keys like 'udham singh nagar'
+            // But wait, the name might be "Udham Singh Nagar" and key is "udham singh nagar".
+            // Let's just use strict lowercase match
+            let matchedKey = 'default';
+            // We can match it if it includes the name
+            if (key.includes('udham')) matchedKey = 'udham singh nagar';
+            else if (key.includes('tehri')) matchedKey = 'tehri garhwal';
+            else if (key.includes('pauri')) matchedKey = 'pauri garhwal';
+            else matchedKey = key;
+
+            openDistrictView(matchedKey);
+        }
+    });
+
     animate();
 
     // RESIZE
