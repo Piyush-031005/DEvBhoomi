@@ -42,24 +42,29 @@ export function initDistrictMap() {
     controls.autoRotate = true;
     controls.autoRotateSpeed = 0.5;
 
-    // LIGHTING - Shaded Relief (High Contrast, Low Angle)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3); // Very low ambient to allow deep shadows
+    // LIGHTING - Optimised for Glass Red (warm key, cool fill, crimson rim)
+    const ambientLight = new THREE.AmbientLight(0xffd0d0, 0.4); // Warm red ambient
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 3.5); // Intense main light
-    dirLight.position.set(-80, 40, 80); // Grazing angle to highlight bump map ridges
+    const dirLight = new THREE.DirectionalLight(0xffffff, 4.0); // Strong white key light
+    dirLight.position.set(-80, 60, 80); // Grazing angle to exaggerate glass bumps
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 2048;
     dirLight.shadow.mapSize.height = 2048;
     scene.add(dirLight);
 
-    const redRimLight = new THREE.DirectionalLight(0xff4444, 1.5);
-    redRimLight.position.set(80, 20, -50); // Low angle back rim light
-    scene.add(redRimLight);
+    const crimsonRimLight = new THREE.DirectionalLight(0xff0022, 3.0); // Strong red rim glow
+    crimsonRimLight.position.set(80, 10, -60);
+    scene.add(crimsonRimLight);
 
-    const blueRimLight = new THREE.DirectionalLight(0x4488ff, 1.0);
-    blueRimLight.position.set(-80, 20, -50); 
-    scene.add(blueRimLight);
+    const pinkFillLight = new THREE.DirectionalLight(0xff88aa, 1.5); // Soft pink fill
+    pinkFillLight.position.set(-60, 30, 60); 
+    scene.add(pinkFillLight);
+
+    // Point light from below for that internal glow effect on glass
+    const glowLight = new THREE.PointLight(0xff0000, 2.0, 200);
+    glowLight.position.set(0, -20, 10);
+    scene.add(glowLight);
 
     // --- PROCEDURAL TERRAIN TEXTURE ---
     function generateTerrainTexture() {
@@ -91,51 +96,55 @@ export function initDistrictMap() {
     
     const terrainTexture = generateTerrainTexture();
 
-    // THEMATIC MATERIALS (Photorealistic Shaded Relief)
+    // UNIFIED GLASS RED MATERIAL (inspired by glossy gem / raspberry glass)
+    const glassRedMat = new THREE.MeshPhysicalMaterial({
+        color: 0xbb0000,          // Deep Ruby Red
+        emissive: 0x330000,       // Inner glow
+        emissiveIntensity: 0.4,
+        roughness: 0.05,          // Almost mirror-smooth
+        metalness: 0.0,
+        transmission: 0.3,        // Slight glass transparency
+        thickness: 4.0,           // Glass depth for refraction
+        clearcoat: 1.0,           // Full clearcoat gloss (like wet nail polish)
+        clearcoatRoughness: 0.05, // Very glossy clearcoat
+        ior: 1.8,                 // High refractive index (denser than water, gem-like)
+        bumpMap: terrainTexture,
+        bumpScale: 0.8
+    });
+
+    // Slightly different tones for visual variety while keeping the Red Glass theme
+    const glassDarkRedMat = new THREE.MeshPhysicalMaterial({
+        color: 0x880000,
+        emissive: 0x220000,
+        emissiveIntensity: 0.3,
+        roughness: 0.08,
+        metalness: 0.0,
+        transmission: 0.2,
+        thickness: 3.0,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.08,
+        ior: 1.7,
+        bumpMap: terrainTexture,
+        bumpScale: 1.2
+    });
+
     const materials = {
-        himalayas: new THREE.MeshStandardMaterial({
-            color: 0xe0e8f0,          // Glacier White/Blue
-            bumpMap: terrainTexture,
-            bumpScale: 1.5,           // Extreme bumps for himalayas
-            roughness: 0.9,
-            metalness: 0.1
-        }),
-        plains: new THREE.MeshStandardMaterial({
-            color: 0x1a3c40,          // Deep Teal / River valley
-            bumpMap: terrainTexture,
-            bumpScale: 0.2,           // Very subtle bumps for plains
-            roughness: 0.7,
-            metalness: 0.2
-        }),
-        capital: new THREE.MeshStandardMaterial({
-            color: 0x8b5a2b,          // Bronze / Earthy Gold
-            bumpMap: terrainTexture,
-            bumpScale: 0.8,           // Medium bumps
-            roughness: 0.8,
-            metalness: 0.15
-        }),
-        temples: new THREE.MeshStandardMaterial({
-            color: 0x6b2b2b,          // Deep Crimson/Earth
-            bumpMap: terrainTexture,
-            bumpScale: 1.0,
-            roughness: 0.85,
-            metalness: 0.1
-        }),
-        default: new THREE.MeshStandardMaterial({
-            color: 0x4a5d4e,          // Earthy Forest Green
-            bumpMap: terrainTexture,
-            bumpScale: 0.8,
-            roughness: 0.9,
-            metalness: 0.1
-        })
+        himalayas: glassDarkRedMat,
+        plains: glassRedMat,
+        capital: glassRedMat,
+        temples: glassDarkRedMat,
+        default: glassRedMat
     };
 
-    const highlightMaterial = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        emissive: 0xff0000,       // Glowing red when hovered
-        roughness: 0.5,
-        metalness: 0.3,
-        flatShading: true
+    const highlightMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0xff4466,          // Bright hot pink/red when hovered
+        emissive: 0xff0033,
+        emissiveIntensity: 0.8,
+        roughness: 0.02,
+        metalness: 0.0,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.02,
+        transmission: 0.1
     });
 
     const lineMaterial = new THREE.LineBasicMaterial({ 
@@ -432,20 +441,28 @@ export function initDistrictMap() {
         renderer.render(scene, camera);
     }
     
-    // CLICK TO OPEN DISTRICT VIEW
-    window.addEventListener('click', () => {
-        if (hoveredMesh && isMapLoaded) {
-            // Find key by lowercasing the name
-            const key = hoveredMesh.userData.name.toLowerCase().replace(/ /g, ' '); // Keep spaces for keys like 'udham singh nagar'
-            // But wait, the name might be "Udham Singh Nagar" and key is "udham singh nagar".
-            // Let's just use strict lowercase match
+    // CLICK VS DRAG DETECTION
+    // Only open district view on a true stationary click, not after dragging the map.
+    let mouseDownX = 0, mouseDownY = 0;
+    const DRAG_THRESHOLD = 5; // pixels
+    
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+        mouseDownX = e.clientX;
+        mouseDownY = e.clientY;
+    });
+
+    renderer.domElement.addEventListener('pointerup', (e) => {
+        const dx = Math.abs(e.clientX - mouseDownX);
+        const dy = Math.abs(e.clientY - mouseDownY);
+        const isDrag = dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD;
+
+        if (!isDrag && hoveredMesh && isMapLoaded) {
+            const key = hoveredMesh.userData.name.toLowerCase();
             let matchedKey = 'default';
-            // We can match it if it includes the name
             if (key.includes('udham')) matchedKey = 'udham singh nagar';
             else if (key.includes('tehri')) matchedKey = 'tehri garhwal';
             else if (key.includes('pauri')) matchedKey = 'pauri garhwal';
             else matchedKey = key;
-
             openDistrictView(matchedKey);
         }
     });
