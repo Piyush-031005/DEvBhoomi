@@ -411,6 +411,26 @@ export function initDistrictMap() {
             
             // Adjust map rotation so North is up, and it lays flat
             mapGroup.rotation.x = -Math.PI / 2; // Lay flat
+            
+            // ── CINEMATIC ENTRY SEQUENCE ──
+            // Map starts invisible, then materializes from below with stagger
+            mapGroup.children.forEach(child => {
+                if (child.isMesh) {
+                    child.material = child.material.clone();
+                    child.material.transparent = true;
+                    child.material.opacity = 0;
+                    child.position.z -= 8; // Start sunken
+                }
+            });
+
+            const entryTl = gsap.timeline({ delay: 0.3 });
+            mapGroup.children.forEach((child, i) => {
+                if (child.isMesh) {
+                    entryTl.to(child.material, { opacity: 1, duration: 0.8, ease: 'power2.out' }, i * 0.04)
+                           .to(child.position, { z: 0, duration: 1.0, ease: 'back.out(1.2)' }, i * 0.04);
+                }
+            });
+
             isMapLoaded = true;
         })
         .catch(err => console.error("Error loading GeoJSON map data", err));
