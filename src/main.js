@@ -17,22 +17,22 @@ gsap.registerPlugin(ScrollTrigger);
 // --- Custom Cursor Logic ---
 const cursor = document.getElementById('custom-cursor');
 const cursorRing = document.getElementById('custom-cursor-ring');
-let mouseX = window.innerWidth / 2;
-let mouseY = window.innerHeight / 2;
-let ringX = mouseX;
-let ringY = mouseY;
+let cursorX = window.innerWidth / 2;
+let cursorY = window.innerHeight / 2;
+let ringX = cursorX;
+let ringY = cursorY;
 
 window.addEventListener('mousemove', (e) => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
+  cursorX = e.clientX;
+  cursorY = e.clientY;
 });
 
 function updateCursor() {
   if (cursor && cursorRing) {
-    cursor.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
+    cursor.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%)`;
     // Lerp the ring for smooth trailing
-    ringX += (mouseX - ringX) * 0.15;
-    ringY += (mouseY - ringY) * 0.15;
+    ringX += (cursorX - ringX) * 0.15;
+    ringY += (cursorY - ringY) * 0.15;
     cursorRing.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
   }
   requestAnimationFrame(updateCursor);
