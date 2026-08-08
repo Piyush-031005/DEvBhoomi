@@ -450,22 +450,12 @@ export function initDistrictMap() {
             // Adjust map rotation so North is up, and it lays flat
             mapGroup.rotation.x = -Math.PI / 2; // Lay flat
             
-            // ── CINEMATIC ENTRY SEQUENCE ──
-            // Map starts invisible, then materializes from below with stagger
+            // Map starts fully visible. (Removed time-based entry animation to prevent conflicts with ScrollTrigger)
             mapGroup.children.forEach(child => {
                 if (child.isMesh) {
-                    child.material = child.material.clone();
                     child.material.transparent = true;
-                    child.material.opacity = 0;
-                    child.position.z -= 8; // Start sunken
-                }
-            });
-
-            const entryTl = gsap.timeline({ delay: 0.3 });
-            mapGroup.children.forEach((child, i) => {
-                if (child.isMesh) {
-                    entryTl.to(child.material, { opacity: 1, duration: 0.8, ease: 'power2.out' }, i * 0.04)
-                           .to(child.position, { z: 0, duration: 1.0, ease: 'back.out(1.2)' }, i * 0.04);
+                    child.material.opacity = 1;
+                    child.position.z = 0;
                 }
             });
 
@@ -479,8 +469,8 @@ export function initDistrictMap() {
         const terrainModel = gltf.scene;
         
         // Scale and position the terrain to fit exactly under the glass map
-        terrainModel.scale.set(0.8, 0.8, 0.8);
-        terrainModel.position.set(-5, -15, -5); 
+        terrainModel.scale.set(60, 40, 60);
+        terrainModel.position.set(0, -20, 0); 
         // Adjust these offsets to center it beneath the glass outline
         
         // Add a cool blue/cyan tint to the terrain material to match the Devbhoomi aesthetic
@@ -625,7 +615,7 @@ export function initDistrictMap() {
         ease: 'none'
     }, 0);
 
-    // Turn glass districts to frosted ice midway
+    // Turn glass districts to frosted ice midway AND make them GROW massively
     districtMeshes.forEach(mesh => {
         climbTimeline.to(mesh.material, {
             transmission: 0.2,
@@ -633,17 +623,29 @@ export function initDistrictMap() {
             color: 0xffffff, // White frost
             ease: 'none'
         }, 0);
+        
+        // Crazy Mountain Growth effect!
+        climbTimeline.to(mesh.scale, {
+            z: 25, // Extrude them crazily upwards
+            ease: 'power2.in'
+        }, 0);
     });
 
-    // Terrain turns cold midway
+    // Terrain turns cold midway and ALSO GROWS
     if (scene.children) {
         scene.children.forEach(c => {
-            if (c.isGroup && c.scale.x === 0.8) {
+            if (c.isGroup && c.scale.x === 60) { // Using 60 to identify the terrain model
                 c.traverse(child => {
                     if (child.isMesh && child.material) {
                         climbTimeline.to(child.material.color, { r: 0.8, g: 0.9, b: 1.0, ease: 'none' }, 0);
                     }
                 });
+                
+                // Real terrain bulges out massively
+                climbTimeline.to(c.scale, {
+                    y: 150, // Massive vertical stretch
+                    ease: 'power2.in'
+                }, 0);
             }
         });
     }
@@ -676,7 +678,7 @@ export function initDistrictMap() {
     // Hide terrain at the top
     if (scene.children) {
         scene.children.forEach(c => {
-            if (c.isGroup && c.scale.x === 0.8) {
+            if (c.isGroup && c.scale.x === 60) {
                 climbTimeline.to(c.position, { y: -100, ease: 'power1.in' }, 0.5);
             }
         });
