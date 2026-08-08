@@ -465,10 +465,10 @@
       <!-- Act 7: UTTARAKHAND 3D DISTRICT MAP                           -->
       <!-- Interactive 3D glass/stone extrusion map of districts        -->
       <!-- ============================================================ -->
-      <section id="district-map-section" style="height: 100vh; position: relative; background: #000; overflow: hidden;">
+      <section id="district-map-section" style="position: relative; background: #000; overflow: hidden;">
         
-        <!-- Three.js Canvas Container -->
-        <div id="district-map-container" style="position: absolute; inset: 0; width: 100%; height: 100%;"></div>
+        <!-- Three.js Canvas Container (Sticky) -->
+        <div id="district-map-container" style="position: sticky; top: 0; left: 0; width: 100%; height: 100vh;"></div>
 
         <!-- UI Overlay -->
         <div class="map-ui">
@@ -497,7 +497,30 @@
           </div>
         </div>
 
+      <!-- Act 8: The Sacred Winter -->
+      <section id="act-8" style="height: 150vh; position: relative; pointer-events: none; z-index: 10;">
+        <div style="position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; padding-left: 10vw;">
+          <h2 class="br-headline" style="opacity: 0.8;">
+            <span class="br-word">THE</span>
+            <span class="br-word outline">SACRED</span>
+            <span class="br-word">WINTER</span>
+          </h2>
+          <p class="br-body" style="max-width: 400px; margin-top: 2rem;">As altitude rises, the warmth fades. The Devbhoomi slumbers beneath a blanket of frost and moonlight.</p>
+        </div>
       </section>
+
+      <!-- Act 9: The Energy Grid -->
+      <section id="act-9" style="height: 150vh; position: relative; pointer-events: none; z-index: 10;">
+        <div style="position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; padding-right: 10vw; text-align: right;">
+          <h2 class="br-headline" style="opacity: 0.8;">
+            <span class="br-word outline">ENERGY</span>
+            <span class="br-word">GRID</span>
+          </h2>
+          <p class="br-body" style="max-width: 400px; margin-top: 2rem; color: #00ffff;">Beneath the physical lies the ethereal. The ancient pathways and energy nodes that connect the Char Dham.</p>
+        </div>
+      </section>
+
+      </section> <!-- End district-map-section -->
 
     </main>
 
