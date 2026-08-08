@@ -398,12 +398,17 @@ export function initDistrictMap() {
                     mesh.castShadow = true;
                     mesh.receiveShadow = true;
                     let matchedKey = 'default';
-                    if (lowerName.includes('udham')) matchedKey = 'udham singh nagar';
-                    else if (lowerName.includes('tehri')) matchedKey = 'tehri garhwal';
-                    else if (lowerName.includes('pauri')) matchedKey = 'pauri garhwal';
+                    const normalizedName = lowerName.replace(/\s+/g, '');
+
+                    if (normalizedName.includes('udham')) matchedKey = 'udham singh nagar';
+                    else if (normalizedName.includes('tehri')) matchedKey = 'tehri garhwal';
+                    else if (normalizedName.includes('pauri')) matchedKey = 'pauri garhwal';
                     else {
                         for (const key in districtData) {
-                            if (lowerName.includes(key)) { matchedKey = key; break; }
+                            if (normalizedName.includes(key.replace(/\s+/g, ''))) { 
+                                matchedKey = key; 
+                                break; 
+                            }
                         }
                     }
                     
@@ -585,6 +590,126 @@ export function initDistrictMap() {
         onEnterBack: () => isActive = true,
         onLeave: () => isActive = false,
         onLeaveBack: () => isActive = false,
+    });
+
+    // ACT 8: THE SACRED WINTER (Ice theme, low camera)
+    ScrollTrigger.create({
+        trigger: '#act-8',
+        start: 'top center',
+        end: 'bottom center',
+        scrub: 1,
+        onEnter: () => {
+            gsap.to(camera.position, { y: 8, z: 25, duration: 2, ease: 'power2.inOut' });
+            gsap.to(camera.rotation, { x: -0.2, duration: 2, ease: 'power2.inOut' });
+            
+            // Turn glass districts to frosted ice
+            districtMeshes.forEach(mesh => {
+                gsap.to(mesh.material, {
+                    transmission: 0.2,
+                    roughness: 0.8,
+                    color: 0xffffff, // White frost
+                    duration: 2
+                });
+            });
+            // Terrain turns cold
+            if (scene.children) {
+                scene.children.forEach(c => {
+                    if (c.isGroup && c.scale.x === 0.8) { // terrainModel
+                        c.traverse(child => {
+                            if (child.isMesh && child.material) {
+                                gsap.to(child.material.color, { r: 0.8, g: 0.9, b: 1.0, duration: 2 });
+                            }
+                        });
+                    }
+                });
+            }
+        },
+        onLeaveBack: () => {
+            gsap.to(camera.position, { y: 20, z: 25, duration: 2, ease: 'power2.inOut' });
+            gsap.to(camera.rotation, { x: -0.8, duration: 2, ease: 'power2.inOut' });
+            
+            // Revert to red glass
+            districtMeshes.forEach(mesh => {
+                const isMountain = ['chamoli', 'uttarkashi', 'pithoragarh', 'rudraprayag'].includes(mesh.userData.name.toLowerCase());
+                gsap.to(mesh.material, {
+                    transmission: isMountain ? 0.85 : 0.9,
+                    roughness: isMountain ? 0.15 : 0.1,
+                    color: isMountain ? 0xff0022 : 0xff4444,
+                    duration: 2
+                });
+            });
+            // Revert terrain
+            if (scene.children) {
+                scene.children.forEach(c => {
+                    if (c.isGroup && c.scale.x === 0.8) {
+                        c.traverse(child => {
+                            if (child.isMesh && child.material) {
+                                gsap.to(child.material.color, { r: 0.06, g: 0.2, b: 0.33, duration: 2 }); // 0x113355
+                            }
+                        });
+                    }
+                });
+            }
+        }
+    });
+
+    // ACT 9: THE ENERGY GRID (Wireframe, dark terrain, top-down camera)
+    ScrollTrigger.create({
+        trigger: '#act-9',
+        start: 'top center',
+        end: 'bottom center',
+        scrub: 1,
+        onEnter: () => {
+            gsap.to(camera.position, { y: 40, x: 0, z: 0, duration: 2, ease: 'power2.inOut' });
+            gsap.to(camera.rotation, { x: -Math.PI / 2, y: 0, z: 0, duration: 2, ease: 'power2.inOut' });
+            
+            // Wireframe districts
+            districtMeshes.forEach(mesh => {
+                mesh.material.wireframe = true;
+                gsap.to(mesh.material, {
+                    color: 0x00ffff,
+                    emissive: 0x0088ff,
+                    emissiveIntensity: 2.0,
+                    opacity: 0.8,
+                    transparent: true,
+                    duration: 1
+                });
+            });
+            
+            // Hide terrain
+            if (scene.children) {
+                scene.children.forEach(c => {
+                    if (c.isGroup && c.scale.x === 0.8) {
+                        gsap.to(c.position, { y: -50, duration: 2 });
+                    }
+                });
+            }
+        },
+        onLeaveBack: () => {
+            gsap.to(camera.position, { y: 8, z: 25, duration: 2, ease: 'power2.inOut' });
+            gsap.to(camera.rotation, { x: -0.2, duration: 2, ease: 'power2.inOut' });
+            
+            // Frosty districts back
+            districtMeshes.forEach(mesh => {
+                mesh.material.wireframe = false;
+                gsap.to(mesh.material, {
+                    color: 0xffffff,
+                    emissive: 0x330000,
+                    emissiveIntensity: 0.15,
+                    opacity: 1.0,
+                    duration: 1
+                });
+            });
+            
+            // Show terrain
+            if (scene.children) {
+                scene.children.forEach(c => {
+                    if (c.isGroup && c.scale.x === 0.8) {
+                        gsap.to(c.position, { y: -15, duration: 2 });
+                    }
+                });
+            }
+        }
     });
 
     function animate() {
