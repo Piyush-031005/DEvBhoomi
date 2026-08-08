@@ -397,29 +397,36 @@ export function initDistrictMap() {
 
                     mesh.castShadow = true;
                     mesh.receiveShadow = true;
-                    let matchedKey = 'default';
-                    const normalizedName = lowerName.replace(/\s+/g, '');
-
-                    if (normalizedName.includes('udham')) matchedKey = 'udham singh nagar';
-                    else if (normalizedName.includes('tehri')) matchedKey = 'tehri garhwal';
-                    else if (normalizedName.includes('pauri')) matchedKey = 'pauri garhwal';
-                    else {
-                        for (const key in districtData) {
-                            if (normalizedName.includes(key.replace(/\s+/g, ''))) { 
-                                matchedKey = key; 
-                                break; 
-                            }
-                        }
-                    }
+                    const GEOJSON_MAP = {
+                        "Almora": "almora",
+                        "Bageshwar": "bageshwar",
+                        "Chamoli": "chamoli",
+                        "Champawat": "champawat",
+                        "Dehra Dun": "dehradun",
+                        "Haridwar": "haridwar",
+                        "Naini Tal": "nainital",
+                        "Pauri Garhwal": "pauri garhwal",
+                        "Pithoragarh": "pithoragarh",
+                        "Rudra Prayag": "rudraprayag",
+                        "Tehri Garhwal": "tehri garhwal",
+                        "Udham Singh Nagar": "udham singh nagar",
+                        "Uttarkashi": "uttarkashi"
+                    };
+                    
+                    let matchedKey = GEOJSON_MAP[name] || 'default';
                     
                     const actualData = districtData[matchedKey] || districtData['default'];
 
                     mesh.userData = { 
                         name: actualData.name,
+                        hindi: actualData.hindi,
+                        theme: actualData.theme,
+                        population: actualData.population,
                         originalHeight: baseHeight,
                         originalMat: mesh.material,
                         area: actualData.area, 
-                        elevation: actualData.altitude
+                        elevation: actualData.altitude,
+                        center: new THREE.Vector3(cx, cy, baseHeight)
                     };
 
                     mapGroup.add(mesh);
@@ -558,11 +565,15 @@ export function initDistrictMap() {
     // ============================================================
     let hoveredMesh = null;
     
-    // UI Elements
-    const uiPanel = document.getElementById('district-info-panel');
-    const uiName = document.getElementById('di-name');
-    const uiElev = document.getElementById('di-elev');
-    const uiArea = document.getElementById('di-area');
+    // UI Elements (Floating Editorial Layout)
+    const uiPanel = document.getElementById('floating-editorial-ui');
+    const uiName = document.getElementById('float-name');
+    const uiHindi = document.getElementById('float-hindi');
+    const uiCoords = document.getElementById('float-coords');
+    const uiElev = document.getElementById('float-elev');
+    const uiPop = document.getElementById('float-pop');
+    const uiTracker = document.getElementById('float-tracker');
+    const uiTheme = document.getElementById('float-theme');
 
     container.addEventListener('mousemove', (e) => {
         const rect = container.getBoundingClientRect();
@@ -592,125 +603,84 @@ export function initDistrictMap() {
         onLeaveBack: () => isActive = false,
     });
 
-    // ACT 8: THE SACRED WINTER (Ice theme, low camera)
-    ScrollTrigger.create({
-        trigger: '#act-8',
-        start: 'top center',
-        end: 'bottom center',
-        scrub: 1,
-        onEnter: () => {
-            gsap.to(camera.position, { y: 8, z: 25, duration: 2, ease: 'power2.inOut' });
-            gsap.to(camera.rotation, { x: -0.2, duration: 2, ease: 'power2.inOut' });
-            
-            // Turn glass districts to frosted ice
-            districtMeshes.forEach(mesh => {
-                gsap.to(mesh.material, {
-                    transmission: 0.2,
-                    roughness: 0.8,
-                    color: 0xffffff, // White frost
-                    duration: 2
-                });
-            });
-            // Terrain turns cold
-            if (scene.children) {
-                scene.children.forEach(c => {
-                    if (c.isGroup && c.scale.x === 0.8) { // terrainModel
-                        c.traverse(child => {
-                            if (child.isMesh && child.material) {
-                                gsap.to(child.material.color, { r: 0.8, g: 0.9, b: 1.0, duration: 2 });
-                            }
-                        });
-                    }
-                });
-            }
-        },
-        onLeaveBack: () => {
-            gsap.to(camera.position, { y: 20, z: 25, duration: 2, ease: 'power2.inOut' });
-            gsap.to(camera.rotation, { x: -0.8, duration: 2, ease: 'power2.inOut' });
-            
-            // Revert to red glass
-            districtMeshes.forEach(mesh => {
-                const isMountain = ['chamoli', 'uttarkashi', 'pithoragarh', 'rudraprayag'].includes(mesh.userData.name.toLowerCase());
-                gsap.to(mesh.material, {
-                    transmission: isMountain ? 0.85 : 0.9,
-                    roughness: isMountain ? 0.15 : 0.1,
-                    color: isMountain ? 0xff0022 : 0xff4444,
-                    duration: 2
-                });
-            });
-            // Revert terrain
-            if (scene.children) {
-                scene.children.forEach(c => {
-                    if (c.isGroup && c.scale.x === 0.8) {
-                        c.traverse(child => {
-                            if (child.isMesh && child.material) {
-                                gsap.to(child.material.color, { r: 0.06, g: 0.2, b: 0.33, duration: 2 }); // 0x113355
-                            }
-                        });
-                    }
-                });
-            }
+    // THE GREAT CLIMB: Scroll-driven continuous timeline
+    const climbTimeline = gsap.timeline({
+        scrollTrigger: {
+            trigger: '#district-map-section',
+            start: 'top top',
+            end: 'bottom bottom',
+            scrub: 1, // Smooth scrub
         }
     });
 
-    // ACT 9: THE ENERGY GRID (Wireframe, dark terrain, top-down camera)
-    ScrollTrigger.create({
-        trigger: '#act-9',
-        start: 'top center',
-        end: 'bottom center',
-        scrub: 1,
-        onEnter: () => {
-            gsap.to(camera.position, { y: 40, x: 0, z: 0, duration: 2, ease: 'power2.inOut' });
-            gsap.to(camera.rotation, { x: -Math.PI / 2, y: 0, z: 0, duration: 2, ease: 'power2.inOut' });
-            
-            // Wireframe districts
-            districtMeshes.forEach(mesh => {
-                mesh.material.wireframe = true;
-                gsap.to(mesh.material, {
-                    color: 0x00ffff,
-                    emissive: 0x0088ff,
-                    emissiveIntensity: 2.0,
-                    opacity: 0.8,
-                    transparent: true,
-                    duration: 1
-                });
-            });
-            
-            // Hide terrain
-            if (scene.children) {
-                scene.children.forEach(c => {
-                    if (c.isGroup && c.scale.x === 0.8) {
-                        gsap.to(c.position, { y: -50, duration: 2 });
-                    }
-                });
-            }
-        },
-        onLeaveBack: () => {
-            gsap.to(camera.position, { y: 8, z: 25, duration: 2, ease: 'power2.inOut' });
-            gsap.to(camera.rotation, { x: -0.2, duration: 2, ease: 'power2.inOut' });
-            
-            // Frosty districts back
-            districtMeshes.forEach(mesh => {
-                mesh.material.wireframe = false;
-                gsap.to(mesh.material, {
-                    color: 0xffffff,
-                    emissive: 0x330000,
-                    emissiveIntensity: 0.15,
-                    opacity: 1.0,
-                    duration: 1
-                });
-            });
-            
-            // Show terrain
-            if (scene.children) {
-                scene.children.forEach(c => {
-                    if (c.isGroup && c.scale.x === 0.8) {
-                        gsap.to(c.position, { y: -15, duration: 2 });
-                    }
-                });
-            }
-        }
+    // 1. Initial State -> Sacred Winter (Climb UP to 40, look down slightly)
+    climbTimeline.to(camera.position, {
+        y: 40,
+        z: 20,
+        ease: 'none'
+    }, 0);
+
+    climbTimeline.to(camera.rotation, {
+        x: -0.8,
+        ease: 'none'
+    }, 0);
+
+    // Turn glass districts to frosted ice midway
+    districtMeshes.forEach(mesh => {
+        climbTimeline.to(mesh.material, {
+            transmission: 0.2,
+            roughness: 0.8,
+            color: 0xffffff, // White frost
+            ease: 'none'
+        }, 0);
     });
+
+    // Terrain turns cold midway
+    if (scene.children) {
+        scene.children.forEach(c => {
+            if (c.isGroup && c.scale.x === 0.8) {
+                c.traverse(child => {
+                    if (child.isMesh && child.material) {
+                        climbTimeline.to(child.material.color, { r: 0.8, g: 0.9, b: 1.0, ease: 'none' }, 0);
+                    }
+                });
+            }
+        });
+    }
+
+    // 2. Sacred Winter -> Energy Grid (Climb to 150, look straight down)
+    climbTimeline.to(camera.position, {
+        y: 120,
+        z: 0,
+        ease: 'power1.in'
+    }, 0.5); // Starts halfway through the scroll
+
+    climbTimeline.to(camera.rotation, {
+        x: -Math.PI / 2, // Top-down
+        ease: 'power1.in'
+    }, 0.5);
+
+    // Wireframe districts at the top
+    districtMeshes.forEach(mesh => {
+        climbTimeline.to(mesh.material, {
+            color: 0x00ffff,
+            emissive: 0x0088ff,
+            emissiveIntensity: 2.0,
+            opacity: 0.8,
+            transparent: true,
+            wireframe: true, // Note: GSAP can't tween boolean wireframe smoothly, but we can set it via onUpdate if needed, or just let it snap.
+            ease: 'power1.in'
+        }, 0.5);
+    });
+
+    // Hide terrain at the top
+    if (scene.children) {
+        scene.children.forEach(c => {
+            if (c.isGroup && c.scale.x === 0.8) {
+                climbTimeline.to(c.position, { y: -100, ease: 'power1.in' }, 0.5);
+            }
+        });
+    }
 
     function animate() {
         requestAnimationFrame(animate);
@@ -740,19 +710,42 @@ export function initDistrictMap() {
                     
                     // Update UI
                     uiName.textContent = hoveredMesh.userData.name;
+                    uiHindi.textContent = hoveredMesh.userData.hindi;
                     uiElev.textContent = hoveredMesh.userData.elevation;
-                    uiArea.textContent = hoveredMesh.userData.area;
-                    uiPanel.classList.add('visible');
+                    uiPop.textContent = hoveredMesh.userData.population;
+                    uiTheme.textContent = hoveredMesh.userData.theme;
+                    
+                    // Simple random/mock coordinates for demo if true coordinates aren't easy to fetch per-district
+                    const lon = (77 + Math.random() * 3).toFixed(2);
+                    const lat = (29 + Math.random() * 2).toFixed(2);
+                    uiCoords.textContent = `${lat}° N, ${lon}° E`;
+
+                    uiPanel.style.opacity = "1";
 
                     // District DNA — unique hover particle burst
                     spawnDNAParticles(hoveredMesh);
+                }
+
+                // 3D tracking: constantly update float-tracker position
+                if (hoveredMesh) {
+                    const centerPos = hoveredMesh.userData.center.clone();
+                    // apply map rotation and position
+                    centerPos.applyMatrix4(mapGroup.matrixWorld);
+                    // project to 2d screen space
+                    centerPos.project(camera);
+                    
+                    const x = (centerPos.x * .5 + .5) * window.innerWidth;
+                    const y = (centerPos.y * -.5 + .5) * window.innerHeight;
+                    
+                    uiTracker.style.left = `${x}px`;
+                    uiTracker.style.top = `${y}px`;
                 }
             } else {
                 if (hoveredMesh) {
                     gsap.to(hoveredMesh.position, { z: 0, duration: 0.3, ease: 'power2.out' });
                     hoveredMesh.material = hoveredMesh.userData.originalMat;
                     hoveredMesh = null;
-                    uiPanel.classList.remove('visible');
+                    uiPanel.style.opacity = "0";
                 }
             }
         }

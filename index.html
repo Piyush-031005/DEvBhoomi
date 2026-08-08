@@ -470,31 +470,39 @@
         <!-- Three.js Canvas Container (Sticky) -->
         <div id="district-map-container" style="position: sticky; top: 0; left: 0; width: 100%; height: 100vh;"></div>
 
-        <!-- UI Overlay -->
-        <div class="map-ui">
-          <div class="map-title-block">
-            <span class="map-eyebrow">ELEVATION MAP</span>
-            <h2 class="map-title">UTTARAKHAND<br><span>DISTRICTS</span></h2>
-            <p class="map-desc">Drag to rotate • Scroll to zoom • Hover for details</p>
-          </div>
-
-          <!-- District Info Panel (Hidden until hover) -->
-          <div id="district-info-panel" class="district-info-panel">
-            <div class="di-box">
-              <span class="di-name" id="di-name">DISTRICT NAME</span>
-              <span class="di-name-skt" id="di-skt">जिला</span>
-              <div class="di-stats">
-                <div class="di-stat">
-                  <span class="di-label">ELEVATION</span>
-                  <span class="di-val" id="di-elev">--</span>
-                </div>
-                <div class="di-stat">
-                  <span class="di-label">AREA</span>
-                  <span class="di-val" id="di-area">--</span>
-                </div>
-              </div>
+        <!-- Floating Editorial Layout (Awwwards Style) -->
+        <div id="floating-editorial-ui" style="pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 100; opacity: 0; transition: opacity 0.5s ease;">
+            
+            <!-- Huge Typography Name -->
+            <div id="float-name" style="position: absolute; left: 5vw; top: 15vh; font-family: 'Neue Machina', sans-serif; font-size: 8vw; font-weight: 800; color: #fff; text-transform: uppercase; mix-blend-mode: overlay; letter-spacing: -0.04em; line-height: 0.85;">
+                DISTRICT
             </div>
-          </div>
+            
+            <!-- Background Ghost Hindi Text -->
+            <div id="float-hindi" style="position: absolute; right: 5vw; top: 10vh; font-family: 'Noto Sans Devanagari', sans-serif; font-size: 15vw; color: rgba(255,255,255,0.03); font-weight: 900; white-space: nowrap;">
+                जिला
+            </div>
+
+            <!-- Coordinates & Data Block -->
+            <div style="position: absolute; right: 5vw; bottom: 15vh; display: flex; flex-direction: column; align-items: flex-end; font-family: 'Space Mono', monospace; font-size: 14px; text-align: right; color: #ccc;">
+                <div style="color: #fff; font-size: 10px; letter-spacing: 0.2em; margin-bottom: 5px;">COORDINATES</div>
+                <div id="float-coords" style="font-size: 1.2rem; color: #00e5ff; margin-bottom: 20px;">29° 35' N, 79° 39' E</div>
+                
+                <div style="color: #fff; font-size: 10px; letter-spacing: 0.2em; margin-bottom: 5px;">ALTITUDE</div>
+                <div id="float-elev" style="font-size: 2rem; font-family: 'Neue Machina', sans-serif; color: #fff; margin-bottom: 20px; font-weight: 200;">1,200m</div>
+
+                <div style="color: #fff; font-size: 10px; letter-spacing: 0.2em; margin-bottom: 5px;">POPULATION</div>
+                <div id="float-pop" style="font-size: 1.2rem; color: #ffaa00;">1,000,000</div>
+            </div>
+
+            <!-- Floating Label tracking 3D object -->
+            <div id="float-tracker" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 10px;">
+                <div style="width: 40px; height: 1px; background: #fff;"></div>
+                <div id="float-theme" style="font-family: 'Space Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #fff; max-width: 150px;">
+                    Theme goes here
+                </div>
+            </div>
+            
         </div>
 
       <!-- Act 8: The Sacred Winter -->
