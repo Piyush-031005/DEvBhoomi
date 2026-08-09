@@ -602,41 +602,31 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 
-    // 1. Mountain to Birds Flight (0.0 to 1.5)
+    // 1. Mask starts visible for Chapter 0 (01 PEAKS OF SILENCE)
     masterTl.to(animState, {
-        birdFlight: 1.0,
-        duration: 1.5,
-        ease: "power1.inOut"
+        maskOpacity: 1.0,
+        maskScale: 1.0,
+        duration: 0.1
     }, 0.0)
-    .add(() => { if (typeof mountainParticles !== "undefined" && mountainParticles) mountainParticles.visible = false; }, 1.5)
     
-    // 2. Mask and Typography Reveal (1.5 to 2.0)
-    .to(".hero-title-container", {
-        opacity: 1,
-        scale: 1,
-        duration: 0.5,
-        ease: "power2.out"
-    }, 1.5)
-    .to(animState, {
-        maskOpacity: 0.85,
-        duration: 0.5,
-        ease: "power2.out"
-    }, 1.5)
-    
-    // 3. Subtle Mask Interaction
+    // 2. Subtle Mask Interaction during Chapter 0
     .to(animState, {
         maskRotY: Math.PI / 12,
-        duration: 1.5,
+        duration: 1.2,
         ease: "power2.inOut"
-    }, 2.5)
+    }, 0.2)
     
-    // 4. Transition to Editorial Procedural Worlds (5.5 to 6.0)
-    .to(".hero-title-container", { opacity: 0, scale: 1.1, duration: 0.3 }, 5.5)
-    .to(animState, { maskOpacity: 0.0, duration: 0.4 }, 5.6) // Fade mask out
-    .to(animState, { brutalistOpacity: 1.0, duration: 0.5, ease: "power2.inOut" }, 5.7)
-    .to('#br-shell', { opacity: 1, duration: 0.5, ease: 'power2.inOut' }, 5.7)
-    .add(() => { document.getElementById('br-shell')?.classList.add('active'); }, 5.8)
-    .add(() => { if(typeof switchBrutalistChapter !== "undefined") switchBrutalistChapter(0); }, 5.7);
+    // 3. Mask Fades OUT right before Chapter 1 (02 SACRED PORTALS) starts (around 1.4)
+    // 1.45 in masterTl time corresponds to 25% of the 5.8 total duration
+    .to(animState, { 
+        maskOpacity: 0.0, 
+        duration: 0.3,
+        ease: "power2.out"
+    }, 1.2)
+    
+    // Fill the rest of the timeline to maintain the total scrub duration (~5.8)
+    .to(animState, { brutalistOpacity: 1.0, duration: 0.5 }, 5.0)
+    .add(() => { document.getElementById('br-shell')?.classList.add('active'); }, 5.5);
 
     
     // ============================================================
@@ -662,6 +652,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const chEl = document.getElementById(chIds[idx]);
         if (!chEl) return;
+        
+        // Play bell sound effect on chapter change
+        if (typeof SoundEngine !== "undefined" && SoundEngine.isInitialized) {
+            SoundEngine.playProceduralBell(440 - (idx * 50), 2.0); // Slightly different pitch per chapter
+        }
         
         // Target the INNER spans for animation (the br-word is the clip container)
         const wordInners = chEl.querySelectorAll('.br-word');
