@@ -469,7 +469,7 @@ export function initDistrictMap() {
         const terrainModel = gltf.scene;
         
         // Scale and position the terrain to fit exactly under the glass map
-        terrainModel.scale.set(25, 20, 25);
+        terrainModel.scale.set(12, 8, 12);
         terrainModel.position.set(-2, -15, -2); 
         // Adjust these offsets to center it beneath the glass outline
         
@@ -497,7 +497,7 @@ export function initDistrictMap() {
 
     // RAYCASTER FOR HOVER
     const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2(-1, -1);
+    const mouse = new THREE.Vector2(-9999, -9999);
     // ============================================================
     // DISTRICT DNA PARTICLE BURST
     // Each district has a unique identity color when hovered
@@ -575,8 +575,8 @@ export function initDistrictMap() {
     });
 
     container.addEventListener('mouseleave', () => {
-        mouse.x = -1;
-        mouse.y = -1;
+        mouse.x = -9999;
+        mouse.y = -9999;
         controls.autoRotate = true;
     });
 
@@ -587,10 +587,10 @@ export function initDistrictMap() {
         trigger: '#district-map-section',
         start: 'top bottom',
         end: 'bottom top',
-        onEnter: () => isActive = true,
-        onEnterBack: () => isActive = true,
-        onLeave: () => isActive = false,
-        onLeaveBack: () => isActive = false,
+        onEnter: () => { isActive = true; controls.enabled = false; },
+        onEnterBack: () => { isActive = true; controls.enabled = false; },
+        onLeave: () => { isActive = false; controls.enabled = true; },
+        onLeaveBack: () => { isActive = false; controls.enabled = true; },
     });
 
     // THE GREAT CLIMB: Scroll-driven continuous timeline
@@ -634,7 +634,7 @@ export function initDistrictMap() {
     // Terrain turns cold midway and ALSO GROWS
     if (scene.children) {
         scene.children.forEach(c => {
-            if (c.isGroup && c.scale.x === 25) { // Using 25 to identify the terrain model
+            if (c.isGroup && c.scale.x === 12) { // Using 12 to identify the terrain model
                 c.traverse(child => {
                     if (child.isMesh && child.material) {
                         climbTimeline.to(child.material.color, { r: 0.8, g: 0.9, b: 1.0, ease: 'none' }, 0);
@@ -643,7 +643,7 @@ export function initDistrictMap() {
                 
                 // Real terrain bulges out massively
                 climbTimeline.to(c.scale, {
-                    y: 80, // Massive vertical stretch
+                    y: 40, // Massive vertical stretch
                     ease: 'power2.in'
                 }, 0);
             }
@@ -678,7 +678,7 @@ export function initDistrictMap() {
     // Hide terrain at the top
     if (scene.children) {
         scene.children.forEach(c => {
-            if (c.isGroup && c.scale.x === 25) {
+            if (c.isGroup && c.scale.x === 12) {
                 climbTimeline.to(c.position, { y: -100, ease: 'power1.in' }, 0.5);
             }
         });
