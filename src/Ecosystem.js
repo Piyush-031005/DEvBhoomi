@@ -20,6 +20,9 @@ class EcosystemEngine {
     
     // The "Pulse" of the earth (used for the breathing mountain effect)
     this.earthPulse = 0; 
+    
+    // Invisible Gods: Track time since last ambient event to prevent spam
+    this.lastAmbientTime = 0;
   }
 
   // Event System
@@ -44,6 +47,31 @@ class EcosystemEngine {
     // Calculate Earth Pulse (Very slow sine wave, 40s period)
     // 2 * PI / 40 = 0.157
     this.earthPulse = Math.sin(this.time * 0.157);
+    
+    // ============================================================
+    // INVISIBLE GODS (Ambient Events)
+    // ============================================================
+    // Occasionally (roughly every 8-15 seconds), trigger a random ambient event
+    if (this.time - this.lastAmbientTime > 8.0) {
+        if (Math.random() < 0.005) { // Low probability per frame once the cooldown passes
+            this.lastAmbientTime = this.time;
+            
+            const eventTypes = ['windBurst', 'spiritPass', 'bellEcho'];
+            const randomEvent = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+            
+            if (randomEvent === 'windBurst') {
+                // A sudden harsh wind
+                this.disturbWind(new THREE.Vector3(
+                    (Math.random() - 0.5) * 4.0,
+                    (Math.random() - 0.5) * 2.0,
+                    (Math.random() - 0.5) * 4.0
+                ));
+            }
+            
+            // Broadcast so other systems (like SoundEngine or UI) can react
+            this.emit('invisibleGod', { type: randomEvent, time: this.time });
+        }
+    }
   }
 
   // Cause a sudden disturbance in the ecosystem

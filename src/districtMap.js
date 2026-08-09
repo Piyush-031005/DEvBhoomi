@@ -242,14 +242,6 @@ export function initDistrictMap() {
     });
     lacquerDarkRedMat.onBeforeCompile = shaderInjection;
 
-    const materials = {
-        himalayas: lacquerDarkRedMat,
-        plains: lacquerRedMat,
-        capital: lacquerRedMat,
-        temples: lacquerDarkRedMat,
-        default: lacquerRedMat
-    };
-
     const highlightMaterial = new THREE.MeshPhysicalMaterial({
         color: 0xffffff,          // White highlight on hover
         emissive: 0x00ffff,       // Cyan glow
@@ -264,6 +256,38 @@ export function initDistrictMap() {
         clearcoat: 1.0,
         clearcoatRoughness: 0.05
     });
+    
+    // ============================================================
+    // WATER REFLECTION (NAINITAL)
+    // ============================================================
+    const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(256, {
+        generateMipmaps: true,
+        minFilter: THREE.LinearMipmapLinearFilter
+    });
+    const cubeCamera = new THREE.CubeCamera(1, 1000, cubeRenderTarget);
+    scene.add(cubeCamera);
+    
+    const lakeMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0x0044aa,          // Deep water blue
+        emissive: 0x001133,
+        roughness: 0.0,           // Perfectly smooth for reflection
+        metalness: 0.2,
+        transmission: 0.9,
+        ior: 1.33,                // Water IOR
+        envMap: cubeRenderTarget.texture,
+        envMapIntensity: 2.0,
+        transparent: true
+    });
+    lakeMaterial.onBeforeCompile = shaderInjection;
+
+    const materials = {
+        himalayas: lacquerDarkRedMat,
+        plains: lacquerRedMat,
+        capital: lacquerRedMat,
+        temples: lacquerDarkRedMat,
+        lakes: lakeMaterial,
+        default: lacquerRedMat
+    };
 
     const lineMaterial = new THREE.LineBasicMaterial({ 
         color: 0x63BDB5,          // Glowing cyan glass edges
@@ -325,26 +349,98 @@ export function initDistrictMap() {
     }
 
     // ============================================================
-    // ATMOSPHERIC LAYERS (fog planes for depth)
+    // ATMOSPHERIC LAYERS (Procedural Volumetric Fog)
     // ============================================================
-    function createFogPlane(y, opacity) {
-        const fogGeo = new THREE.PlaneGeometry(200, 100);
-        const fogMat = new THREE.MeshBasicMaterial({
-            color: 0x0a0505,
+    const fogUniforms = {
+        uTime: { value: 0.0 }
+    };
+    
+    function createFogPlane(y, opacity, scale) {
+        const fogGeo = new THREE.PlaneGeometry(300, 150);
+        const fogMat = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: fogUniforms.uTime,
+                uOpacity: { value: opacity },
+                uScale: { value: scale }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float uTime;
+                uniform float uOpacity;
+                uniform float uScale;
+                varying vec2 vUv;
+                
+                // Classic Perlin 2D Noise 
+                vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
+                vec2 fade(vec2 t) {return t*t*t*(t*(t*6.0-15.0)+10.0);}
+                float cnoise(vec2 P){
+                  vec4 Pi = floor(P.xyxy) + vec4(0.0, 0.0, 1.0, 1.0);
+                  vec4 Pf = fract(P.xyxy) - vec4(0.0, 0.0, 1.0, 1.0);
+                  Pi = mod(Pi, 289.0); // To avoid truncation effects in permutation
+                  vec4 ix = Pi.xzxz;
+                  vec4 iy = Pi.yyww;
+                  vec4 fx = Pf.xzxz;
+                  vec4 fy = Pf.yyww;
+                  vec4 i = permute(permute(ix) + iy);
+                  vec4 gx = 2.0 * fract(i * 0.0243902439) - 1.0; // 1/41 = 0.024...
+                  vec4 gy = abs(gx) - 0.5;
+                  vec4 tx = floor(gx + 0.5);
+                  gx = gx - tx;
+                  vec2 g00 = vec2(gx.x,gy.x);
+                  vec2 g10 = vec2(gx.y,gy.y);
+                  vec2 g01 = vec2(gx.z,gy.z);
+                  vec2 g11 = vec2(gx.w,gy.w);
+                  vec4 norm = 1.79284291400159 - 0.85373472095314 * 
+                    vec4(dot(g00, g00), dot(g01, g01), dot(g10, g10), dot(g11, g11));
+                  g00 *= norm.x;
+                  g01 *= norm.y;
+                  g10 *= norm.z;
+                  g11 *= norm.w;
+                  float n00 = dot(g00, vec2(fx.x, fy.x));
+                  float n10 = dot(g10, vec2(fx.y, fy.y));
+                  float n01 = dot(g01, vec2(fx.z, fy.z));
+                  float n11 = dot(g11, vec2(fx.w, fy.w));
+                  vec2 fade_xy = fade(Pf.xy);
+                  vec2 n_x = mix(vec2(n00, n01), vec2(n10, n11), fade_xy.x);
+                  float n_xy = mix(n_x.x, n_x.y, fade_xy.y);
+                  return 2.3 * n_xy;
+                }
+
+                void main() {
+                    vec2 uv = vUv * uScale;
+                    uv.x += uTime * 0.05; // Fog drift
+                    uv.y += sin(uTime * 0.02) * 0.2;
+                    
+                    float noise = cnoise(uv) * 0.5 + 0.5;
+                    // Add detail octave
+                    noise += cnoise(uv * 2.0 - vec2(uTime * 0.08, uTime * 0.03)) * 0.25;
+                    
+                    // Soft edges
+                    float edge = smoothstep(0.0, 0.2, vUv.x) * smoothstep(1.0, 0.8, vUv.x) *
+                                 smoothstep(0.0, 0.2, vUv.y) * smoothstep(1.0, 0.8, vUv.y);
+                                 
+                    float alpha = smoothstep(0.3, 0.8, noise) * uOpacity * edge;
+                    gl_FragColor = vec4(0.8, 0.9, 1.0, alpha); // Icy blue-white fog
+                }
+            `,
             transparent: true,
-            opacity,
             depthWrite: false,
-            side: THREE.DoubleSide
+            blending: THREE.AdditiveBlending
         });
         const fog = new THREE.Mesh(fogGeo, fogMat);
-        fog.rotation.x = Math.PI / 2;
-        fog.position.set(0, y, 1.5);
+        fog.position.set(0, y, 2.5);
         return fog;
     }
 
-    // Subtle dark fog layers at different heights for depth
-    scene.add(createFogPlane(-25, 0.25));
-    scene.add(createFogPlane(-15, 0.15));
+    // Volumetric procedural fog layers rolling through valleys
+    scene.add(createFogPlane(-25, 0.4, 4.0));
+    scene.add(createFogPlane(-15, 0.2, 6.0));
 
 
     // GEOJSON PARSING & EXTRUSION
@@ -394,6 +490,8 @@ export function initDistrictMap() {
                     category = 'capital';
                 } else if (['rudraprayag', 'pauri garhwal'].some(d => lowerName.includes(d))) {
                     category = 'temples'; // Custom category for shrines
+                } else if (lowerName.includes('naini tal') || lowerName.includes('nainital')) {
+                    category = 'lakes';
                 }
                 
                 const processPolygon = (coords) => {
@@ -831,6 +929,12 @@ export function initDistrictMap() {
         });
     }
 
+    // Skybox fades to pure void at high altitude
+    climbTimeline.to(skyboxUniforms.uColorBottom.value, { r: 0.0, g: 0.01, b: 0.02, ease: 'none' }, 0.5);
+    climbTimeline.to(skyboxUniforms.uColorTop.value, { r: 0.0, g: 0.0, b: 0.0, ease: 'none' }, 0.5);
+
+    let nainitalMesh = null; // We will populate this to hide it during its own reflection render
+    
     // Animate Loop logic for Ecosystem
     function updateEcosystemInMap() {
         if (terrainModel) {
@@ -848,12 +952,26 @@ export function initDistrictMap() {
         requestAnimationFrame(animateMap);
         const time = Date.now() * 0.001;
         skyboxUniforms.uTime.value = time;
+        fogUniforms.uTime.value = time;
         
         updateEcosystemInMap();
 
         if (!isActive) return;
 
         controls.update();
+        
+        // Find Nainital mesh if we haven't yet
+        if (!nainitalMesh && districtMeshes.length > 0) {
+            nainitalMesh = districtMeshes.find(m => m.userData.name.toLowerCase() === 'nainital');
+        }
+        
+        // Update Live Reflection for Nainital
+        if (nainitalMesh) {
+            nainitalMesh.visible = false; // Don't reflect itself
+            cubeCamera.position.copy(nainitalMesh.position);
+            cubeCamera.update(renderer, scene);
+            nainitalMesh.visible = true;
+        }
 
         if (isMapLoaded) {
             raycaster.setFromCamera(mouse, camera);

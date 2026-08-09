@@ -7,6 +7,7 @@ import Lenis from '@studio-freight/lenis';
 import { initSacredData } from './sacredData.js';
 import { initDistrictMap } from './districtMap.js';
 import { Ecosystem } from './Ecosystem.js';
+import { SoundEngine } from './SoundEngine.js';
 
 import brutalistVertexShader  from './shaders/brutalistVertex.glsl?raw';
 import brutalistFragmentShader from './shaders/brutalistFragment.glsl?raw';
@@ -87,6 +88,44 @@ const clock = new THREE.Clock();
 // --- Group for all world objects ---
 const worldGroup = new THREE.Group();
 scene.add(worldGroup);
+
+// --- INVISIBLE GODS (Bell Resonance Ripple) ---
+// A transparent glass ring that expands to distort the view
+const rippleGeo = new THREE.RingGeometry(0.1, 0.5, 64);
+const rippleMat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    transmission: 1.0,
+    ior: 1.8,           // High index of refraction for strong distortion
+    thickness: 1.0,
+    roughness: 0.0,
+    transparent: true,
+    opacity: 0.0,
+    side: THREE.DoubleSide
+});
+const rippleMesh = new THREE.Mesh(rippleGeo, rippleMat);
+rippleMesh.position.set(0, 0, -5); // In front of the camera
+camera.add(rippleMesh);
+scene.add(camera); // Add camera to scene so its children are rendered
+
+Ecosystem.on('invisibleGod', (e) => {
+    if (e.type === 'bellEcho') {
+        // Reset and trigger shockwave
+        rippleMesh.scale.set(0.1, 0.1, 0.1);
+        rippleMat.opacity = 1.0;
+        
+        gsap.to(rippleMesh.scale, {
+            x: 20, y: 20, z: 20,
+            duration: 2.5,
+            ease: "power2.out"
+        });
+        
+        gsap.to(rippleMat, {
+            opacity: 0.0,
+            duration: 2.0,
+            ease: "power2.in"
+        });
+    }
+});
 
 // --- Act 1: The Void (Stars / Snow) ---
 const particlesGeom = new THREE.BufferGeometry();
