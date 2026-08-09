@@ -632,9 +632,10 @@ export function initDistrictMap() {
                     mapGroup.add(mesh);
                     districtMeshes.push(mesh);
 
-                    // Add top border lines for definition
+                    // Add top border lines for definition (elevated slightly above the mesh to avoid z-fighting)
                     const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
                     const line = new THREE.Line(lineGeom, lineMaterial);
+                    line.position.z = baseHeight + 0.02; // Placed at the top of the extrusion
                     mapGroup.add(line);
                 };
 
@@ -671,9 +672,9 @@ export function initDistrictMap() {
         terrainModel = gltf.scene;
         
         // Scale and position the terrain to fit exactly under the glass map
-        // Scaled up significantly to create huge background mountains
-        terrainModel.scale.set(7.0, 4.0, 7.0);
-        terrainModel.position.set(-2, -5, -2); 
+        // Scaled up MASSIVELY to create huge background mountains
+        terrainModel.scale.set(35.0, 15.0, 35.0);
+        terrainModel.position.set(-2, -30, -2); 
         // Adjust these offsets to center it beneath the glass outline
         
         // The Earth Pulse uniform
@@ -926,7 +927,7 @@ export function initDistrictMap() {
     // Hide terrain at the top
     if (scene.children) {
         scene.children.forEach(c => {
-            if (c.isGroup && c.scale.x === 4) {
+            if (c.isGroup && c.scale.x === 35) { // Matched terrainModel scale
                 climbTimeline.to(c.position, { y: -100, ease: 'power1.in' }, 0.5);
             }
         });

@@ -372,12 +372,13 @@ loader.load('/mask.glb', (gltf) => {
     // Vishnu / Avatar flanking masks
     const leftMask = maskModel.clone();
     leftMask.scale.set(0.6, 0.6, 0.6); // Slightly smaller
-    leftMask.position.set(-6, -1, -4); // Behind and left
+    // maskGroup is scaled by ~9, so local offsets must be small!
+    leftMask.position.set(-0.8, -0.2, -0.5); // Behind and left
     leftMask.rotation.y = Math.PI / 4; // Look slightly inwards
     
     const rightMask = maskModel.clone();
     rightMask.scale.set(0.6, 0.6, 0.6);
-    rightMask.position.set(6, -1, -4);
+    rightMask.position.set(0.8, -0.2, -0.5);
     rightMask.rotation.y = -Math.PI / 4;
     
     maskGroup.add(leftMask);
@@ -554,14 +555,14 @@ function animate() {
         // Y-axis limited tracking
         let targetPosY = mouseY * 0.8;
         // Shift mask further to the right side to prevent overlap with left text
-        let targetPosX = 8.5 + (mouseX * 0.5); 
+        let targetPosX = 12.0 + (mouseX * 0.5); 
         
         maskGroup.position.x += (targetPosX - maskGroup.position.x) * 0.1;
         maskGroup.position.y += (targetPosY - maskGroup.position.y) * 0.1;
         
         // Scale (stretched wider on X) and opacity driven by GSAP
-        // Reduced base scale so they don't clip the camera
-        maskGroup.scale.set(animState.maskScale * 0.8, animState.maskScale * 0.6, animState.maskScale * 0.6);
+        // Restored correct proportions
+        maskGroup.scale.set(animState.maskScale * 0.8, animState.maskScale * 0.8, animState.maskScale * 0.8);
         
         // Traverse and update opacity
         maskGroup.traverse((child) => {
