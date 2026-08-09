@@ -347,14 +347,14 @@ worldGroup.add(maskGroup);
 loader.load('/mask.glb', (gltf) => {
     maskModel = gltf.scene;
     
-    // Apply materials BEFORE cloning
+    // Apply materials
     maskModel.traverse((child) => {
         if (child.isMesh) {
-            // Apply Brutalist dark metallic theme
+            // Apply Brutalist dark metallic theme (User requested light dark blue)
             if (child.material) {
-                child.material.color.setHex(0xf5f5dc); // White Cream
-                child.material.roughness = 0.3;
-                child.material.metalness = 0.5;
+                child.material.color.setHex(0x1a2b4c); // Dark blue metallic
+                child.material.roughness = 0.4;
+                child.material.metalness = 0.6;
                 child.material.transparent = true;
                 child.material.opacity = animState.maskOpacity;
                 child.material.depthWrite = false;
@@ -365,24 +365,11 @@ loader.load('/mask.glb', (gltf) => {
     // Reset base scale to 1 so maskGroup handles scaling
     maskModel.scale.set(1, 1, 1);
     maskModel.position.set(0, 0, 0);
+    // User requested mask not to face right by default
+    maskModel.rotation.y = -Math.PI / 6; 
     
     // Main mask
     maskGroup.add(maskModel);
-    
-    // Vishnu / Avatar flanking masks
-    const leftMask = maskModel.clone();
-    leftMask.scale.set(0.6, 0.6, 0.6); // Slightly smaller
-    // maskGroup is scaled by ~9, so local offsets must be small!
-    leftMask.position.set(-0.8, -0.2, -0.5); // Behind and left
-    leftMask.rotation.y = Math.PI / 4; // Look slightly inwards
-    
-    const rightMask = maskModel.clone();
-    rightMask.scale.set(0.6, 0.6, 0.6);
-    rightMask.position.set(0.8, -0.2, -0.5);
-    rightMask.rotation.y = -Math.PI / 4;
-    
-    maskGroup.add(leftMask);
-    maskGroup.add(rightMask);
 });
 // Handle Resize
 window.addEventListener('resize', () => {

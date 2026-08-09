@@ -267,16 +267,18 @@ export function initDistrictMap() {
     const cubeCamera = new THREE.CubeCamera(1, 1000, cubeRenderTarget);
     scene.add(cubeCamera);
     
-    const lakeMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0x0044aa,          // Deep water blue
-        emissive: 0x001133,
-        roughness: 0.0,           // Perfectly smooth for reflection
-        metalness: 0.2,
-        transmission: 0.9,
-        ior: 1.33,                // Water IOR
-        envMap: cubeRenderTarget.texture,
-        envMapIntensity: 2.0,
-        transparent: true
+    const meshMaterial = new THREE.MeshStandardMaterial({
+        color: 0x051024,
+        metalness: 0.3,
+        roughness: 0.8,
+        transparent: true,
+        opacity: 0.9
+    });
+    
+    const lakeMaterial = new THREE.MeshStandardMaterial({
+        color: 0x0044aa,
+        roughness: 0.0,
+        metalness: 0.2
     });
     lakeMaterial.onBeforeCompile = shaderInjection;
 
@@ -514,12 +516,8 @@ export function initDistrictMap() {
                     });
                     
                     const extrudeSettings = {
-                        depth: baseHeight,
-                        bevelEnabled: true,
-                        bevelSegments: 2,
-                        steps: 1,
-                        bevelSize: 0.1,
-                        bevelThickness: 0.1
+                        depth: 0.02, // User requested flat diagonal view (no thick side walls)
+                        bevelEnabled: false
                     };
                     
                     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
@@ -632,10 +630,10 @@ export function initDistrictMap() {
                     mapGroup.add(mesh);
                     districtMeshes.push(mesh);
 
-                    // Add top border lines for definition (elevated slightly above the mesh to avoid z-fighting)
+                    // Add top border lines for definition
                     const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
                     const line = new THREE.Line(lineGeom, lineMaterial);
-                    line.position.z = baseHeight + 0.02; // Placed at the top of the extrusion
+                    line.position.z = 0.02; // Placed exactly at the top of the flat extrusion
                     mapGroup.add(line);
                 };
 
@@ -872,7 +870,6 @@ export function initDistrictMap() {
     // Turn glass districts to frosted ice midway AND make them GROW massively
     districtMeshes.forEach(mesh => {
         climbTimeline.to(mesh.material, {
-            transmission: 0.2,
             roughness: 0.8,
             color: 0xffffff, // White frost
             ease: 'none'
@@ -933,15 +930,8 @@ export function initDistrictMap() {
         });
     }
 
-    // 4. Energy Grid (Hide solid districts, show ONLY glowing data borders)
+    // 4. Energy Grid (Map stays fully visible in the final chapter, NO opacity change)
     climbTimeline.to(mapGroup.position, { z: -10, ease: 'power2.inOut' }, 0.5);
-    
-    districtMeshes.forEach(mesh => {
-        climbTimeline.to(mesh.material, {
-            opacity: 0.0, // Fade out the solid glass to reveal the wireframe borders
-            ease: 'power2.inOut'
-        }, 0.6);
-    });
 
     // Skybox fades to pure void at high altitude
     climbTimeline.to(skyboxUniforms.uColorBottom.value, { r: 0.0, g: 0.01, b: 0.02, ease: 'none' }, 0.5);

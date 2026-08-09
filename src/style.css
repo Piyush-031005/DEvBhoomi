@@ -238,11 +238,12 @@ body {
 /* Each word of the headline animates in independently */
 .br-headline {
   font-family: var(--f-condensed);
-  font-size: clamp(3.5rem, 9vw, 11rem);
+  font-size: clamp(3.5rem, 7vw, 9rem);
   font-weight: 800;
   line-height: 0.9;
   text-transform: uppercase;
   letter-spacing: -0.02em;
+  color: #ff2244;
   display: flex;
   flex-wrap: wrap;
   gap: 0 0.15em;
