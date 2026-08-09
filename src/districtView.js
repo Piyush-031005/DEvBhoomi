@@ -99,8 +99,8 @@ export function openDistrictView(districtKey) {
         { y: 30, opacity: 0 },
         { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out' }, '-=0.5')
       .fromTo('.data-row',
-        { y: 40, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.7, stagger: 0.12, ease: 'power3.out' }, '-=0.5');
+        { x: 30, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.6, stagger: 0.08, ease: 'power2.out' }, '-=0.4');
 }
 
 export function closeDistrictView() {
