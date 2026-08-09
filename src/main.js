@@ -552,7 +552,7 @@ function animate() {
         maskGroup.scale.set(animState.maskScale * 0.8, animState.maskScale * 0.8, animState.maskScale * 0.8);
         
         // Traverse and update opacity
-        maskGroup.traverse((child) => {
+        maskModel.traverse(child => {
             if (child.isMesh && child.material) {
                 child.material.opacity = animState.maskOpacity;
             }
@@ -611,7 +611,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // 2. Fade IN the mask for Chapter 3 (50% progress, ~2.9 on the timeline)
     .to(animState, { 
-        maskOpacity: 1.0, 
+        maskOpacity: 0.75, // Slightly transparent as requested by user
         duration: 0.5,
         ease: "power2.inOut"
     }, 2.5) // Starts fading in just before Chapter 3
