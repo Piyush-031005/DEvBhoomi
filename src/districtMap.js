@@ -865,6 +865,7 @@ export function initDistrictMap() {
         const rect = container.getBoundingClientRect();
         mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        mouseMoved = true;
         
         // Stop auto-rotation when user is interacting
         controls.autoRotate = false;
@@ -881,6 +882,7 @@ export function initDistrictMap() {
     let isActive = false;
     let uiParallaxX = 0;
     let uiParallaxY = 0;
+    let mouseMoved = true; // Flag for performance optimization
     
     ScrollTrigger.create({
         trigger: '#district-map-section',
@@ -1029,7 +1031,9 @@ export function initDistrictMap() {
             nainitalMesh.visible = true;
         }
 
-        if (isMapLoaded) {
+        // Raycasting Performance Optimization: Only raycast if mouse moved, or if we need to keep tracking a hovered mesh
+        if (isMapLoaded && (mouseMoved || hoveredMesh)) {
+            mouseMoved = false;
             raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(districtMeshes, false); // ONLY intersect main district meshes, not their children!
 
