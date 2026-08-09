@@ -469,8 +469,8 @@ export function initDistrictMap() {
         const terrainModel = gltf.scene;
         
         // Scale and position the terrain to fit exactly under the glass map
-        terrainModel.scale.set(60, 40, 60);
-        terrainModel.position.set(0, -20, 0); 
+        terrainModel.scale.set(25, 20, 25);
+        terrainModel.position.set(-2, -15, -2); 
         // Adjust these offsets to center it beneath the glass outline
         
         // Add a cool blue/cyan tint to the terrain material to match the Devbhoomi aesthetic
@@ -634,7 +634,7 @@ export function initDistrictMap() {
     // Terrain turns cold midway and ALSO GROWS
     if (scene.children) {
         scene.children.forEach(c => {
-            if (c.isGroup && c.scale.x === 60) { // Using 60 to identify the terrain model
+            if (c.isGroup && c.scale.x === 25) { // Using 25 to identify the terrain model
                 c.traverse(child => {
                     if (child.isMesh && child.material) {
                         climbTimeline.to(child.material.color, { r: 0.8, g: 0.9, b: 1.0, ease: 'none' }, 0);
@@ -643,7 +643,7 @@ export function initDistrictMap() {
                 
                 // Real terrain bulges out massively
                 climbTimeline.to(c.scale, {
-                    y: 150, // Massive vertical stretch
+                    y: 80, // Massive vertical stretch
                     ease: 'power2.in'
                 }, 0);
             }
@@ -678,7 +678,7 @@ export function initDistrictMap() {
     // Hide terrain at the top
     if (scene.children) {
         scene.children.forEach(c => {
-            if (c.isGroup && c.scale.x === 60) {
+            if (c.isGroup && c.scale.x === 25) {
                 climbTimeline.to(c.position, { y: -100, ease: 'power1.in' }, 0.5);
             }
         });
