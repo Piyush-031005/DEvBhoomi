@@ -879,6 +879,8 @@ export function initDistrictMap() {
 
     // RENDER LOOP
     let isActive = false;
+    let uiParallaxX = 0;
+    let uiParallaxY = 0;
     
     ScrollTrigger.create({
         trigger: '#district-map-section',
@@ -1095,6 +1097,11 @@ export function initDistrictMap() {
                     
                     uiTracker.style.left = `${x}px`;
                     uiTracker.style.top = `${y}px`;
+                    
+                    // Parallax the whole UI panel slightly towards mouse
+                    uiParallaxX = THREE.MathUtils.lerp(uiParallaxX, mouse.x * 20, 0.1);
+                    uiParallaxY = THREE.MathUtils.lerp(uiParallaxY, -mouse.y * 20, 0.1);
+                    uiPanel.style.transform = `translate(${uiParallaxX}px, ${uiParallaxY}px)`;
                 }
             } else {
                 if (hoveredMesh) {
