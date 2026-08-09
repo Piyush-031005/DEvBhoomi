@@ -104,6 +104,7 @@ const rippleMat = new THREE.MeshPhysicalMaterial({
 });
 const rippleMesh = new THREE.Mesh(rippleGeo, rippleMat);
 rippleMesh.position.set(0, 0, -5); // In front of the camera
+rippleMesh.visible = false; // Hidden until bell echo
 camera.add(rippleMesh);
 scene.add(camera); // Add camera to scene so its children are rendered
 
@@ -112,6 +113,7 @@ Ecosystem.on('invisibleGod', (e) => {
         // Reset and trigger shockwave
         rippleMesh.scale.set(0.1, 0.1, 0.1);
         rippleMat.opacity = 1.0;
+        rippleMesh.visible = true;
         
         gsap.to(rippleMesh.scale, {
             x: 20, y: 20, z: 20,
@@ -122,7 +124,8 @@ Ecosystem.on('invisibleGod', (e) => {
         gsap.to(rippleMat, {
             opacity: 0.0,
             duration: 2.0,
-            ease: "power2.in"
+            ease: "power2.in",
+            onComplete: () => { rippleMesh.visible = false; }
         });
     }
 });

@@ -426,12 +426,12 @@ export function initDistrictMap() {
                                  smoothstep(0.0, 0.2, vUv.y) * smoothstep(1.0, 0.8, vUv.y);
                                  
                     float alpha = smoothstep(0.3, 0.8, noise) * uOpacity * edge;
-                    gl_FragColor = vec4(0.8, 0.9, 1.0, alpha); // Icy blue-white fog
+                    gl_FragColor = vec4(0.02, 0.08, 0.12, alpha); // Dark cinematic mist instead of bright white
                 }
             `,
             transparent: true,
             depthWrite: false,
-            blending: THREE.AdditiveBlending
+            blending: THREE.NormalBlending
         });
         const fog = new THREE.Mesh(fogGeo, fogMat);
         fog.position.set(0, y, 2.5);
