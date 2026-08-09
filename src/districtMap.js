@@ -917,8 +917,9 @@ export function initDistrictMap() {
         ease: 'none'
     }, 0);
 
-    // Fade in snow during Sacred Winter
+    // Fade in snow and dense blizzard fog during Sacred Winter
     climbTimeline.to(snowMat, { opacity: 0.8, ease: 'power2.in' }, 0);
+    climbTimeline.to(scene.fog, { near: 10, far: 80, ease: 'power2.inOut' }, 0); // Blizzard whiteout
 
     // Turn glass districts to frosted ice midway AND make them GROW massively
     districtMeshes.forEach(mesh => {
@@ -988,6 +989,7 @@ export function initDistrictMap() {
 
     // Skybox fades to pure void at high altitude, and snow stops
     climbTimeline.to(snowMat, { opacity: 0.0, ease: 'power2.out' }, 0.5);
+    climbTimeline.to(scene.fog, { near: 50, far: 350, ease: 'power2.out' }, 0.5); // Fog clears for void
     climbTimeline.to(skyboxUniforms.uColorBottom.value, { r: 0.0, g: 0.01, b: 0.02, ease: 'none' }, 0.5);
     climbTimeline.to(skyboxUniforms.uColorTop.value, { r: 0.0, g: 0.0, b: 0.0, ease: 'none' }, 0.5);
 
