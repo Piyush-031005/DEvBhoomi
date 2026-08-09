@@ -552,6 +552,7 @@ function animate() {
         maskGroup.scale.set(animState.maskScale * 0.8, animState.maskScale * 0.8, animState.maskScale * 0.8);
         
         // Traverse and update opacity
+        if (maskGroup) maskGroup.visible = (animState.maskOpacity > 0.01);
         maskModel.traverse(child => {
             if (child.isMesh && child.material) {
                 child.material.opacity = animState.maskOpacity;
@@ -609,12 +610,12 @@ document.addEventListener("DOMContentLoaded", () => {
         duration: 0.1
     }, 0.0)
     
-    // 2. Fade IN the mask for Chapter 3 (50% progress, ~2.9 on the timeline)
+    // 2. Fade IN the mask strictly for Chapter 3 (50% progress, exactly 2.9 on the timeline)
     .to(animState, { 
         maskOpacity: 0.75, // Slightly transparent as requested by user
         duration: 0.5,
         ease: "power2.inOut"
-    }, 2.5) // Starts fading in just before Chapter 3
+    }, 2.9) // Starts fading in exactly at Chapter 3
     
     // 3. Subtle Mask Interaction during Chapter 3 and 4
     .to(animState, {
@@ -622,6 +623,13 @@ document.addEventListener("DOMContentLoaded", () => {
         duration: 2.0,
         ease: "power2.inOut"
     }, 2.8)
+    
+    // 4. Fade OUT the mask at the very end of Chapter 4
+    .to(animState, {
+        maskOpacity: 0.0,
+        duration: 0.4,
+        ease: "power2.inOut"
+    }, 5.4)
     
     // Fill the rest of the timeline to maintain the total scrub duration (~5.8)
     .to(animState, { brutalistOpacity: 1.0, duration: 0.5 }, 5.0)
