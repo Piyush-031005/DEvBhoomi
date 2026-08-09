@@ -1030,6 +1030,11 @@ export function initDistrictMap() {
                     hoverLight.position.set(lightTarget.position.x, lightTarget.position.y + 40, lightTarget.position.z + 10);
                     gsap.to(hoverLight, { intensity: 20.0, duration: 0.4 });
                     
+                    // Audio feedback
+                    if (typeof SoundEngine !== "undefined" && SoundEngine.isInitialized) {
+                        SoundEngine.playProceduralBell(600 + Math.random() * 200, 0.3); // High, soft chime
+                    }
+                    
                     // Update UI
                     uiName.textContent = hoveredMesh.userData.name;
                     uiHindi.textContent = hoveredMesh.userData.hindi;
@@ -1099,6 +1104,12 @@ export function initDistrictMap() {
             else if (key.includes('tehri')) matchedKey = 'tehri garhwal';
             else if (key.includes('pauri')) matchedKey = 'pauri garhwal';
             else matchedKey = key;
+            
+            // Audio feedback
+            if (typeof SoundEngine !== "undefined" && SoundEngine.isInitialized) {
+                SoundEngine.playProceduralBell(220, 1.5); // Deep, resonant click
+            }
+            
             openDistrictView(matchedKey);
         }
     });
