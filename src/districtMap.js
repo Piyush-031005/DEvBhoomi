@@ -663,7 +663,7 @@ export function initDistrictMap() {
             // Adjust map rotation so North is up, and it lays flat
             mapGroup.rotation.x = -Math.PI / 2; // Lay flat
             mapGroup.scale.set(1.3, 1.0, 1.0); // Stretch X to match familiar wide proportions of Uttarakhand
-            mapGroup.position.y = 25.0; // ELEVATE HIGH ABOVE TERRAIN to prevent z-fighting / overlap
+            mapGroup.position.y = 0.0; // Restore to 0 so it stays in camera view!
             
             // Map starts fully visible. (Removed time-based entry animation to prevent conflicts with ScrollTrigger)
             mapGroup.children.forEach(child => {
@@ -727,8 +727,8 @@ export function initDistrictMap() {
         });
         
         // Animate terrain entry
-        terrainModel.position.y = -50;
-        gsap.to(terrainModel.position, { y: -15, duration: 2.5, ease: 'power3.out', delay: 0.5 });
+        terrainModel.position.y = -80;
+        gsap.to(terrainModel.position, { y: -45, duration: 2.5, ease: 'power3.out', delay: 0.5 }); // Kept low to prevent z-fighting with map
         
         scene.add(terrainModel);
     }, undefined, (error) => {

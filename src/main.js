@@ -602,27 +602,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 
-    // 1. Mask starts visible for Chapter 0 (01 PEAKS OF SILENCE)
+    // 1. Mask is invisible initially
     masterTl.to(animState, {
-        maskOpacity: 1.0,
+        maskOpacity: 0.0,
         maskScale: 9.0, // Make mask massive
         duration: 0.1
     }, 0.0)
     
-    // 2. Subtle Mask Interaction during Chapter 0
+    // 2. Fade IN the mask for Chapter 3 (50% progress, ~2.9 on the timeline)
+    .to(animState, { 
+        maskOpacity: 1.0, 
+        duration: 0.5,
+        ease: "power2.inOut"
+    }, 2.5) // Starts fading in just before Chapter 3
+    
+    // 3. Subtle Mask Interaction during Chapter 3 and 4
     .to(animState, {
         maskRotY: Math.PI / 12,
-        duration: 1.2,
+        duration: 2.0,
         ease: "power2.inOut"
-    }, 0.2)
-    
-    // 3. Mask Fades OUT right before Chapter 1 (02 SACRED PORTALS) starts (around 1.4)
-    // 1.45 in masterTl time corresponds to 25% of the 5.8 total duration
-    .to(animState, { 
-        maskOpacity: 0.0, 
-        duration: 0.3,
-        ease: "power2.out"
-    }, 1.2)
+    }, 2.8)
     
     // Fill the rest of the timeline to maintain the total scrub duration (~5.8)
     .to(animState, { brutalistOpacity: 1.0, duration: 0.5 }, 5.0)
