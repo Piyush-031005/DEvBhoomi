@@ -103,7 +103,7 @@ export function initDistrictMap() {
     // CONTROLS
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.07;
+    controls.dampingFactor = 0.05; // Cinematic loose damping by default
     controls.maxPolarAngle = Math.PI / 2.1;
     controls.minDistance = 25;
     controls.maxDistance = 220;
@@ -114,9 +114,11 @@ export function initDistrictMap() {
     let autoRotateTimer = null;
     renderer.domElement.addEventListener('pointerdown', () => {
         controls.autoRotate = false;
+        controls.dampingFactor = 0.15; // Tighten control on interaction
         if (autoRotateTimer) clearTimeout(autoRotateTimer);
     });
     renderer.domElement.addEventListener('pointerup', () => {
+        controls.dampingFactor = 0.05; // Loosen control when released
         autoRotateTimer = setTimeout(() => { controls.autoRotate = true; }, 3000);
     });
 
@@ -866,12 +868,13 @@ export function initDistrictMap() {
         
         // Stop auto-rotation when user is interacting
         controls.autoRotate = false;
+        if (autoRotateTimer) clearTimeout(autoRotateTimer);
     });
 
     container.addEventListener('mouseleave', () => {
         mouse.x = -9999;
         mouse.y = -9999;
-        controls.autoRotate = true;
+        autoRotateTimer = setTimeout(() => { controls.autoRotate = true; }, 1000);
     });
 
     // RENDER LOOP
