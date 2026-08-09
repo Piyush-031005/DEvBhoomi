@@ -267,18 +267,30 @@ export function initDistrictMap() {
     const cubeCamera = new THREE.CubeCamera(1, 1000, cubeRenderTarget);
     scene.add(cubeCamera);
     
-    const meshMaterial = new THREE.MeshStandardMaterial({
-        color: 0x051024,
-        metalness: 0.3,
-        roughness: 0.8,
+    const meshMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0xaa1122,          // Deep Crimson Red
+        emissive: 0x440011,       // Dark blood glow
+        emissiveIntensity: 0.4,
+        roughness: 0.1,           
+        metalness: 0.2,           
+        transmission: 0.9,        // GLASS!
+        opacity: 1.0,
         transparent: true,
-        opacity: 0.9
+        ior: 1.5,                 
+        thickness: 2.0,           
+        clearcoat: 1.0,           
+        clearcoatRoughness: 0.05
     });
+    meshMaterial.onBeforeCompile = shaderInjection;
     
-    const lakeMaterial = new THREE.MeshStandardMaterial({
-        color: 0x0044aa,
+    const lakeMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0xff0022, // Glowing red for lakes
+        emissive: 0xaa0011,
+        emissiveIntensity: 0.8,
         roughness: 0.0,
-        metalness: 0.2
+        metalness: 0.2,
+        transmission: 0.9,
+        transparent: true
     });
     lakeMaterial.onBeforeCompile = shaderInjection;
 

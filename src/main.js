@@ -350,9 +350,9 @@ loader.load('/mask.glb', (gltf) => {
     // Apply materials
     maskModel.traverse((child) => {
         if (child.isMesh) {
-            // Apply Brutalist dark metallic theme (User requested light dark blue)
+            // Apply Brutalist dark metallic theme (User provided black/red reference)
             if (child.material) {
-                child.material.color.setHex(0x1a2b4c); // Dark blue metallic
+                child.material.color.setHex(0x111111); // Dark charcoal black
                 child.material.roughness = 0.4;
                 child.material.metalness = 0.6;
                 child.material.transparent = true;
@@ -698,11 +698,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Create ONE big pinned section that covers all 4 chapters
-    // Reduced to 400vh for much faster switching
+    // Reduced to 200vh for much faster switching
     ScrollTrigger.create({
         trigger: '#brutalist-act',
         start: 'top top',
-        end: '+=400%',
+        end: '+=200%',
         pin: true,
         onEnter: () => activateChapter(0),
         onUpdate: (self) => {
