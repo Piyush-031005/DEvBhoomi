@@ -469,8 +469,8 @@ export function initDistrictMap() {
         const terrainModel = gltf.scene;
         
         // Scale and position the terrain to fit exactly under the glass map
-        terrainModel.scale.set(12, 8, 12);
-        terrainModel.position.set(-2, -15, -2); 
+        terrainModel.scale.set(4, 1.5, 4);
+        terrainModel.position.set(-2, -5, -2); 
         // Adjust these offsets to center it beneath the glass outline
         
         // Add a cool blue/cyan tint to the terrain material to match the Devbhoomi aesthetic
@@ -587,10 +587,10 @@ export function initDistrictMap() {
         trigger: '#district-map-section',
         start: 'top bottom',
         end: 'bottom top',
-        onEnter: () => { isActive = true; controls.enabled = false; },
-        onEnterBack: () => { isActive = true; controls.enabled = false; },
-        onLeave: () => { isActive = false; controls.enabled = true; },
-        onLeaveBack: () => { isActive = false; controls.enabled = true; },
+        onEnter: () => { isActive = true; },
+        onEnterBack: () => { isActive = true; },
+        onLeave: () => { isActive = false; },
+        onLeaveBack: () => { isActive = false; },
     });
 
     // THE GREAT CLIMB: Scroll-driven continuous timeline
@@ -603,15 +603,10 @@ export function initDistrictMap() {
         }
     });
 
-    // 1. Initial State -> Sacred Winter (Climb UP to 40, look down slightly)
+    // 1. Initial State -> Sacred Winter (Climb UP to 40)
     climbTimeline.to(camera.position, {
         y: 40,
         z: 20,
-        ease: 'none'
-    }, 0);
-
-    climbTimeline.to(camera.rotation, {
-        x: -0.8,
         ease: 'none'
     }, 0);
 
@@ -634,33 +629,28 @@ export function initDistrictMap() {
     // Terrain turns cold midway and ALSO GROWS
     if (scene.children) {
         scene.children.forEach(c => {
-            if (c.isGroup && c.scale.x === 12) { // Using 12 to identify the terrain model
+            if (c.isGroup && c.scale.x === 4) { // Using 4 to identify the terrain model
                 c.traverse(child => {
                     if (child.isMesh && child.material) {
                         climbTimeline.to(child.material.color, { r: 0.8, g: 0.9, b: 1.0, ease: 'none' }, 0);
                     }
                 });
                 
-                // Real terrain bulges out massively
+                // Real terrain bulges out slightly
                 climbTimeline.to(c.scale, {
-                    y: 40, // Massive vertical stretch
+                    y: 10, // Small vertical stretch
                     ease: 'power2.in'
                 }, 0);
             }
         });
     }
 
-    // 2. Sacred Winter -> Energy Grid (Climb to 150, look straight down)
+    // 2. Sacred Winter -> Energy Grid (Climb to 120, OrbitControls will auto look down)
     climbTimeline.to(camera.position, {
         y: 120,
         z: 0,
         ease: 'power1.in'
     }, 0.5); // Starts halfway through the scroll
-
-    climbTimeline.to(camera.rotation, {
-        x: -Math.PI / 2, // Top-down
-        ease: 'power1.in'
-    }, 0.5);
 
     // Wireframe districts at the top
     districtMeshes.forEach(mesh => {
@@ -678,7 +668,7 @@ export function initDistrictMap() {
     // Hide terrain at the top
     if (scene.children) {
         scene.children.forEach(c => {
-            if (c.isGroup && c.scale.x === 12) {
+            if (c.isGroup && c.scale.x === 4) {
                 climbTimeline.to(c.position, { y: -100, ease: 'power1.in' }, 0.5);
             }
         });
