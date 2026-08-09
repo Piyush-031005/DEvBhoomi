@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,700;0,900;1,700&family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index-Hy6MEGtV.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CmxS2vhr.css">
+    <script type="module" crossorigin src="/assets/index-CmPBGzhD.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-zgcqsIHs.css">
   </head>
   <body>
     <div id="canvas-container"></div>
@@ -490,6 +490,14 @@
         <!-- Floating Editorial Layout (Awwwards Style) -->
         <div id="floating-editorial-ui" style="pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 100; opacity: 0; transition: opacity 0.5s ease; background: linear-gradient(90deg, transparent 50%, rgba(5,0,0,0.4) 100%);">
             
+            <!-- Multi-Layer Devbhoomi Toggle -->
+            <div id="layer-toggles" style="position: absolute; bottom: 5vh; left: 5vw; display: flex; gap: 15px; pointer-events: auto;">
+                <button class="layer-btn active" data-layer="terrain">TERRAIN</button>
+                <button class="layer-btn" data-layer="ecology">ECOLOGY</button>
+                <button class="layer-btn" data-layer="spiritual">SPIRITUAL</button>
+                <button class="layer-btn" data-layer="culture">CULTURE</button>
+            </div>
+
             <!-- Huge Typography Name -->
             <div id="float-name" style="position: absolute; left: 5vw; top: 15vh; font-family: 'Neue Machina', sans-serif; font-size: 8vw; font-weight: 800; color: #fff; text-transform: uppercase; mix-blend-mode: overlay; letter-spacing: -0.04em; line-height: 0.85;">
                 DISTRICT
