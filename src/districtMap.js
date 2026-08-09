@@ -207,17 +207,17 @@ export function initDistrictMap() {
     // GLASS UI — Original Sacred Red Glass
     const lacquerRedMat = new THREE.MeshPhysicalMaterial({
         color: 0xaa1122,          // Deep Crimson Red
-        emissive: 0x440011,       // Dark blood glow
-        emissiveIntensity: 0.4,
+        emissive: 0xff0022,       // Strong bright red glow
+        emissiveIntensity: 0.6,   // Increased to make it visibly red
         roughness: 0.1,           
-        metalness: 0.2,           
-        transmission: 0.9,        // GLASS!
+        metalness: 0.3,           
+        transmission: 0.6,        // Less transparent so the red color shows strongly
         opacity: 1.0,
         transparent: true,
         ior: 1.5,                 
         thickness: 2.0,           
         clearcoat: 1.0,           
-        clearcoatRoughness: 0.05, 
+        clearcoatRoughness: 0.05,
         bumpMap: terrainTexture,
         bumpScale: 0.2
     });
@@ -304,9 +304,9 @@ export function initDistrictMap() {
     };
 
     const lineMaterial = new THREE.LineBasicMaterial({ 
-        color: 0x63BDB5,          // Glowing cyan glass edges
+        color: 0xff3333,          // Glowing red glass edges to match the theme
         transparent: true, 
-        opacity: 0.6              
+        opacity: 0.6 
     });
 
     const mapGroup = new THREE.Group();
@@ -692,13 +692,13 @@ export function initDistrictMap() {
             uEarthPulse: { value: 0.0 }
         };
 
-        // Add a cool blue/cyan tint to the terrain material to match the Devbhoomi aesthetic
+        // Add a dark red tint to the terrain material to match the red Devbhoomi aesthetic
         terrainModel.traverse((child) => {
             if (child.isMesh && child.material) {
                 const mat = new THREE.MeshStandardMaterial({
-                    color: 0x113355, 
-                    roughness: 0.8,
-                    metalness: 0.2,
+                    color: 0x330505, // Dark crimson red instead of blue
+                    roughness: 0.9,
+                    metalness: 0.1,
                     bumpMap: terrainTexture,
                     bumpScale: 2.0
                 });

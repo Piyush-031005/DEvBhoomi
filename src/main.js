@@ -605,7 +605,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 1. Mask starts visible for Chapter 0 (01 PEAKS OF SILENCE)
     masterTl.to(animState, {
         maskOpacity: 1.0,
-        maskScale: 1.0,
+        maskScale: 9.0, // Make mask massive
         duration: 0.1
     }, 0.0)
     
