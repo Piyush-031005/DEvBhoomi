@@ -649,6 +649,7 @@ export function initDistrictMap() {
             
             // Adjust map rotation so North is up, and it lays flat
             mapGroup.rotation.x = -Math.PI / 2; // Lay flat
+            mapGroup.scale.set(1.3, 1.0, 1.0); // Stretch X to match familiar wide proportions of Uttarakhand
             
             // Map starts fully visible. (Removed time-based entry animation to prevent conflicts with ScrollTrigger)
             mapGroup.children.forEach(child => {
@@ -670,7 +671,8 @@ export function initDistrictMap() {
         terrainModel = gltf.scene;
         
         // Scale and position the terrain to fit exactly under the glass map
-        terrainModel.scale.set(4, 1.5, 4);
+        // Scaled up significantly to create huge background mountains
+        terrainModel.scale.set(7.0, 4.0, 7.0);
         terrainModel.position.set(-2, -5, -2); 
         // Adjust these offsets to center it beneath the glass outline
         

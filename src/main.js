@@ -9,6 +9,13 @@ import { initDistrictMap } from './districtMap.js';
 import { Ecosystem } from './Ecosystem.js';
 import { SoundEngine } from './SoundEngine.js';
 
+// Initialize audio on first click (browser autoplay policy)
+document.addEventListener('click', () => {
+    if (!SoundEngine.isInitialized) {
+        SoundEngine.init();
+    }
+}, { once: true });
+
 import brutalistVertexShader  from './shaders/brutalistVertex.glsl?raw';
 import brutalistFragmentShader from './shaders/brutalistFragment.glsl?raw';
 import atmosVertexShader      from './shaders/atmosVertex.glsl?raw';
@@ -92,15 +99,13 @@ scene.add(worldGroup);
 // --- INVISIBLE GODS (Bell Resonance Ripple) ---
 // A transparent glass ring that expands to distort the view
 const rippleGeo = new THREE.RingGeometry(0.1, 0.5, 64);
-const rippleMat = new THREE.MeshPhysicalMaterial({
+const rippleMat = new THREE.MeshBasicMaterial({
     color: 0xffffff,
-    transmission: 1.0,
-    ior: 1.8,           // High index of refraction for strong distortion
-    thickness: 1.0,
-    roughness: 0.0,
     transparent: true,
     opacity: 0.0,
-    side: THREE.DoubleSide
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
 });
 const rippleMesh = new THREE.Mesh(rippleGeo, rippleMat);
 rippleMesh.position.set(0, 0, -5); // In front of the camera
@@ -342,10 +347,7 @@ worldGroup.add(maskGroup);
 loader.load('/mask.glb', (gltf) => {
     maskModel = gltf.scene;
     
-    // Scale and position the massive mask to the right side
-    maskModel.scale.set(animState.maskScale * 0.8, animState.maskScale * 0.8, animState.maskScale * 0.8);
-    
-    // Apply materials
+    // Apply materials BEFORE cloning
     maskModel.traverse((child) => {
         if (child.isMesh) {
             // Apply Brutalist dark metallic theme
@@ -359,20 +361,24 @@ loader.load('/mask.glb', (gltf) => {
             }
         }
     });
+
+    // Reset base scale to 1 so maskGroup handles scaling
+    maskModel.scale.set(1, 1, 1);
+    maskModel.position.set(0, 0, 0);
     
     // Main mask
     maskGroup.add(maskModel);
     
     // Vishnu / Avatar flanking masks
     const leftMask = maskModel.clone();
-    leftMask.scale.multiplyScalar(0.7); // Smaller
-    leftMask.position.set(-8, -2, -5); // Behind and left
-    leftMask.rotation.y = Math.PI / 6; // Look slightly inwards
+    leftMask.scale.set(0.6, 0.6, 0.6); // Slightly smaller
+    leftMask.position.set(-6, -1, -4); // Behind and left
+    leftMask.rotation.y = Math.PI / 4; // Look slightly inwards
     
     const rightMask = maskModel.clone();
-    rightMask.scale.multiplyScalar(0.7);
-    rightMask.position.set(8, -2, -5);
-    rightMask.rotation.y = -Math.PI / 6;
+    rightMask.scale.set(0.6, 0.6, 0.6);
+    rightMask.position.set(6, -1, -4);
+    rightMask.rotation.y = -Math.PI / 4;
     
     maskGroup.add(leftMask);
     maskGroup.add(rightMask);
@@ -547,14 +553,15 @@ function animate() {
         
         // Y-axis limited tracking
         let targetPosY = mouseY * 0.8;
-        // Shift mask to the right side to prevent overlap with left text
-        let targetPosX = 4.5 + (mouseX * 0.5); 
+        // Shift mask further to the right side to prevent overlap with left text
+        let targetPosX = 8.5 + (mouseX * 0.5); 
         
         maskGroup.position.x += (targetPosX - maskGroup.position.x) * 0.1;
         maskGroup.position.y += (targetPosY - maskGroup.position.y) * 0.1;
         
         // Scale (stretched wider on X) and opacity driven by GSAP
-        maskGroup.scale.set(animState.maskScale * 1.4, animState.maskScale, animState.maskScale);
+        // Reduced base scale so they don't clip the camera
+        maskGroup.scale.set(animState.maskScale * 0.8, animState.maskScale * 0.6, animState.maskScale * 0.6);
         
         // Traverse and update opacity
         maskGroup.traverse((child) => {
