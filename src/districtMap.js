@@ -142,6 +142,19 @@ export function initDistrictMap() {
     rimLight.position.set(0, 80, -80);
     scene.add(rimLight);
 
+    // Dynamic Hover Spotlight
+    const hoverLight = new THREE.SpotLight(0xffffff, 0); // Initially hidden (intensity 0)
+    hoverLight.angle = Math.PI / 8;
+    hoverLight.penumbra = 0.5;
+    hoverLight.decay = 2;
+    hoverLight.distance = 150;
+    scene.add(hoverLight);
+    
+    // Light target needs to be added to scene
+    const lightTarget = new THREE.Object3D();
+    scene.add(lightTarget);
+    hoverLight.target = lightTarget;
+
     // --- PROCEDURAL TERRAIN TEXTURE ---
     function generateTerrainTexture() {
         const size = 512;
@@ -1011,6 +1024,12 @@ export function initDistrictMap() {
                     hoveredMesh.material = highlightMaterial;
                     gsap.to(hoveredMesh.position, { z: 2.5, duration: 0.5, ease: 'back.out(2)' });
                     
+                    // Activate hover spotlight
+                    lightTarget.position.copy(hoveredMesh.position);
+                    lightTarget.position.applyMatrix4(mapGroup.matrixWorld);
+                    hoverLight.position.set(lightTarget.position.x, lightTarget.position.y + 40, lightTarget.position.z + 10);
+                    gsap.to(hoverLight, { intensity: 20.0, duration: 0.4 });
+                    
                     // Update UI
                     uiName.textContent = hoveredMesh.userData.name;
                     uiHindi.textContent = hoveredMesh.userData.hindi;
@@ -1049,6 +1068,7 @@ export function initDistrictMap() {
                     hoveredMesh.material = hoveredMesh.userData.originalMat;
                     hoveredMesh = null;
                     uiPanel.style.opacity = "0";
+                    gsap.to(hoverLight, { intensity: 0, duration: 0.3 }); // Fade out spotlight
                 }
             }
         }
