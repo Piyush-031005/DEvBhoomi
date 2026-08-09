@@ -1075,6 +1075,11 @@ export function initDistrictMap() {
 
                 // 3D tracking: constantly update float-tracker position
                 if (hoveredMesh) {
+                    // Pulsing glow effect
+                    if (hoveredMesh.material && hoveredMesh.material.emissiveIntensity !== undefined) {
+                        hoveredMesh.material.emissiveIntensity = 0.5 + Math.sin(time * 5.0) * 0.3;
+                    }
+
                     const centerPos = hoveredMesh.userData.center.clone();
                     // apply map rotation and position
                     centerPos.applyMatrix4(mapGroup.matrixWorld);
