@@ -329,6 +329,16 @@ export function initDistrictMap() {
     const mapGroup = new THREE.Group();
     scene.add(mapGroup);
     
+    // Multi-Layer Node Groups
+    const layerGroups = {
+        spiritual: new THREE.Group(),
+        ecology: new THREE.Group(),
+    };
+    layerGroups.spiritual.visible = false;
+    layerGroups.ecology.visible = false;
+    mapGroup.add(layerGroups.spiritual);
+    mapGroup.add(layerGroups.ecology);
+    
     // To center the map
     const centerOffset = new THREE.Vector3();
     let isMapLoaded = false;
@@ -658,6 +668,29 @@ export function initDistrictMap() {
 
                     mapGroup.add(mesh);
                     districtMeshes.push(mesh);
+                    
+                    // --- MULTI-LAYER GENERATION ---
+                    // 1. Spiritual Nodes (Glowing Gold Temples)
+                    if (Math.random() > 0.3) { // 70% chance a district has major spiritual nodes
+                        const numTemples = 2 + Math.floor(Math.random() * 5);
+                        for(let i=0; i<numTemples; i++) {
+                            const nodeMat = new THREE.MeshBasicMaterial({ color: 0xffcc00, transparent: true, opacity: 0.0 });
+                            const nodeMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), nodeMat);
+                            nodeMesh.position.set(cx + (Math.random() - 0.5) * spawnAreaX, cy + (Math.random() - 0.5) * spawnAreaY, baseHeight + 0.5);
+                            layerGroups.spiritual.add(nodeMesh);
+                        }
+                    }
+                    
+                    // 2. Ecology Nodes (Glowing Green Forests/Rivers)
+                    if (Math.random() > 0.1) {
+                        const numForests = 5 + Math.floor(Math.random() * 10);
+                        for(let i=0; i<numForests; i++) {
+                            const nodeMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.0 });
+                            const nodeMesh = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), nodeMat);
+                            nodeMesh.position.set(cx + (Math.random() - 0.5) * spawnAreaX, cy + (Math.random() - 0.5) * spawnAreaY, baseHeight + 0.3);
+                            layerGroups.ecology.add(nodeMesh);
+                        }
+                    }
 
                     // Add top border lines for definition
                     const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
@@ -1155,6 +1188,66 @@ export function initDistrictMap() {
             
             openDistrictView(matchedKey);
         }
+    });
+
+    // ============================================================
+    // MULTI-LAYER ATLAS LOGIC
+    // ============================================================
+    const layerBtns = document.querySelectorAll('.layer-btn');
+    let currentLayer = 'terrain';
+    
+    // Base colors for transitions
+    const layerColors = {
+        terrain: { color: 0xaa0000, emissive: 0x330000, rim: 0xffffff, rimIntensity: 3.0 },
+        ecology: { color: 0x002200, emissive: 0x001100, rim: 0x00ff88, rimIntensity: 1.5 },
+        spiritual: { color: 0x220000, emissive: 0x441100, rim: 0xffaa00, rimIntensity: 1.5 },
+        culture: { color: 0x880022, emissive: 0x550011, rim: 0xff5555, rimIntensity: 2.0 }
+    };
+
+    layerBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const layer = e.target.dataset.layer;
+            if (layer === currentLayer) return;
+            
+            // Update UI
+            layerBtns.forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentLayer = layer;
+            
+            const targetStyle = layerColors[layer];
+            
+            // 1. Transition Map Materials
+            districtMeshes.forEach(mesh => {
+                if (mesh.userData.name.toLowerCase().includes('naini')) return; // skip lakes
+                gsap.to(mesh.material.color, { r: (targetStyle.color >> 16 & 255)/255, g: (targetStyle.color >> 8 & 255)/255, b: (targetStyle.color & 255)/255, duration: 1.5, ease: 'power2.inOut' });
+                gsap.to(mesh.material.emissive, { r: (targetStyle.emissive >> 16 & 255)/255, g: (targetStyle.emissive >> 8 & 255)/255, b: (targetStyle.emissive & 255)/255, duration: 1.5, ease: 'power2.inOut' });
+            });
+            
+            // Transition Rim Light
+            gsap.to(rimLight.color, { r: (targetStyle.rim >> 16 & 255)/255, g: (targetStyle.rim >> 8 & 255)/255, b: (targetStyle.rim & 255)/255, duration: 1.5 });
+            gsap.to(rimLight, { intensity: targetStyle.rimIntensity, duration: 1.5 });
+
+            // 2. Toggle Node Layers
+            // Fade out everything
+            layerGroups.spiritual.children.forEach(c => gsap.to(c.material, { opacity: 0, duration: 0.5 }));
+            layerGroups.ecology.children.forEach(c => gsap.to(c.material, { opacity: 0, duration: 0.5 }));
+            
+            setTimeout(() => {
+                layerGroups.spiritual.visible = layer === 'spiritual';
+                layerGroups.ecology.visible = layer === 'ecology';
+                
+                if (layer === 'spiritual') {
+                    layerGroups.spiritual.children.forEach(c => gsap.to(c.material, { opacity: 0.8 + Math.random()*0.2, duration: 1.5, delay: Math.random()*0.5 }));
+                } else if (layer === 'ecology') {
+                    layerGroups.ecology.children.forEach(c => gsap.to(c.material, { opacity: 0.6 + Math.random()*0.4, duration: 1.5, delay: Math.random()*0.5 }));
+                }
+            }, 500);
+            
+            // Play a soft transition sound
+            if (typeof SoundEngine !== 'undefined' && SoundEngine.isInitialized) {
+                SoundEngine.playProceduralBell(200, 0.5);
+            }
+        });
     });
 
     animateMap();
