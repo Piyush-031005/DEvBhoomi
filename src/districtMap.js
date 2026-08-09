@@ -11,6 +11,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { openDistrictView } from './districtView.js';
 import { districtData } from './districtData.js';
+import { Ecosystem } from './Ecosystem.js';
 
 export function initDistrictMap() {
     const container = document.getElementById('district-map-container');
@@ -18,9 +19,75 @@ export function initDistrictMap() {
 
     // SCENE SETUP
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x050101);
-    // Use linear fog so the map doesn't get completely hidden at a distance
-    scene.fog = new THREE.Fog(0x050101, 100, 350); 
+    // Remove static background, we will use a procedural skybox
+    scene.background = null; 
+    scene.fog = new THREE.Fog(0x010203, 100, 350); 
+    
+    // ============================================================
+    // THE LIVING HORIZON (Procedural Skybox)
+    // ============================================================
+    const skyboxUniforms = {
+        uTime: { value: 0.0 },
+        uColorTop: { value: new THREE.Color(0x020813) }, // Deep space/sky
+        uColorBottom: { value: new THREE.Color(0x15696F) }, // Teal horizon
+        uHorizonOffset: { value: 0.0 }
+    };
+    
+    const skyboxMat = new THREE.ShaderMaterial({
+        uniforms: skyboxUniforms,
+        vertexShader: `
+            varying vec3 vWorldPosition;
+            void main() {
+                vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                vWorldPosition = worldPosition.xyz;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform vec3 uColorTop;
+            uniform vec3 uColorBottom;
+            uniform float uHorizonOffset;
+            uniform float uTime;
+            varying vec3 vWorldPosition;
+            
+            // Simple 3D noise function for clouds
+            float hash(vec3 p) {
+                p = fract(p * 0.3183099 + 0.1);
+                p *= 17.0;
+                return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+            }
+            float noise(vec3 x) {
+                vec3 i = floor(x);
+                vec3 f = fract(x);
+                f = f * f * (3.0 - 2.0 * f);
+                return mix(
+                    mix(mix(hash(i + vec3(0,0,0)), hash(i + vec3(1,0,0)), f.x),
+                        mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
+                    mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x),
+                        mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z
+                );
+            }
+
+            void main() {
+                vec3 viewDirection = normalize(vWorldPosition);
+                // Mix sky colors based on Y direction (height)
+                float h = max(0.0, viewDirection.y + uHorizonOffset);
+                vec3 skyColor = mix(uColorBottom, uColorTop, pow(h, 0.5));
+                
+                // Add slow-moving procedural noise clouds near horizon
+                float cloudNoise = noise(viewDirection * 5.0 + vec3(uTime * 0.02, 0.0, uTime * 0.05));
+                float cloudMask = smoothstep(0.4, 0.7, cloudNoise) * (1.0 - smoothstep(0.0, 0.5, h));
+                skyColor = mix(skyColor, vec3(0.5, 0.7, 0.8), cloudMask * 0.3);
+                
+                gl_FragColor = vec4(skyColor, 1.0);
+            }
+        `,
+        side: THREE.BackSide,
+        depthWrite: false
+    });
+    
+    const skyboxMesh = new THREE.Mesh(new THREE.SphereGeometry(400, 32, 16), skyboxMat);
+    scene.add(skyboxMesh);
 
     const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
     // Position camera closer so it's perfectly visible
@@ -105,28 +172,61 @@ export function initDistrictMap() {
     
     const terrainTexture = generateTerrainTexture();
 
-    // GLASS UI — Transparent glowing red glass 
+    // GLOBAL SHADER UNIFORMS for Map Reveal
+    const mapUniforms = {
+        uFlowProgress: { value: 0.0 } // 0 = fully hidden (black void), 1.0 = fully revealed
+    };
+
+    const shaderInjection = (shader) => {
+        shader.uniforms.uFlowProgress = mapUniforms.uFlowProgress;
+        shader.fragmentShader = `
+            uniform float uFlowProgress;
+            ${shader.fragmentShader}
+        `.replace(
+            `#include <dithering_fragment>`,
+            `#include <dithering_fragment>
+            
+            // "Rivers Draw Everything" - Reveal from top to bottom (Y axis is up in this scene, but map is flat on XY, so we reveal along Y)
+            // vWorldPosition is available in MeshPhysicalMaterial
+            float reveal = smoothstep(uFlowProgress * 150.0 - 75.0, (uFlowProgress * 150.0 - 75.0) + 10.0, vWorldPosition.y);
+            
+            // Add a glowing "water edge" where the reveal is currently happening
+            float edge = smoothstep((uFlowProgress * 150.0 - 75.0) + 9.5, (uFlowProgress * 150.0 - 75.0) + 10.0, vWorldPosition.y);
+            vec3 edgeColor = vec3(0.0, 1.0, 1.0); // Cyan glow edge
+            
+            // If the pixel is below the flow line, discard it (invisible)
+            if (vWorldPosition.y < (uFlowProgress * 150.0 - 75.0)) {
+                discard;
+            }
+            
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, edgeColor, edge * 0.8);
+            `
+        );
+    };
+
+    // GLASS UI — Digital Ecology Teal Glass
     const lacquerRedMat = new THREE.MeshPhysicalMaterial({
-        color: 0xff4444,          // Light tint
-        emissive: 0x550011,       // Deep inner glow
+        color: 0x15696F,          // Deep Teal
+        emissive: 0x002233,       // Dark underwater glow
         emissiveIntensity: 0.2,
-        roughness: 0.1,           // Very smooth
+        roughness: 0.1,           
         metalness: 0.1,           
-        transmission: 0.9,        // High transmission = GLASS!
+        transmission: 0.9,        // GLASS!
         opacity: 1.0,
         transparent: true,
-        ior: 1.5,                 // Glass index of refraction
-        thickness: 2.0,           // Refract the terrain underneath
-        clearcoat: 1.0,           // Glossy reflections
+        ior: 1.5,                 
+        thickness: 2.0,           
+        clearcoat: 1.0,           
         clearcoatRoughness: 0.05, 
         bumpMap: terrainTexture,
         bumpScale: 0.2
     });
+    lacquerRedMat.onBeforeCompile = shaderInjection;
 
-    // Darker variant for shadowed/Himalayan districts
+    // Darker variant for Himalayan districts
     const lacquerDarkRedMat = new THREE.MeshPhysicalMaterial({
-        color: 0xff0022,          
-        emissive: 0x330000,
+        color: 0x003344,          
+        emissive: 0x001122,
         emissiveIntensity: 0.15,
         roughness: 0.15,
         metalness: 0.1,
@@ -140,6 +240,7 @@ export function initDistrictMap() {
         bumpMap: terrainTexture,
         bumpScale: 0.4
     });
+    lacquerDarkRedMat.onBeforeCompile = shaderInjection;
 
     const materials = {
         himalayas: lacquerDarkRedMat,
@@ -165,7 +266,7 @@ export function initDistrictMap() {
     });
 
     const lineMaterial = new THREE.LineBasicMaterial({ 
-        color: 0x00ffff,          // Glowing cyan glass edges
+        color: 0x63BDB5,          // Glowing cyan glass edges
         transparent: true, 
         opacity: 0.6              
     });
@@ -464,25 +565,49 @@ export function initDistrictMap() {
         .catch(err => console.error("Error loading GeoJSON map data", err));
 
     // LOAD REAL 3D TERRAIN UNDERNEATH
+    let terrainModel = null;
     const loader = new GLTFLoader();
     loader.load('/models/snowy_mountain_v2_-_terrain.glb', (gltf) => {
-        const terrainModel = gltf.scene;
+        terrainModel = gltf.scene;
         
         // Scale and position the terrain to fit exactly under the glass map
         terrainModel.scale.set(4, 1.5, 4);
         terrainModel.position.set(-2, -5, -2); 
         // Adjust these offsets to center it beneath the glass outline
         
+        // The Earth Pulse uniform
+        const terrainUniforms = {
+            uEarthPulse: { value: 0.0 }
+        };
+
         // Add a cool blue/cyan tint to the terrain material to match the Devbhoomi aesthetic
         terrainModel.traverse((child) => {
             if (child.isMesh && child.material) {
-                child.material = new THREE.MeshStandardMaterial({
+                const mat = new THREE.MeshStandardMaterial({
                     color: 0x113355, 
                     roughness: 0.8,
                     metalness: 0.2,
                     bumpMap: terrainTexture,
                     bumpScale: 2.0
                 });
+                
+                mat.onBeforeCompile = (shader) => {
+                    shader.uniforms.uEarthPulse = terrainUniforms.uEarthPulse;
+                    shader.vertexShader = `
+                        uniform float uEarthPulse;
+                        ${shader.vertexShader}
+                    `.replace(
+                        `#include <begin_vertex>`,
+                        `#include <begin_vertex>
+                        // Mountain Breathing: Push vertices outward slightly along their normals
+                        // The sine wave is pre-calculated in Ecosystem.earthPulse
+                        transformed += normal * (uEarthPulse * 0.5); // Very subtle (approx 2px on screen depending on distance)
+                        `
+                    );
+                };
+                
+                child.material = mat;
+                child.userData.terrainUniforms = terrainUniforms; // Save reference to update it later
             }
         });
         
@@ -544,6 +669,32 @@ export function initDistrictMap() {
         const burst = new THREE.Points(burstGeo, burstMat);
         scene.add(burst);
 
+        // Ecosystem reacts! A sudden wind gust based on the district position
+        const windGust = new THREE.Vector3(
+            (Math.random() - 0.5) * 2.0, 
+            0,                           
+            (Math.random() - 0.5) * 2.0  
+        );
+        Ecosystem.disturbWind(windGust);
+        
+        // Morph the Living Horizon based on district category
+        const c = name.toLowerCase();
+        let targetBottom = new THREE.Color(0x15696F); // Default Teal
+        let targetTop = new THREE.Color(0x020813);
+        
+        if (['pithoragarh', 'chamoli', 'uttarkashi'].some(d => c.includes(d))) {
+            targetBottom.setHex(0xffffff); // White icy horizon
+            targetTop.setHex(0x15696F);
+        } else if (['haridwar', 'udham singh nagar'].some(d => c.includes(d))) {
+            targetBottom.setHex(0xffaa00); // Warm gold horizon
+            targetTop.setHex(0x331100);
+        } else if (c.includes('nainital')) {
+            targetBottom.setHex(0x0044aa); // Deep blue lake horizon
+        }
+        
+        gsap.to(skyboxUniforms.uColorBottom.value, { r: targetBottom.r, g: targetBottom.g, b: targetBottom.b, duration: 2.0 });
+        gsap.to(skyboxUniforms.uColorTop.value, { r: targetTop.r, g: targetTop.g, b: targetTop.b, duration: 2.0 });
+
         // Animate opacity out and remove
         gsap.to(burstMat, { opacity: 0, duration: 1.8, ease: 'power2.in',
             onComplete: () => { scene.remove(burst); burstGeo.dispose(); burstMat.dispose(); }
@@ -587,10 +738,16 @@ export function initDistrictMap() {
         trigger: '#district-map-section',
         start: 'top bottom',
         end: 'bottom top',
-        onEnter: () => { isActive = true; },
+        onEnter: () => { 
+            isActive = true; 
+            gsap.to(mapUniforms.uFlowProgress, { value: 1.0, duration: 3.5, ease: 'power2.inOut', overwrite: true });
+        },
         onEnterBack: () => { isActive = true; },
         onLeave: () => { isActive = false; },
-        onLeaveBack: () => { isActive = false; },
+        onLeaveBack: () => { 
+            isActive = false; 
+            gsap.to(mapUniforms.uFlowProgress, { value: 0.0, duration: 1.0, overwrite: true }); // Hide when scrolling back up
+        },
     });
 
     // THE GREAT CLIMB: Scroll-driven continuous timeline
@@ -669,14 +826,31 @@ export function initDistrictMap() {
     if (scene.children) {
         scene.children.forEach(c => {
             if (c.isGroup && c.scale.x === 4) {
-                climbTimeline.to(c.position, { y: -100, ease: 'power1.in' }, 0.5);
+        climbTimeline.to(c.position, { y: -100, ease: 'power1.in' }, 0.5);
             }
         });
     }
 
-    function animate() {
-        requestAnimationFrame(animate);
+    // Animate Loop logic for Ecosystem
+    function updateEcosystemInMap() {
+        if (terrainModel) {
+            terrainModel.traverse(child => {
+                if (child.userData && child.userData.terrainUniforms) {
+                    child.userData.terrainUniforms.uEarthPulse.value = Ecosystem.earthPulse;
+                }
+            });
+        }
+    }
+    
+    function animateMap() {
+        if (!container.parentElement) return; 
+
+        requestAnimationFrame(animateMap);
+        const time = Date.now() * 0.001;
+        skyboxUniforms.uTime.value = time;
         
+        updateEcosystemInMap();
+
         if (!isActive) return;
 
         controls.update();

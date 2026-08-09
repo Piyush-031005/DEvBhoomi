@@ -6,6 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
 import { initSacredData } from './sacredData.js';
 import { initDistrictMap } from './districtMap.js';
+import { Ecosystem } from './Ecosystem.js';
 
 import brutalistVertexShader  from './shaders/brutalistVertex.glsl?raw';
 import brutalistFragmentShader from './shaders/brutalistFragment.glsl?raw';
@@ -428,7 +429,8 @@ atmosGeom.setAttribute('aSpeed',   new THREE.BufferAttribute(atmosSpeeds,    1))
 const atmosMat = new THREE.ShaderMaterial({
     uniforms: {
         uTime:    { value: 0 },
-        uOpacity: { value: 0 }
+        uOpacity: { value: 0 },
+        uWind:    { value: new THREE.Vector3() }
     },
     vertexShader:   atmosVertexShader,
     fragmentShader: atmosFragmentShader,
@@ -455,7 +457,11 @@ scene.add(directionalLight);
 
 function animate() {
     requestAnimationFrame(animate);
+    const delta = clock.getDelta();
     const elapsedTime = clock.getElapsedTime();
+    
+    // Update Ecosystem
+    Ecosystem.update(delta);
     
     // Constant subtle motion
     starsMesh.rotation.y = elapsedTime * 0.01;
@@ -465,6 +471,12 @@ function animate() {
         mountainParticles.material.uniforms.uFlightProgress.value = animState.birdFlight;
         mountainParticles.material.uniforms.uOpacity.value = 1.0 - animState.brutalistOpacity;
     }
+    
+    if (typeof atmosMesh !== "undefined" && atmosMesh && atmosMesh.visible) {
+        atmosMat.uniforms.uTime.value = elapsedTime;
+        atmosMat.uniforms.uWind.value.copy(Ecosystem.wind);
+    }
+
     if (maskModel) {
         // Continuous slow floating rotation + Interactive Mouse X rotation
         // The mask is "pinned" on the Y axis, so only rotation.y is affected by mouseX
