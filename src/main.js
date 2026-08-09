@@ -336,12 +336,14 @@ const maskFill = new THREE.DirectionalLight('#ffffff', 1.0); // Soft white fill
 maskFill.position.set(-5, 0, 10);
 scene.add(maskFill);
 
+let maskGroup = new THREE.Group();
+worldGroup.add(maskGroup);
+
 loader.load('/mask.glb', (gltf) => {
     maskModel = gltf.scene;
     
     // Scale and position the massive mask to the right side
     maskModel.scale.set(animState.maskScale * 0.8, animState.maskScale * 0.8, animState.maskScale * 0.8);
-    maskModel.position.set(10, 0, 0); // Moved to the right to prevent overlapping text
     
     // Apply materials
     maskModel.traverse((child) => {
@@ -358,7 +360,22 @@ loader.load('/mask.glb', (gltf) => {
         }
     });
     
-    worldGroup.add(maskModel);
+    // Main mask
+    maskGroup.add(maskModel);
+    
+    // Vishnu / Avatar flanking masks
+    const leftMask = maskModel.clone();
+    leftMask.scale.multiplyScalar(0.7); // Smaller
+    leftMask.position.set(-8, -2, -5); // Behind and left
+    leftMask.rotation.y = Math.PI / 6; // Look slightly inwards
+    
+    const rightMask = maskModel.clone();
+    rightMask.scale.multiplyScalar(0.7);
+    rightMask.position.set(8, -2, -5);
+    rightMask.rotation.y = -Math.PI / 6;
+    
+    maskGroup.add(leftMask);
+    maskGroup.add(rightMask);
 });
 // Handle Resize
 window.addEventListener('resize', () => {
@@ -519,28 +536,28 @@ function animate() {
         atmosMat.uniforms.uWind.value.copy(Ecosystem.wind);
     }
 
-    if (maskModel) {
+    if (maskGroup && maskModel) {
         // Continuous slow floating rotation + Interactive Mouse X rotation
         // The mask is "pinned" on the Y axis, so only rotation.y is affected by mouseX
         let targetRotY = animState.maskRotY + (mouseX * 0.8) + (Math.sin(elapsedTime * 0.5) * 0.1);
         
         // Smoothly interpolate current rotation to target rotation
-        maskModel.rotation.y += (targetRotY - maskModel.rotation.y) * 0.1;
-        maskModel.rotation.x = Math.cos(elapsedTime * 0.3) * 0.05 + (mouseY * 0.2); // Look up/down slightly
+        maskGroup.rotation.y += (targetRotY - maskGroup.rotation.y) * 0.1;
+        maskGroup.rotation.x = Math.cos(elapsedTime * 0.3) * 0.05 + (mouseY * 0.2); // Look up/down slightly
         
         // Y-axis limited tracking
         let targetPosY = mouseY * 0.8;
         // Shift mask to the right side to prevent overlap with left text
         let targetPosX = 4.5 + (mouseX * 0.5); 
         
-        maskModel.position.x += (targetPosX - maskModel.position.x) * 0.1;
-        maskModel.position.y += (targetPosY - maskModel.position.y) * 0.1;
+        maskGroup.position.x += (targetPosX - maskGroup.position.x) * 0.1;
+        maskGroup.position.y += (targetPosY - maskGroup.position.y) * 0.1;
         
         // Scale (stretched wider on X) and opacity driven by GSAP
-        maskModel.scale.set(animState.maskScale * 1.4, animState.maskScale, animState.maskScale);
+        maskGroup.scale.set(animState.maskScale * 1.4, animState.maskScale, animState.maskScale);
         
         // Traverse and update opacity
-        maskModel.traverse((child) => {
+        maskGroup.traverse((child) => {
             if (child.isMesh && child.material) {
                 child.material.opacity = animState.maskOpacity;
             }

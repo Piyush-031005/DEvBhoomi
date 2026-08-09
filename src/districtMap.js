@@ -204,13 +204,13 @@ export function initDistrictMap() {
         );
     };
 
-    // GLASS UI — Digital Ecology Teal Glass
+    // GLASS UI — Original Sacred Red Glass
     const lacquerRedMat = new THREE.MeshPhysicalMaterial({
-        color: 0x15696F,          // Deep Teal
-        emissive: 0x002233,       // Dark underwater glow
-        emissiveIntensity: 0.2,
+        color: 0xaa1122,          // Deep Crimson Red
+        emissive: 0x440011,       // Dark blood glow
+        emissiveIntensity: 0.4,
         roughness: 0.1,           
-        metalness: 0.1,           
+        metalness: 0.2,           
         transmission: 0.9,        // GLASS!
         opacity: 1.0,
         transparent: true,
@@ -225,9 +225,9 @@ export function initDistrictMap() {
 
     // Darker variant for Himalayan districts
     const lacquerDarkRedMat = new THREE.MeshPhysicalMaterial({
-        color: 0x003344,          
-        emissive: 0x001122,
-        emissiveIntensity: 0.15,
+        color: 0x550000,          // Dark obsidian red
+        emissive: 0x220000,
+        emissiveIntensity: 0.3,
         roughness: 0.15,
         metalness: 0.1,
         transmission: 0.85,
@@ -500,7 +500,8 @@ export function initDistrictMap() {
                     let localMinX = Infinity, localMaxX = -Infinity, localMinY = Infinity, localMaxY = -Infinity;
 
                     coords.forEach((coord, i) => {
-                        const x = (coord[0] - centerX) * scaleFactor;
+                        // Apply Mercator-like longitude squeeze (cos(30 deg) = 0.866) to fix diamond distortion
+                        const x = (coord[0] - centerX) * scaleFactor * 0.866;
                         const y = (coord[1] - centerY) * scaleFactor;
                         points.push(new THREE.Vector3(x, y, 0));
                         if (i === 0) shape.moveTo(x, y);
@@ -915,7 +916,7 @@ export function initDistrictMap() {
             emissiveIntensity: 2.0,
             opacity: 0.8,
             transparent: true,
-            wireframe: true, // Note: GSAP can't tween boolean wireframe smoothly, but we can set it via onUpdate if needed, or just let it snap.
+            onStart: () => mesh.material.wireframe = true,
             ease: 'power1.in'
         }, 0.5);
     });
@@ -924,10 +925,20 @@ export function initDistrictMap() {
     if (scene.children) {
         scene.children.forEach(c => {
             if (c.isGroup && c.scale.x === 4) {
-        climbTimeline.to(c.position, { y: -100, ease: 'power1.in' }, 0.5);
+                climbTimeline.to(c.position, { y: -100, ease: 'power1.in' }, 0.5);
             }
         });
     }
+
+    // 4. Energy Grid (Hide solid districts, show ONLY glowing data borders)
+    climbTimeline.to(mapGroup.position, { z: -10, ease: 'power2.inOut' }, 0.5);
+    
+    districtMeshes.forEach(mesh => {
+        climbTimeline.to(mesh.material, {
+            opacity: 0.0, // Fade out the solid glass to reveal the wireframe borders
+            ease: 'power2.inOut'
+        }, 0.6);
+    });
 
     // Skybox fades to pure void at high altitude
     climbTimeline.to(skyboxUniforms.uColorBottom.value, { r: 0.0, g: 0.01, b: 0.02, ease: 'none' }, 0.5);
