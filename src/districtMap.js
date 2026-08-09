@@ -1042,6 +1042,8 @@ export function initDistrictMap() {
                     uiPop.textContent = hoveredMesh.userData.population;
                     uiTheme.textContent = hoveredMesh.userData.theme;
                     
+                    document.body.classList.add('hover-active');
+                    
                     // Simple random/mock coordinates for demo if true coordinates aren't easy to fetch per-district
                     const lon = (77 + Math.random() * 3).toFixed(2);
                     const lat = (29 + Math.random() * 2).toFixed(2);
@@ -1074,6 +1076,7 @@ export function initDistrictMap() {
                     hoveredMesh = null;
                     uiPanel.style.opacity = "0";
                     gsap.to(hoverLight, { intensity: 0, duration: 0.3 }); // Fade out spotlight
+                    document.body.classList.remove('hover-active');
                 }
             }
         }
