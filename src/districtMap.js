@@ -1064,7 +1064,7 @@ export function initDistrictMap() {
         }
     });
 
-    animate();
+    animateMap();
 
     // RESIZE
     window.addEventListener('resize', () => {

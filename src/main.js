@@ -336,9 +336,9 @@ scene.add(maskFill);
 loader.load('/mask.glb', (gltf) => {
     maskModel = gltf.scene;
     
-    // Scale and position the massive mask
-    maskModel.scale.set(animState.maskScale, animState.maskScale, animState.maskScale);
-    maskModel.position.set(0, 0, 0);
+    // Scale and position the massive mask to the right side
+    maskModel.scale.set(animState.maskScale * 0.8, animState.maskScale * 0.8, animState.maskScale * 0.8);
+    maskModel.position.set(10, 0, 0); // Moved to the right to prevent overlapping text
     
     // Apply materials
     maskModel.traverse((child) => {
