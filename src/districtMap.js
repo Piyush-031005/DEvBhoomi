@@ -287,9 +287,11 @@ export function initDistrictMap() {
         color: 0xff0022, // Glowing red for lakes
         emissive: 0xaa0011,
         emissiveIntensity: 0.8,
-        roughness: 0.0,
+        roughness: 0.0, // Perfectly smooth for reflection
         metalness: 0.2,
         transmission: 0.9,
+        envMap: cubeRenderTarget.texture,
+        envMapIntensity: 2.0,
         transparent: true
     });
     lakeMaterial.onBeforeCompile = shaderInjection;
@@ -661,6 +663,7 @@ export function initDistrictMap() {
             // Adjust map rotation so North is up, and it lays flat
             mapGroup.rotation.x = -Math.PI / 2; // Lay flat
             mapGroup.scale.set(1.3, 1.0, 1.0); // Stretch X to match familiar wide proportions of Uttarakhand
+            mapGroup.position.y = 25.0; // ELEVATE HIGH ABOVE TERRAIN to prevent z-fighting / overlap
             
             // Map starts fully visible. (Removed time-based entry animation to prevent conflicts with ScrollTrigger)
             mapGroup.children.forEach(child => {
