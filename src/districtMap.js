@@ -778,24 +778,39 @@ export function initDistrictMap() {
             if (name.includes(key)) { color = dnaColors[key]; break; }
         }
 
-        const count = 80;
+        const count = 120; // Increased count
         const burstGeo = new THREE.BufferGeometry();
         const positions = new Float32Array(count * 3);
-        const mx = mesh.position.x, my = mesh.position.y, mz = mesh.position.z + 3;
+        const velocities = []; // Store upward velocities
+        const mx = mesh.position.x, my = mesh.position.y, mz = mesh.position.z + 5;
 
         for (let i = 0; i < count; i++) {
-            positions[i*3]   = mx + (Math.random() - 0.5) * 20;
-            positions[i*3+1] = my + (Math.random() - 0.5) * 12;
-            positions[i*3+2] = mz + Math.random() * 8;
+            positions[i*3]   = mx + (Math.random() - 0.5) * 15;
+            positions[i*3+1] = my + (Math.random() - 0.5) * 10;
+            positions[i*3+2] = mz + Math.random() * 5;
+            velocities.push(Math.random() * 0.4 + 0.1); // Z velocity (upwards)
         }
 
         burstGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         const burstMat = new THREE.PointsMaterial({
-            color, size: 0.5, transparent: true, opacity: 0.9,
-            depthWrite: false, sizeAttenuation: true
+            color, size: 0.8, transparent: true, opacity: 0.9, // Brighter and bigger
+            depthWrite: false, sizeAttenuation: true, blending: THREE.AdditiveBlending
         });
         const burst = new THREE.Points(burstGeo, burstMat);
         scene.add(burst);
+
+        // Animate particles shooting UP into the sky (Z axis)
+        const dummy = { p: 0 };
+        gsap.to(dummy, {
+            p: 1, duration: 1.5, ease: 'power2.in',
+            onUpdate: () => {
+                const pos = burstGeo.attributes.position.array;
+                for (let i = 0; i < count; i++) {
+                    pos[i*3+2] += velocities[i] * 3.0; // Fly up!
+                }
+                burstGeo.attributes.position.needsUpdate = true;
+            }
+        });
 
         // Ecosystem reacts! A sudden wind gust based on the district position
         const windGust = new THREE.Vector3(
