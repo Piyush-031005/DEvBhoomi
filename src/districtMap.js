@@ -356,7 +356,7 @@ export function initDistrictMap() {
         color: 0xffffff,
         size: 0.35,
         transparent: true,
-        opacity: 0.7,
+        opacity: 0.0, // Initially hidden
         depthWrite: false,
         sizeAttenuation: true
     });
@@ -913,6 +913,9 @@ export function initDistrictMap() {
         ease: 'none'
     }, 0);
 
+    // Fade in snow during Sacred Winter
+    climbTimeline.to(snowMat, { opacity: 0.8, ease: 'power2.in' }, 0);
+
     // Turn glass districts to frosted ice midway AND make them GROW massively
     districtMeshes.forEach(mesh => {
         climbTimeline.to(mesh.material, {
@@ -979,7 +982,8 @@ export function initDistrictMap() {
     // 4. Energy Grid (Map stays fully visible in the final chapter, NO opacity change)
     climbTimeline.to(mapGroup.position, { z: -10, ease: 'power2.inOut' }, 0.5);
 
-    // Skybox fades to pure void at high altitude
+    // Skybox fades to pure void at high altitude, and snow stops
+    climbTimeline.to(snowMat, { opacity: 0.0, ease: 'power2.out' }, 0.5);
     climbTimeline.to(skyboxUniforms.uColorBottom.value, { r: 0.0, g: 0.01, b: 0.02, ease: 'none' }, 0.5);
     climbTimeline.to(skyboxUniforms.uColorTop.value, { r: 0.0, g: 0.0, b: 0.0, ease: 'none' }, 0.5);
 
