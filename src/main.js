@@ -603,36 +603,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 
-    // 1. Mask is invisible initially
-    masterTl.to(animState, {
-        maskOpacity: 0.0,
-        maskScale: 9.0, // Make mask massive
-        duration: 0.1
-    }, 0.0)
-    
-    // 2. Fade IN the mask strictly for Chapter 3 (50% progress, exactly 2.9 on the timeline)
-    .to(animState, { 
-        maskOpacity: 0.75, // Slightly transparent as requested by user
-        duration: 0.5,
-        ease: "power2.inOut"
-    }, 2.9) // Starts fading in exactly at Chapter 3
-    
-    // 3. Subtle Mask Interaction during Chapter 3 and 4
-    .to(animState, {
-        maskRotY: Math.PI / 12,
-        duration: 2.0,
-        ease: "power2.inOut"
-    }, 2.8)
-    
-    // 4. Fade OUT the mask at the very end of Chapter 4
-    .to(animState, {
-        maskOpacity: 0.0,
-        duration: 0.4,
-        ease: "power2.inOut"
-    }, 5.4)
-    
-    // Fill the rest of the timeline to maintain the total scrub duration (~5.8)
-    .to(animState, { brutalistOpacity: 1.0, duration: 0.5 }, 5.0)
+    // masterTl is now only for hero titles and brutalist shell opacity
+    masterTl.to(animState, { brutalistOpacity: 1.0, duration: 0.5 }, 5.0)
     .add(() => { document.getElementById('br-shell')?.classList.add('active'); }, 5.5);
 
     
@@ -664,6 +636,16 @@ document.addEventListener("DOMContentLoaded", () => {
         if (typeof SoundEngine !== "undefined" && SoundEngine.isInitialized) {
             SoundEngine.playProceduralBell(440 - (idx * 50), 2.0); // Slightly different pitch per chapter
         }
+
+        // --- MASK LOGIC TIE-IN ---
+        if (idx >= 2) {
+            // Chapter 3 and 4: Fade IN the mask
+            gsap.to(animState, { maskOpacity: 0.75, maskRotY: Math.PI / 12, duration: 1.0, ease: "power2.out", overwrite: "auto" });
+        } else {
+            // Chapter 1 and 2: Hide the mask
+            gsap.to(animState, { maskOpacity: 0.0, maskRotY: 0, duration: 0.5, ease: "power2.in", overwrite: "auto" });
+        }
+        // -------------------------
         
         // Target the INNER spans for animation (the br-word is the clip container)
         const wordInners = chEl.querySelectorAll('.br-word');
@@ -717,6 +699,14 @@ document.addEventListener("DOMContentLoaded", () => {
             if (currentLabel !== expectedLabel) {
                 activateChapter(idx);
             }
+        },
+        onLeave: () => {
+            // User scrolled past Chapter 4, hide mask completely
+            gsap.to(animState, { maskOpacity: 0.0, duration: 0.5, ease: "power2.in", overwrite: "auto" });
+        },
+        onEnterBack: () => {
+            // User scrolled back UP into Chapter 4
+            activateChapter(3);
         }
     });
 
