@@ -508,7 +508,7 @@
         <div id="floating-editorial-ui" style="pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 100; opacity: 0; transition: opacity 0.5s ease; background: linear-gradient(90deg, transparent 50%, rgba(5,0,0,0.4) 100%);">
 
             <!-- Huge Typography Name -->
-            <div id="float-name" style="position: absolute; left: 5vw; top: 35vh; font-family: 'Neue Machina', sans-serif; font-size: 8vw; font-weight: 800; color: #fff; text-transform: uppercase; mix-blend-mode: overlay; letter-spacing: -0.04em; line-height: 0.85;">
+            <div id="float-name" style="position: absolute; left: 5vw; top: 20vh; font-family: 'Neue Machina', sans-serif; font-size: 4vw; font-weight: 800; color: var(--bauhaus-blue, #0055FF); text-transform: uppercase; letter-spacing: -0.02em; line-height: 0.85; text-shadow: 2px 2px 0px var(--bauhaus-black, #000);">
                 DISTRICT
             </div>
             
@@ -552,31 +552,31 @@
             <button class="layer-btn" data-layer="culture">CULTURE</button>
         </div>
 
-        <!-- THE LIVING ARCHIVE (Phase 2 Overlay) -->
-        <div id="living-archive-ui" style="position: fixed; inset: 0; z-index: 300; background: rgba(5,0,0,0.85); backdrop-filter: blur(20px); pointer-events: none; opacity: 0; transition: opacity 0.8s cubic-bezier(0.87, 0, 0.13, 1); display: flex; align-items: center; justify-content: center;">
-            <button id="close-archive-btn" style="position: absolute; top: 5vh; right: 5vw; background: none; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px 20px; font-family: 'Space Mono', monospace; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; pointer-events: auto;">BACK TO ATLAS [X]</button>
+        <!-- THE LIVING ARCHIVE (Phase 2 Overlay -> Bauhaus Restyle) -->
+        <div id="living-archive-ui" class="bauhaus-overlay" style="align-items: center; justify-content: center; background-color: var(--bauhaus-black);">
+            <button id="close-archive-btn" class="bauhaus-btn-inverse" style="position: absolute; top: 40px; right: 60px; color: var(--bauhaus-white); border-color: var(--bauhaus-white);">[ X ] CLOSE ARCHIVE</button>
             
-            <div style="width: 80vw; max-width: 1200px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; color: white;">
+            <div style="width: 90vw; max-width: 1400px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; color: white;">
                 <!-- Left: Massive Typography and Data -->
-                <div style="display: flex; flex-direction: column; justify-content: center;">
-                    <div id="archive-type" style="color: #ff1a2b; font-family: 'Space Mono', monospace; letter-spacing: 0.2em; font-size: 14px; margin-bottom: 10px;">ARCHIVE.TYPE // SPIRITUAL</div>
-                    <h2 id="archive-title" style="font-family: 'Neue Machina', sans-serif; font-size: clamp(3vw, 5vw, 60px); font-weight: 800; line-height: 0.9; text-transform: uppercase; margin: 0 0 20px 0; word-wrap: break-word; overflow-wrap: break-word; max-width: 100%;">KEDARNATH</h2>
-                    <p id="archive-desc" style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; line-height: 1.4; color: #aaa; margin-bottom: 40px; max-width: 90%;">An ancient shrine standing at 3,583m. It survived the 2013 floods through the protection of a massive boulder. A true testament to Devbhoomi architecture.</p>
+                <div style="display: flex; flex-direction: column; justify-content: center; border-right: 4px solid var(--bauhaus-red); padding-right: 40px;">
+                    <div id="archive-type" style="color: var(--bauhaus-red); font-family: 'Space Mono', monospace; letter-spacing: 0.2em; font-size: 16px; margin-bottom: 20px; font-weight: bold;">ARCHIVE.TYPE // SPIRITUAL</div>
+                    <h2 id="archive-title" style="font-family: 'Neue Machina', sans-serif; font-size: clamp(4vw, 6vw, 80px); font-weight: 800; line-height: 0.85; text-transform: uppercase; margin: 0 0 30px 0; word-wrap: break-word; overflow-wrap: break-word; color: var(--bauhaus-white);">KEDARNATH</h2>
+                    <p id="archive-desc" style="font-family: 'Space Mono', monospace; font-size: 1.2rem; line-height: 1.6; color: #ccc; margin-bottom: 40px; max-width: 90%;">An ancient shrine standing at 3,583m. It survived the 2013 floods through the protection of a massive boulder. A true testament to Devbhoomi architecture.</p>
                     
-                    <div style="display: flex; gap: 30px;">
+                    <div style="display: flex; gap: 40px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 30px;">
                         <div>
-                            <div style="font-family: 'Space Mono', monospace; font-size: 10px; color: #666;">ESTABLISHED</div>
-                            <div id="archive-stat1" style="font-family: 'Space Mono', monospace; font-size: 18px; color: #fff;">8TH CENTURY</div>
+                            <div style="font-family: 'Space Mono', monospace; font-size: 12px; color: var(--bauhaus-yellow); margin-bottom: 10px;">ESTABLISHED</div>
+                            <div id="archive-stat1" style="font-family: 'Neue Machina', sans-serif; font-size: 24px; color: #fff; font-weight: 800;">8TH CENTURY</div>
                         </div>
                         <div>
-                            <div style="font-family: 'Space Mono', monospace; font-size: 10px; color: #666;">ARCHITECTURE</div>
-                            <div id="archive-stat2" style="font-family: 'Space Mono', monospace; font-size: 18px; color: #fff;">KATYURI STYLE</div>
+                            <div style="font-family: 'Space Mono', monospace; font-size: 12px; color: var(--bauhaus-blue); margin-bottom: 10px;">ARCHITECTURE</div>
+                            <div id="archive-stat2" style="font-family: 'Neue Machina', sans-serif; font-size: 24px; color: #fff; font-weight: 800;">KATYURI STYLE</div>
                         </div>
                     </div>
                 </div>
                 <!-- Right: Visual Schematic -->
-                <div style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 40px; display: flex; flex-direction: column; justify-content: center;">
-                    <div id="hologram-container" style="width: 100%; height: 400px; border: 1px dashed rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(255,26,43,0.05) 0%, rgba(255,26,43,0.15) 100%); cursor: grab;">
+                <div style="padding-left: 20px; display: flex; flex-direction: column; justify-content: center;">
+                    <div id="hologram-container" style="width: 100%; height: 500px; border: 4px solid var(--bauhaus-white); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background: var(--bauhaus-red); cursor: grab; box-shadow: 20px 20px 0px var(--bauhaus-blue);">
                         <!-- 3D Hologram will be injected here -->
                     </div>
                 </div>

@@ -335,10 +335,11 @@ export function initDistrictMap() {
     
     // Multi-Layer Node Groups
     const layerGroups = {
-        spiritual: new THREE.Group(),
+        terrain: new THREE.Group(),
         ecology: new THREE.Group(),
+        spiritual: new THREE.Group(),
         culture: new THREE.Group(),
-        terrain: new THREE.Group()
+        easterEgg: new THREE.Group() // Phase 1 Commit 6: Hidden Devbhoomi
     };
     layerGroups.spiritual.visible = false;
     layerGroups.ecology.visible = false;
@@ -796,6 +797,37 @@ export function initDistrictMap() {
         })
         .catch(err => console.error("Error loading GeoJSON map data", err));
 
+    // ============================================================
+    // PHASE 1 COMMIT 6: HIDDEN DEVBHOOMI (EASTER EGGS)
+    // ============================================================
+    // These nodes are practically invisible unless you stumble upon them
+    const easterEggs = [
+        { name: "Patal Bhuvaneshwar Cave", lat: 29.825, lon: 80.035, type: 'cave', desc: "A limestone cave containing stalagmite figures of Hindu gods." },
+        { name: "Roopkund (Skeleton Lake)", lat: 30.260, lon: 79.730, type: 'mystery', desc: "A high altitude glacial lake famous for hundreds of human skeletons." },
+        { name: "Kasar Devi Magnetic Ridge", lat: 29.635, lon: 79.635, type: 'anomaly', desc: "Positioned on the Van Allen Belt, known for intense geomagnetic fields." }
+    ];
+
+    easterEggs.forEach(egg => {
+        const p = latLonToVector3(egg.lat, egg.lon, mapWidth, mapHeight, centerLat, centerLon);
+        const geo = new THREE.OctahedronGeometry(0.3, 0); // Very small
+        const mat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 }); // Almost invisible
+        const mesh = new THREE.Mesh(geo, mat);
+        
+        mesh.position.set(p.x, p.y, p.z + 2); // Hover slightly
+        mesh.userData = { 
+            isNode: true, 
+            name: egg.name, 
+            type: egg.type, 
+            description: egg.desc,
+            originalMat: mat,
+            isEasterEgg: true
+        };
+        
+        layerGroups.easterEgg.add(mesh);
+        interactiveNodes.push(mesh); // Make them raycastable
+    });
+    mapGroup.add(layerGroups.easterEgg);
+    
     // LOAD REAL 3D TERRAIN UNDERNEATH
     let terrainModel = null;
     const loader = new GLTFLoader();
@@ -963,6 +995,7 @@ export function initDistrictMap() {
     const uiPop = document.getElementById('float-pop');
     const uiTracker = document.getElementById('float-tracker');
     const uiTheme = document.getElementById('float-theme');
+    const uiDesc = document.getElementById('float-desc'); // Assume this exists in your HTML
 
     container.addEventListener('mousemove', (e) => {
         const rect = container.getBoundingClientRect();
@@ -1198,12 +1231,24 @@ export function initDistrictMap() {
                         uiElev.textContent = hoveredMesh.userData.elevation;
                         uiPop.textContent = hoveredMesh.userData.population;
                         uiTheme.textContent = hoveredMesh.userData.theme;
+                        uiName.style.color = "var(--bauhaus-blue)";
                     } else {
-                        uiName.textContent = hoveredMesh.userData.title;
-                        uiHindi.textContent = "नोड";
-                        uiElev.textContent = "SYSTEM.NODE";
-                        uiPop.textContent = "CLASSIFIED";
-                        uiTheme.textContent = hoveredMesh.userData.layer;
+                        // It's a Node!
+                        if (hoveredMesh.userData.isEasterEgg) {
+                            uiName.textContent = "??? HIDDEN DISCOVERY ???";
+                            uiHindi.textContent = "CLASSIFIED";
+                            uiElev.textContent = hoveredMesh.userData.type.toUpperCase();
+                            uiPop.textContent = hoveredMesh.userData.name;
+                            uiTheme.textContent = hoveredMesh.userData.description;
+                            uiName.style.color = "var(--bauhaus-yellow)";
+                        } else {
+                            uiName.textContent = hoveredMesh.userData.title || hoveredMesh.userData.name;
+                            uiHindi.textContent = "नोड";
+                            uiElev.textContent = "SYSTEM.NODE";
+                            uiPop.textContent = "CLASSIFIED";
+                            uiTheme.textContent = hoveredMesh.userData.layer;
+                            uiName.style.color = "var(--bauhaus-blue)";
+                        }
                     }
                     
                     document.body.classList.add('hover-active');
@@ -1507,6 +1552,24 @@ export function initDistrictMap() {
         // 2. Trigger a click on the corresponding UI button so the bottom menu stays in sync
         const btn = document.querySelector(`.layer-btn[data-layer="${layerToActivate}"]`);
         if (btn) btn.click();
+        
+        // 2.5 Show a massive cinematic instruction card
+        const flashCard = document.createElement('div');
+        flashCard.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: var(--bauhaus-red, #FF2A2A); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; color: white; text-align: center;
+        `;
+        flashCard.innerHTML = `
+            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 8vw; line-height: 0.9;">${category.toUpperCase()} OF ${district.toUpperCase()}</div>
+            <div style="font-family: 'Space Mono', monospace; font-size: 1.5rem; margin-top: 20px; letter-spacing: 0.1em; background: black; padding: 10px 20px;">CLICK GLOWING NODES TO EXPLORE</div>
+        `;
+        document.body.appendChild(flashCard);
+        
+        gsap.to(flashCard, { opacity: 1, duration: 0.3, onComplete: () => {
+            gsap.to(flashCard, { opacity: 0, duration: 1.0, delay: 1.5, onComplete: () => flashCard.remove() });
+        }});
         
         // 3. Find the district mesh to zoom to
         const targetMesh = districtMeshes.find(m => m.userData.name.toLowerCase() === district);
