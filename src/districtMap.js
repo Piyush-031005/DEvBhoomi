@@ -677,9 +677,9 @@ export function initDistrictMap() {
                         const numTemples = 2 + Math.floor(Math.random() * 5);
                         for(let i=0; i<numTemples; i++) {
                             const nodeMat = new THREE.MeshBasicMaterial({ color: 0xffcc00, transparent: true, opacity: 0.0 });
-                            const nodeMesh = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), nodeMat); // Larger for easier clicking
+                            const nodeMesh = new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 8), nodeMat); // Larger for easier clicking
                             nodeMesh.position.set(cx + (Math.random() - 0.5) * spawnAreaX, cy + (Math.random() - 0.5) * spawnAreaY, baseHeight + 0.5);
-                            nodeMesh.userData = { isNode: true, layer: 'SPIRITUAL', title: lowerName.toUpperCase() + ' TEMPLE', desc: 'An ancient shrine standing at 3,583m. It survived the 2013 floods through the protection of a massive boulder. A true testament to Devbhoomi architecture.', stat1: '8TH CENTURY', stat2: 'KATYURI STYLE' };
+                            nodeMesh.userData = { isNode: true, layer: 'SPIRITUAL', title: lowerName.toUpperCase() + ' TEMPLE', desc: 'An ancient shrine standing at 3,583m. It survived the 2013 floods through the protection of a massive boulder. A true testament to Devbhoomi architecture.', stat1: '8TH CENTURY', stat2: 'KATYURI STYLE', originalMat: nodeMat };
                             layerGroups.spiritual.add(nodeMesh);
                             interactiveNodes.push(nodeMesh);
                         }
@@ -690,9 +690,9 @@ export function initDistrictMap() {
                         const numForests = 5 + Math.floor(Math.random() * 10);
                         for(let i=0; i<numForests; i++) {
                             const nodeMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.0 });
-                            const nodeMesh = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), nodeMat);
+                            const nodeMesh = new THREE.Mesh(new THREE.SphereGeometry(0.7, 8, 8), nodeMat);
                             nodeMesh.position.set(cx + (Math.random() - 0.5) * spawnAreaX, cy + (Math.random() - 0.5) * spawnAreaY, baseHeight + 0.3);
-                            nodeMesh.userData = { isNode: true, layer: 'ECOLOGY', title: lowerName.toUpperCase() + ' FOREST', desc: 'A dense ecological zone rich in biodiversity. Home to rare Himalayan flora and fauna, serving as a critical carbon sink.', stat1: 'PROTECTED', stat2: 'BIODIVERSE' };
+                            nodeMesh.userData = { isNode: true, layer: 'ECOLOGY', title: lowerName.toUpperCase() + ' FOREST', desc: 'A dense ecological zone rich in biodiversity. Home to rare Himalayan flora and fauna, serving as a critical carbon sink.', stat1: 'PROTECTED', stat2: 'BIODIVERSE', originalMat: nodeMat };
                             layerGroups.ecology.add(nodeMesh);
                             interactiveNodes.push(nodeMesh);
                         }
@@ -1097,14 +1097,22 @@ export function initDistrictMap() {
                 if (hoveredMesh !== object) {
                     // Reset previous hover
                     if (hoveredMesh) {
-                        gsap.to(hoveredMesh.position, { z: 0, duration: 0.3, ease: 'power2.out' });
-                        hoveredMesh.material = hoveredMesh.userData.originalMat;
+                        gsap.to(hoveredMesh.position, { z: hoveredMesh.userData.isNode ? hoveredMesh.position.z : 0, duration: 0.3, ease: 'power2.out' });
+                        if (hoveredMesh.userData.isNode) {
+                            gsap.to(hoveredMesh.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
+                        } else {
+                            hoveredMesh.material = hoveredMesh.userData.originalMat;
+                        }
                     }
                     
                     hoveredMesh = object;
                     // Apply highlight and lift up slightly
-                    hoveredMesh.material = highlightMaterial;
-                    gsap.to(hoveredMesh.position, { z: 2.5, duration: 0.5, ease: 'back.out(2)' });
+                    if (hoveredMesh.userData.isNode) {
+                        gsap.to(hoveredMesh.scale, { x: 2.0, y: 2.0, z: 2.0, duration: 0.3, ease: 'back.out(2)' });
+                    } else {
+                        hoveredMesh.material = highlightMaterial;
+                        gsap.to(hoveredMesh.position, { z: 2.5, duration: 0.5, ease: 'back.out(2)' });
+                    }
                     
                     // Activate hover spotlight
                     lightTarget.position.copy(hoveredMesh.position);

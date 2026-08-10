@@ -642,8 +642,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // masterTl is now only for hero titles and brutalist shell opacity
     
+    // masterTl is now only for hero titles and brutalist shell opacity
+    
     // 1. "WELCOME TO GOD'S LAND" rises from behind mountains and vanishes quickly
-    masterTl.to('#gods-land-text', { y: 0, opacity: 1, duration: 1.0, ease: 'power2.out' }, 0)
+    masterTl.to('#gods-land-text', { y: '-25vh', opacity: 1, duration: 1.0, ease: 'power2.out' }, 0)
             .to('#gods-land-text', { opacity: 0, duration: 0.5, ease: 'power2.in' }, 2.0); // Vanishes quickly before Act 1 fully hits
     
     // 2. Fade in the Brutalist Shell (Act 1 start point basically)
