@@ -1216,11 +1216,17 @@ export function initDistrictMap() {
             
             const targetStyle = layerColors[layer];
             
-            // 1. Transition Map Materials
+            // 1. Transition Map Materials (Only tween unique materials once)
+            const uniqueMaterials = new Set();
             districtMeshes.forEach(mesh => {
-                if (mesh.userData.name.toLowerCase().includes('naini')) return; // skip lakes
-                gsap.to(mesh.material.color, { r: (targetStyle.color >> 16 & 255)/255, g: (targetStyle.color >> 8 & 255)/255, b: (targetStyle.color & 255)/255, duration: 1.5, ease: 'power2.inOut' });
-                gsap.to(mesh.material.emissive, { r: (targetStyle.emissive >> 16 & 255)/255, g: (targetStyle.emissive >> 8 & 255)/255, b: (targetStyle.emissive & 255)/255, duration: 1.5, ease: 'power2.inOut' });
+                if (!mesh.userData.name.toLowerCase().includes('naini')) {
+                    uniqueMaterials.add(mesh.material);
+                }
+            });
+            
+            uniqueMaterials.forEach(mat => {
+                gsap.to(mat.color, { r: (targetStyle.color >> 16 & 255)/255, g: (targetStyle.color >> 8 & 255)/255, b: (targetStyle.color & 255)/255, duration: 1.5, ease: 'power2.inOut' });
+                gsap.to(mat.emissive, { r: (targetStyle.emissive >> 16 & 255)/255, g: (targetStyle.emissive >> 8 & 255)/255, b: (targetStyle.emissive & 255)/255, duration: 1.5, ease: 'power2.inOut' });
             });
             
             // Transition Rim Light
