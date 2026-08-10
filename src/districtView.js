@@ -117,4 +117,21 @@ export function closeDistrictView() {
 document.addEventListener('DOMContentLoaded', () => {
     const backBtn = document.getElementById('back-to-map-btn');
     if (backBtn) backBtn.addEventListener('click', closeDistrictView);
+    
+    // Bauhaus Discovery Menu Logic
+    const exploreBtn = document.getElementById('explore-district-btn');
+    const closeDiscoveryBtn = document.getElementById('close-discovery-btn');
+    const discoveryMenu = document.getElementById('discovery-menu');
+    
+    if (exploreBtn && discoveryMenu) {
+        exploreBtn.addEventListener('click', () => {
+            discoveryMenu.classList.add('active');
+        });
+    }
+    
+    if (closeDiscoveryBtn && discoveryMenu) {
+        closeDiscoveryBtn.addEventListener('click', () => {
+            discoveryMenu.classList.remove('active');
+        });
+    }
 });

@@ -870,6 +870,140 @@ body {
 }
 
 /* ============================================================
+   BAUHAUS UI COMPONENTS (Phase 1 Overhaul)
+   ============================================================ */
+:root {
+  --bauhaus-red: #FF2A2A;
+  --bauhaus-black: #050101;
+  --bauhaus-white: #FFFFFF;
+}
+
+.bauhaus-btn {
+  background: var(--bauhaus-red);
+  color: var(--bauhaus-white);
+  border: none;
+  padding: 16px 32px;
+  font-family: 'Neue Machina', sans-serif;
+  font-weight: 800;
+  font-size: 1.2rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s;
+}
+
+.bauhaus-btn:hover {
+  background: #ff4a4a;
+  transform: translateX(10px);
+}
+
+.bauhaus-btn-inverse {
+  background: transparent;
+  color: var(--bauhaus-black);
+  border: 2px solid var(--bauhaus-black);
+  padding: 12px 24px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bauhaus-btn-inverse:hover {
+  background: var(--bauhaus-black);
+  color: var(--bauhaus-white);
+}
+
+.bauhaus-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: var(--bauhaus-white);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 60px;
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.6s cubic-bezier(0.87, 0, 0.13, 1), visibility 0.6s;
+}
+
+.bauhaus-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+  visibility: visible;
+}
+
+.bauhaus-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 80px;
+}
+
+.bauhaus-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 4rem;
+  color: var(--bauhaus-black);
+  line-height: 0.9;
+  max-width: 500px;
+  text-align: right;
+}
+
+.bauhaus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2px;
+  background: var(--bauhaus-black);
+  border: 2px solid var(--bauhaus-black);
+  flex-grow: 1;
+}
+
+.bauhaus-menu-item {
+  background: var(--bauhaus-white);
+  border: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 40px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+.bauhaus-menu-item:hover {
+  background: var(--bauhaus-red);
+}
+
+.bauhaus-menu-item:hover .bauhaus-num,
+.bauhaus-menu-item:hover .bauhaus-label {
+  color: var(--bauhaus-white);
+}
+
+.bauhaus-num {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.2rem;
+  color: #aaa;
+  margin-bottom: 60px;
+  transition: color 0.3s;
+}
+
+.bauhaus-label {
+  font-family: 'Neue Machina', sans-serif;
+  font-weight: 800;
+  font-size: 3rem;
+  color: var(--bauhaus-black);
+  text-transform: uppercase;
+  transition: color 0.3s;
+}
+
+/* ============================================================
    DISTRICT DYNAMIC VIEW OVERLAY (Phase 2)
    ============================================================ */
 .district-overlay {
