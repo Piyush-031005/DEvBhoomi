@@ -9,6 +9,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { lenis } from './main.js';
+import { initHologram, loadHologram } from './hologramViewer.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { openDistrictView } from './districtView.js';
 import { districtData } from './districtData.js';
@@ -672,30 +673,86 @@ export function initDistrictMap() {
                     mapGroup.add(mesh);
                     districtMeshes.push(mesh);
                     
+                    // --- SCI-FI HOLOGRAPHIC PIN GENERATOR ---
+                    function createSciFiPin(colorHex) {
+                        const pinGroup = new THREE.Group();
+                        // Glowing Ring
+                        const ringGeom = new THREE.TorusGeometry(0.6, 0.1, 8, 24);
+                        const ringMat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+                        const ring = new THREE.Mesh(ringGeom, ringMat);
+                        ring.rotation.x = Math.PI / 2;
+                        pinGroup.add(ring);
+                        // Center Core (Diamond)
+                        const coreGeom = new THREE.OctahedronGeometry(0.3, 0);
+                        const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: false });
+                        const core = new THREE.Mesh(coreGeom, coreMat);
+                        pinGroup.add(core);
+                        // Vertical Beam
+                        const beamGeom = new THREE.CylinderGeometry(0.05, 0.05, 2, 8);
+                        const beamMat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.5 });
+                        const beam = new THREE.Mesh(beamGeom, beamMat);
+                        beam.position.y = -1;
+                        pinGroup.add(beam);
+                        
+                        // Animation data
+                        pinGroup.userData.ring = ring;
+                        pinGroup.userData.core = core;
+                        pinGroup.userData.originalMat = ringMat; // for hover logic
+                        
+                        // Link children to parent for raycaster
+                        ring.userData.parentGroup = pinGroup;
+                        core.userData.parentGroup = pinGroup;
+                        beam.userData.parentGroup = pinGroup;
+                        
+                        return pinGroup;
+                    }
+
                     // --- MULTI-LAYER GENERATION ---
                     // 1. Spiritual Nodes (Glowing Gold Temples)
-                    if (Math.random() > 0.3) { // 70% chance a district has major spiritual nodes
-                        const numTemples = 2 + Math.floor(Math.random() * 5);
+                    if (Math.random() > 0.3) {
+                        const numTemples = 1 + Math.floor(Math.random() * 3);
                         for(let i=0; i<numTemples; i++) {
-                            const nodeMat = new THREE.MeshBasicMaterial({ color: 0xffcc00, transparent: true, opacity: 0.0 });
-                            const nodeMesh = new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 8), nodeMat); // Larger for easier clicking
-                            nodeMesh.position.set(cx + (Math.random() - 0.5) * spawnAreaX, cy + (Math.random() - 0.5) * spawnAreaY, baseHeight + 0.5);
-                            nodeMesh.userData = { isNode: true, layer: 'SPIRITUAL', title: lowerName.toUpperCase() + ' TEMPLE', desc: 'An ancient shrine standing at 3,583m. It survived the 2013 floods through the protection of a massive boulder. A true testament to Devbhoomi architecture.', stat1: '8TH CENTURY', stat2: 'KATYURI STYLE', originalMat: nodeMat };
-                            layerGroups.spiritual.add(nodeMesh);
-                            interactiveNodes.push(nodeMesh);
+                            const nodeGroup = createSciFiPin(0xffcc00);
+                            nodeGroup.position.set(cx + (Math.random() - 0.5) * spawnAreaX, cy + (Math.random() - 0.5) * spawnAreaY, baseHeight + 2);
+                            nodeGroup.userData = { ...nodeGroup.userData, isNode: true, layer: 'SPIRITUAL', title: lowerName.toUpperCase() + ' TEMPLE', desc: 'An ancient shrine standing at 3,583m. It survived the 2013 floods through the protection of a massive boulder. A true testament to Devbhoomi architecture.', stat1: '8TH CENTURY', stat2: 'KATYURI STYLE' };
+                            layerGroups.spiritual.add(nodeGroup);
+                            interactiveNodes.push(nodeGroup);
                         }
                     }
                     
-                    // 2. Ecology Nodes (Glowing Green Forests/Rivers)
+                    // 2. Ecology Nodes (Glowing Green Forests)
                     if (Math.random() > 0.1) {
-                        const numForests = 5 + Math.floor(Math.random() * 10);
+                        const numForests = 2 + Math.floor(Math.random() * 4);
                         for(let i=0; i<numForests; i++) {
-                            const nodeMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.0 });
-                            const nodeMesh = new THREE.Mesh(new THREE.SphereGeometry(0.7, 8, 8), nodeMat);
-                            nodeMesh.position.set(cx + (Math.random() - 0.5) * spawnAreaX, cy + (Math.random() - 0.5) * spawnAreaY, baseHeight + 0.3);
-                            nodeMesh.userData = { isNode: true, layer: 'ECOLOGY', title: lowerName.toUpperCase() + ' FOREST', desc: 'A dense ecological zone rich in biodiversity. Home to rare Himalayan flora and fauna, serving as a critical carbon sink.', stat1: 'PROTECTED', stat2: 'BIODIVERSE', originalMat: nodeMat };
-                            layerGroups.ecology.add(nodeMesh);
-                            interactiveNodes.push(nodeMesh);
+                            const nodeGroup = createSciFiPin(0x00ff88);
+                            nodeGroup.position.set(cx + (Math.random() - 0.5) * spawnAreaX, cy + (Math.random() - 0.5) * spawnAreaY, baseHeight + 2);
+                            nodeGroup.userData = { ...nodeGroup.userData, isNode: true, layer: 'ECOLOGY', title: lowerName.toUpperCase() + ' FOREST', desc: 'A dense ecological zone rich in biodiversity. Home to rare Himalayan flora and fauna, serving as a critical carbon sink.', stat1: 'PROTECTED', stat2: 'BIODIVERSE' };
+                            layerGroups.ecology.add(nodeGroup);
+                            interactiveNodes.push(nodeGroup);
+                        }
+                    }
+                    
+                    // 3. Culture Nodes (Glowing Magenta)
+                    if (Math.random() > 0.5) {
+                        const numCulture = 1 + Math.floor(Math.random() * 2);
+                        for(let i=0; i<numCulture; i++) {
+                            const nodeGroup = createSciFiPin(0xff44cc);
+                            nodeGroup.position.set(cx + (Math.random() - 0.5) * spawnAreaX, cy + (Math.random() - 0.5) * spawnAreaY, baseHeight + 2);
+                            nodeGroup.userData = { ...nodeGroup.userData, isNode: true, layer: 'CULTURE', title: lowerName.toUpperCase() + ' HERITAGE', desc: 'A deeply preserved cultural artifact holding the stories, music, and traditions of the mountain communities.', stat1: 'FOLKLORE', stat2: 'PRESERVED' };
+                            layerGroups.culture.add(nodeGroup);
+                            interactiveNodes.push(nodeGroup);
+                        }
+                    }
+                    
+                    // 4. Terrain Nodes (Ice Blue Peaks)
+                    if (Math.random() > 0.4) {
+                        const numTerrain = 1 + Math.floor(Math.random() * 3);
+                        for(let i=0; i<numTerrain; i++) {
+                            const nodeGroup = createSciFiPin(0x00d4ff);
+                            nodeGroup.position.set(cx + (Math.random() - 0.5) * spawnAreaX, cy + (Math.random() - 0.5) * spawnAreaY, baseHeight + 2);
+                            nodeGroup.userData = { ...nodeGroup.userData, isNode: true, layer: 'TERRAIN', title: lowerName.toUpperCase() + ' PEAK', desc: 'A towering Himalayan peak serving as a crucial geographical and climatic barrier. Covered in eternal snow.', stat1: '7,816 M', stat2: 'GLACIATED' };
+                            layerGroups.terrain.add(nodeGroup);
+                            interactiveNodes.push(nodeGroup);
                         }
                     }
 
@@ -1089,11 +1146,14 @@ export function initDistrictMap() {
         if (isMapLoaded && (mouseMoved || hoveredMesh)) {
             mouseMoved = false;
             raycaster.setFromCamera(mouse, camera);
-            const intersectTargets = (layerGroups.spiritual.children.length > 0 || layerGroups.ecology.children.length > 0) ? [...districtMeshes, ...interactiveNodes] : districtMeshes;
-            const intersects = raycaster.intersectObjects(intersectTargets, false);
+            const intersectTargets = (interactiveNodes.length > 0) ? [...districtMeshes, ...interactiveNodes] : districtMeshes;
+            const intersects = raycaster.intersectObjects(intersectTargets, true); // true for recursive (hits children of groups)
 
             if (intersects.length > 0) {
-                const object = intersects[0].object;
+                let object = intersects[0].object;
+                if (object.userData.parentGroup) {
+                    object = object.userData.parentGroup; // Map ring/core/beam back to the PinGroup
+                }
                 
                 if (hoveredMesh !== object) {
                     // Reset previous hover
@@ -1158,6 +1218,12 @@ export function initDistrictMap() {
                     // Pulsing glow effect
                     if (hoveredMesh.material && hoveredMesh.material.emissiveIntensity !== undefined) {
                         hoveredMesh.material.emissiveIntensity = 0.5 + Math.sin(time * 5.0) * 0.3;
+                    }
+                    
+                    // Rotate the node's internal ring if it is a Sci-Fi Pin
+                    if (hoveredMesh.userData.isNode && hoveredMesh.userData.ring) {
+                        hoveredMesh.userData.ring.rotation.z += 0.05;
+                        hoveredMesh.userData.core.rotation.y += 0.1;
                     }
 
                     let centerPos;
@@ -1272,16 +1338,18 @@ export function initDistrictMap() {
         document.getElementById('archive-stat1').textContent = nodeMesh.userData.stat1;
         document.getElementById('archive-stat2').textContent = nodeMesh.userData.stat2;
         
-        const schemaImg = document.getElementById('archive-schema-img');
-        if (schemaImg) {
-            schemaImg.src = nodeMesh.userData.layer === 'SPIRITUAL' ? 'temple_schematic.png' : 'ecology_schematic.png';
-        }
-        
         setTimeout(() => {
             const archiveUi = document.getElementById('living-archive-ui');
             if (archiveUi) {
                 archiveUi.style.opacity = '1';
                 archiveUi.style.pointerEvents = 'auto';
+                
+                // Initialize Hologram
+                if (!window.hologramInitialized) {
+                    initHologram('hologram-container');
+                    window.hologramInitialized = true;
+                }
+                loadHologram(nodeMesh.userData.layer);
             }
         }, 2000);
         
