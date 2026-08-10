@@ -13,10 +13,17 @@
 <body style="margin: 0; padding: 0; background-color: #050000; overflow-x: hidden;">
 
     <!-- Serene Preloader -->
-    <div id="global-loader" style="position: fixed; inset: 0; background: #050000; z-index: 99999; display: flex; align-items: center; justify-content: center; color: #ffffff; font-family: 'Cormorant Garamond', serif; font-size: 3vw; flex-direction: column; transition: opacity 1.5s ease; letter-spacing: 0.1em; text-align: center;">
-        <div style="font-weight: 300;">WELCOME TO GOD'S LAND</div>
-        <div id="loader-progress" style="font-size: 1vw; margin-top: 20px; color: #aaaaaa; letter-spacing: 0.5em; font-family: 'Space Mono', monospace;">LOADING ASSETS 0%</div>
-        <button id="enter-btn" style="display: none; margin-top: 40px; background: none; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 15px 40px; font-family: 'Space Mono', monospace; letter-spacing: 4px; cursor: pointer; text-transform: uppercase; transition: all 0.3s ease;">ENTER</button>
+    <div id="global-loader" style="position: fixed; inset: 0; background: #050000; z-index: 99999; display: flex; align-items: center; justify-content: center; color: #ffffff; flex-direction: column; transition: opacity 1.5s ease; text-align: center; padding: 0 5vw;">
+        <div style="font-family: 'Noto Sans Devanagari', sans-serif; font-size: 3vw; font-weight: 300; letter-spacing: 0.1em; margin-bottom: 20px;">अस्त्युत्तरस्यां दिशि देवतात्मा हिमालयो नाम नगाधिराजः</div>
+        <div style="font-family: 'Cormorant Garamond', serif; font-size: 1.5vw; font-style: italic; color: #aaaaaa; letter-spacing: 0.1em; max-width: 600px; line-height: 1.5;">"In the North stands the divine soul, the King of Mountains, Himalaya."<br>— Kalidasa, Kumarasambhava</div>
+        
+        <div id="loader-progress" style="font-size: 1vw; margin-top: 40px; color: #666; letter-spacing: 0.5em; font-family: 'Space Mono', monospace;">LOADING ASSETS 0%</div>
+        <button id="enter-btn" style="display: none; margin-top: 40px; background: none; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 15px 40px; font-family: 'Space Mono', monospace; letter-spacing: 4px; cursor: pointer; text-transform: uppercase; transition: all 0.3s ease;">ENTER DEV BHOOMI</button>
+    </div>
+
+    <!-- Background text behind 3D Scene -->
+    <div id="gods-land-bg" style="position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: -2; background: transparent; overflow: hidden; pointer-events: none;">
+        <h1 id="gods-land-text" style="font-family: 'Neue Machina', sans-serif; font-size: 10vw; color: rgba(255, 255, 255, 0.9); text-transform: uppercase; letter-spacing: -0.05em; font-weight: 800; white-space: nowrap; transform: translateY(100vh); opacity: 0; text-shadow: 0 0 50px rgba(255,255,255,0.5);">WELCOME TO GOD'S LAND</h1>
     </div>
 
     <div id="canvas-container"></div>
@@ -493,13 +500,7 @@
         <!-- Three.js Canvas Container (Sticky) -->
         <div id="district-map-container" style="position: sticky; top: 0; left: 0; width: 100%; height: 100vh;">
             
-            <!-- Multi-Layer Devbhoomi Toggle (Visible only in map section) -->
-            <div id="layer-toggles" style="position: absolute; bottom: 15vh; left: 5vw; display: flex; gap: 15px; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;">
-                <button class="layer-btn active" data-layer="terrain">TERRAIN</button>
-                <button class="layer-btn" data-layer="ecology">ECOLOGY</button>
-                <button class="layer-btn" data-layer="spiritual">SPIRITUAL</button>
-                <button class="layer-btn" data-layer="culture">CULTURE</button>
-            </div>
+            <!-- Three.js Canvas Container (Sticky) -->
             
         </div>
 
@@ -536,6 +537,14 @@
                 </div>
             </div>
             
+        </div>
+        
+        <!-- Multi-Layer Devbhoomi Toggle (Visible only in map section) -->
+        <div id="layer-toggles" style="position: fixed; bottom: 15vh; left: 5vw; display: flex; gap: 15px; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;">
+            <button class="layer-btn active" data-layer="terrain">TERRAIN</button>
+            <button class="layer-btn" data-layer="ecology">ECOLOGY</button>
+            <button class="layer-btn" data-layer="spiritual">SPIRITUAL</button>
+            <button class="layer-btn" data-layer="culture">CULTURE</button>
         </div>
 
         <!-- THE LIVING ARCHIVE (Phase 2 Overlay) -->
