@@ -929,11 +929,13 @@ body {
 
 .district-hero-text h1 {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 8rem;
-  line-height: 0.8;
+  font-size: clamp(3rem, 8vw, 8rem);
+  line-height: 0.9;
   color: #fff;
   margin: 0;
   text-transform: uppercase;
+  word-wrap: break-word;
+  max-width: 90vw;
 }
 
 .district-hero-text h2 {

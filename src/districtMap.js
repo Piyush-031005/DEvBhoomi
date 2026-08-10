@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { lenis } from './main.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { openDistrictView } from './districtView.js';
 import { districtData } from './districtData.js';
@@ -1097,7 +1098,6 @@ export function initDistrictMap() {
                 if (hoveredMesh !== object) {
                     // Reset previous hover
                     if (hoveredMesh) {
-                        gsap.to(hoveredMesh.position, { z: hoveredMesh.userData.isNode ? hoveredMesh.position.z : 0, duration: 0.3, ease: 'power2.out' });
                         if (hoveredMesh.userData.isNode) {
                             gsap.to(hoveredMesh.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
                         } else {
@@ -1111,7 +1111,6 @@ export function initDistrictMap() {
                         gsap.to(hoveredMesh.scale, { x: 2.0, y: 2.0, z: 2.0, duration: 0.3, ease: 'back.out(2)' });
                     } else {
                         hoveredMesh.material = highlightMaterial;
-                        gsap.to(hoveredMesh.position, { z: 2.5, duration: 0.5, ease: 'back.out(2)' });
                     }
                     
                     // Activate hover spotlight
@@ -1241,6 +1240,7 @@ export function initDistrictMap() {
     // ============================================================
     function openLivingArchive(nodeMesh) {
         controls.enabled = false;
+        lenis.stop(); // Prevent scrolling while in cinematic mode
         
         gsap.to('#floating-editorial-ui', { opacity: 0, duration: 0.5 });
         gsap.to('#layer-toggles', { opacity: 0, duration: 0.5 });
@@ -1272,6 +1272,11 @@ export function initDistrictMap() {
         document.getElementById('archive-stat1').textContent = nodeMesh.userData.stat1;
         document.getElementById('archive-stat2').textContent = nodeMesh.userData.stat2;
         
+        const schemaImg = document.getElementById('archive-schema-img');
+        if (schemaImg) {
+            schemaImg.src = nodeMesh.userData.layer === 'SPIRITUAL' ? 'temple_schematic.png' : 'ecology_schematic.png';
+        }
+        
         setTimeout(() => {
             const archiveUi = document.getElementById('living-archive-ui');
             if (archiveUi) {
@@ -1295,7 +1300,10 @@ export function initDistrictMap() {
                 x: 0, y: 70, z: 90,
                 duration: 2.5,
                 ease: 'power3.inOut',
-                onComplete: () => { controls.enabled = true; }
+                onComplete: () => { 
+                    controls.enabled = true; 
+                    lenis.start(); 
+                }
             });
             
             gsap.to(controls.target, {
