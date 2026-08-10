@@ -20,12 +20,29 @@ THREE.DefaultLoadingManager.onProgress = function (url, itemsLoaded, itemsTotal)
 };
 
 THREE.DefaultLoadingManager.onLoad = function () {
-    const loaderEl = document.getElementById('global-loader');
-    if (loaderEl) {
-        loaderEl.style.opacity = '0';
-        setTimeout(() => {
-            loaderEl.remove();
-        }, 1000);
+    const progressEl = document.getElementById('loader-progress');
+    const enterBtn = document.getElementById('enter-btn');
+    if (progressEl && enterBtn) {
+        progressEl.style.display = 'none';
+        enterBtn.style.display = 'inline-block';
+        
+        enterBtn.addEventListener('click', () => {
+            const loaderEl = document.getElementById('global-loader');
+            if (loaderEl) {
+                loaderEl.style.opacity = '0';
+                
+                // Play double temple bell on enter
+                if (typeof SoundEngine !== "undefined") {
+                    if (!SoundEngine.isInitialized) SoundEngine.init();
+                    SoundEngine.playProceduralBell(440, 1.5);
+                    setTimeout(() => SoundEngine.playProceduralBell(440, 2.0), 400); // 2nd strike
+                }
+                
+                setTimeout(() => {
+                    loaderEl.remove();
+                }, 1500);
+            }
+        });
     }
 };
 

@@ -1153,7 +1153,13 @@ export function initDistrictMap() {
                         hoveredMesh.material.emissiveIntensity = 0.5 + Math.sin(time * 5.0) * 0.3;
                     }
 
-                    const centerPos = hoveredMesh.userData.center.clone();
+                    let centerPos;
+                    if (hoveredMesh.userData.center) {
+                        centerPos = hoveredMesh.userData.center.clone();
+                    } else {
+                        centerPos = hoveredMesh.position.clone();
+                    }
+                    
                     // apply map rotation and position
                     centerPos.applyMatrix4(mapGroup.matrixWorld);
                     // project to 2d screen space
