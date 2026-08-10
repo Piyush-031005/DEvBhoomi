@@ -187,10 +187,11 @@ export function initDistrictMap() {
     
     const terrainTexture = generateTerrainTexture();
 
-    // GLOBAL SHADER UNIFORMS for Map Reveal
-    const mapUniforms = {
-        uFlowProgress: { value: 0.0 } // 0 = fully hidden (black void), 1.0 = fully revealed
+    // GLOBAL SHADER UNIFORMS
+    let mapUniforms = {
+        uFlowProgress: { value: 0.0 }
     };
+    const interactiveNodes = [];
 
     const shaderInjection = (shader) => {
         shader.uniforms.uFlowProgress = mapUniforms.uFlowProgress;
@@ -556,7 +557,7 @@ export function initDistrictMap() {
                     });
                     
                     const extrudeSettings = {
-                        depth: 0.02, // User requested flat diagonal view (no thick side walls)
+                        depth: 2.0, // Increased thickness so it looks substantial from side angles
                         bevelEnabled: false
                     };
                     
@@ -676,9 +677,11 @@ export function initDistrictMap() {
                         const numTemples = 2 + Math.floor(Math.random() * 5);
                         for(let i=0; i<numTemples; i++) {
                             const nodeMat = new THREE.MeshBasicMaterial({ color: 0xffcc00, transparent: true, opacity: 0.0 });
-                            const nodeMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), nodeMat);
+                            const nodeMesh = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), nodeMat); // Larger for easier clicking
                             nodeMesh.position.set(cx + (Math.random() - 0.5) * spawnAreaX, cy + (Math.random() - 0.5) * spawnAreaY, baseHeight + 0.5);
+                            nodeMesh.userData = { isNode: true, layer: 'SPIRITUAL', title: lowerName.toUpperCase() + ' TEMPLE', desc: 'An ancient shrine standing at 3,583m. It survived the 2013 floods through the protection of a massive boulder. A true testament to Devbhoomi architecture.', stat1: '8TH CENTURY', stat2: 'KATYURI STYLE' };
                             layerGroups.spiritual.add(nodeMesh);
+                            interactiveNodes.push(nodeMesh);
                         }
                     }
                     
@@ -687,9 +690,11 @@ export function initDistrictMap() {
                         const numForests = 5 + Math.floor(Math.random() * 10);
                         for(let i=0; i<numForests; i++) {
                             const nodeMat = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.0 });
-                            const nodeMesh = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), nodeMat);
+                            const nodeMesh = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), nodeMat);
                             nodeMesh.position.set(cx + (Math.random() - 0.5) * spawnAreaX, cy + (Math.random() - 0.5) * spawnAreaY, baseHeight + 0.3);
+                            nodeMesh.userData = { isNode: true, layer: 'ECOLOGY', title: lowerName.toUpperCase() + ' FOREST', desc: 'A dense ecological zone rich in biodiversity. Home to rare Himalayan flora and fauna, serving as a critical carbon sink.', stat1: 'PROTECTED', stat2: 'BIODIVERSE' };
                             layerGroups.ecology.add(nodeMesh);
+                            interactiveNodes.push(nodeMesh);
                         }
                     }
 
@@ -925,12 +930,24 @@ export function initDistrictMap() {
         onEnter: () => { 
             isActive = true; 
             gsap.to(mapUniforms.uFlowProgress, { value: 1.0, duration: 3.5, ease: 'power2.inOut', overwrite: true });
+            const toggles = document.getElementById('layer-toggles');
+            if (toggles) { toggles.style.opacity = '1'; toggles.style.pointerEvents = 'auto'; }
         },
-        onEnterBack: () => { isActive = true; },
-        onLeave: () => { isActive = false; },
+        onEnterBack: () => { 
+            isActive = true; 
+            const toggles = document.getElementById('layer-toggles');
+            if (toggles) { toggles.style.opacity = '1'; toggles.style.pointerEvents = 'auto'; }
+        },
+        onLeave: () => { 
+            isActive = false; 
+            const toggles = document.getElementById('layer-toggles');
+            if (toggles) { toggles.style.opacity = '0'; toggles.style.pointerEvents = 'none'; }
+        },
         onLeaveBack: () => { 
             isActive = false; 
             gsap.to(mapUniforms.uFlowProgress, { value: 0.0, duration: 1.0, overwrite: true }); // Hide when scrolling back up
+            const toggles = document.getElementById('layer-toggles');
+            if (toggles) { toggles.style.opacity = '0'; toggles.style.pointerEvents = 'none'; }
         },
     });
 
@@ -1071,7 +1088,8 @@ export function initDistrictMap() {
         if (isMapLoaded && (mouseMoved || hoveredMesh)) {
             mouseMoved = false;
             raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(districtMeshes, false); // ONLY intersect main district meshes, not their children!
+            const intersectTargets = (layerGroups.spiritual.children.length > 0 || layerGroups.ecology.children.length > 0) ? [...districtMeshes, ...interactiveNodes] : districtMeshes;
+            const intersects = raycaster.intersectObjects(intersectTargets, false);
 
             if (intersects.length > 0) {
                 const object = intersects[0].object;
@@ -1100,11 +1118,20 @@ export function initDistrictMap() {
                     }
                     
                     // Update UI
-                    uiName.textContent = hoveredMesh.userData.name;
-                    uiHindi.textContent = hoveredMesh.userData.hindi;
-                    uiElev.textContent = hoveredMesh.userData.elevation;
-                    uiPop.textContent = hoveredMesh.userData.population;
-                    uiTheme.textContent = hoveredMesh.userData.theme;
+                    // Update UI if it's a district
+                    if (!hoveredMesh.userData.isNode) {
+                        uiName.textContent = hoveredMesh.userData.name;
+                        uiHindi.textContent = hoveredMesh.userData.hindi;
+                        uiElev.textContent = hoveredMesh.userData.elevation;
+                        uiPop.textContent = hoveredMesh.userData.population;
+                        uiTheme.textContent = hoveredMesh.userData.theme;
+                    } else {
+                        uiName.textContent = hoveredMesh.userData.title;
+                        uiHindi.textContent = "नोड";
+                        uiElev.textContent = "SYSTEM.NODE";
+                        uiPop.textContent = "CLASSIFIED";
+                        uiTheme.textContent = hoveredMesh.userData.layer;
+                    }
                     
                     document.body.classList.add('hover-active');
                     
@@ -1175,21 +1202,100 @@ export function initDistrictMap() {
         const isDrag = dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD;
 
         if (!isDrag && hoveredMesh && isMapLoaded) {
-            const key = hoveredMesh.userData.name.toLowerCase();
-            let matchedKey = 'default';
-            if (key.includes('udham')) matchedKey = 'udham singh nagar';
-            else if (key.includes('tehri')) matchedKey = 'tehri garhwal';
-            else if (key.includes('pauri')) matchedKey = 'pauri garhwal';
-            else matchedKey = key;
-            
-            // Audio feedback
-            if (typeof SoundEngine !== "undefined" && SoundEngine.isInitialized) {
-                SoundEngine.playProceduralBell(220, 1.5); // Deep, resonant click
+            if (hoveredMesh.userData.isNode) {
+                openLivingArchive(hoveredMesh);
+            } else {
+                const key = hoveredMesh.userData.name.toLowerCase();
+                let matchedKey = 'default';
+                if (key.includes('udham')) matchedKey = 'udham singh nagar';
+                else if (key.includes('tehri')) matchedKey = 'tehri garhwal';
+                else if (key.includes('pauri')) matchedKey = 'pauri garhwal';
+                else matchedKey = key;
+                
+                // Audio feedback
+                if (typeof SoundEngine !== "undefined" && SoundEngine.isInitialized) {
+                    SoundEngine.playProceduralBell(220, 1.5); // Deep, resonant click
+                }
+                
+                openDistrictView(matchedKey);
             }
-            
-            openDistrictView(matchedKey);
         }
     });
+
+    // ============================================================
+    // THE LIVING ARCHIVE (CINEMATIC JOURNEYS)
+    // ============================================================
+    function openLivingArchive(nodeMesh) {
+        controls.enabled = false;
+        
+        gsap.to('#floating-editorial-ui', { opacity: 0, duration: 0.5 });
+        gsap.to('#layer-toggles', { opacity: 0, duration: 0.5 });
+        
+        const targetPos = nodeMesh.position.clone();
+        targetPos.applyMatrix4(mapGroup.matrixWorld);
+        
+        gsap.to(camera.position, {
+            x: targetPos.x,
+            y: targetPos.y - 10,
+            z: targetPos.z + 10,
+            duration: 2.5,
+            ease: 'power3.inOut'
+        });
+        
+        gsap.to(controls.target, {
+            x: targetPos.x,
+            y: targetPos.y,
+            z: targetPos.z,
+            duration: 2.5,
+            ease: 'power3.inOut'
+        });
+        
+        districtMeshes.forEach(m => gsap.to(m.material, { opacity: 0.1, duration: 2.5 }));
+        
+        document.getElementById('archive-type').textContent = `ARCHIVE.TYPE // ${nodeMesh.userData.layer}`;
+        document.getElementById('archive-title').textContent = nodeMesh.userData.title;
+        document.getElementById('archive-desc').textContent = nodeMesh.userData.desc;
+        document.getElementById('archive-stat1').textContent = nodeMesh.userData.stat1;
+        document.getElementById('archive-stat2').textContent = nodeMesh.userData.stat2;
+        
+        setTimeout(() => {
+            const archiveUi = document.getElementById('living-archive-ui');
+            if (archiveUi) {
+                archiveUi.style.opacity = '1';
+                archiveUi.style.pointerEvents = 'auto';
+            }
+        }, 2000);
+        
+        if (typeof SoundEngine !== "undefined" && SoundEngine.isInitialized) {
+            SoundEngine.playProceduralBell(800, 2.0); 
+        }
+    }
+    
+    const closeArchiveBtn = document.getElementById('close-archive-btn');
+    if (closeArchiveBtn) {
+        closeArchiveBtn.addEventListener('click', () => {
+            document.getElementById('living-archive-ui').style.opacity = '0';
+            document.getElementById('living-archive-ui').style.pointerEvents = 'none';
+            
+            gsap.to(camera.position, {
+                x: 0, y: 70, z: 90,
+                duration: 2.5,
+                ease: 'power3.inOut',
+                onComplete: () => { controls.enabled = true; }
+            });
+            
+            gsap.to(controls.target, {
+                x: 0, y: 0, z: 0,
+                duration: 2.5,
+                ease: 'power3.inOut'
+            });
+            
+            districtMeshes.forEach(m => gsap.to(m.material, { opacity: 0.9, duration: 2.5 }));
+            
+            gsap.to('#floating-editorial-ui', { opacity: 1, duration: 0.5 });
+            gsap.to('#layer-toggles', { opacity: 1, duration: 0.5 });
+        });
+    }
 
     // ============================================================
     // MULTI-LAYER ATLAS LOGIC

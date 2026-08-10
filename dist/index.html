@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,700;0,900;1,700&family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index-DBsIe6QA.js"></script>
+    <script type="module" crossorigin src="/assets/index-Be0PcjHo.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-zgcqsIHs.css">
   </head>
 <body style="margin: 0; padding: 0; background-color: #050000; overflow-x: hidden;">
@@ -495,7 +495,7 @@
         <div id="district-map-container" style="position: sticky; top: 0; left: 0; width: 100%; height: 100vh;">
             
             <!-- Multi-Layer Devbhoomi Toggle (Visible only in map section) -->
-            <div id="layer-toggles" style="position: absolute; bottom: 15vh; left: 5vw; display: flex; gap: 15px; z-index: 200; pointer-events: auto;">
+            <div id="layer-toggles" style="position: absolute; bottom: 15vh; left: 5vw; display: flex; gap: 15px; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;">
                 <button class="layer-btn active" data-layer="terrain">TERRAIN</button>
                 <button class="layer-btn" data-layer="ecology">ECOLOGY</button>
                 <button class="layer-btn" data-layer="spiritual">SPIRITUAL</button>
@@ -526,7 +526,7 @@
                 <div id="float-elev" style="font-size: 2rem; font-family: 'Neue Machina', sans-serif; color: #fff; margin-bottom: 20px; font-weight: 200;">1,200m</div>
 
                 <div style="color: #fff; font-size: 10px; letter-spacing: 0.2em; margin-bottom: 5px;">POPULATION</div>
-                <div id="float-pop" style="font-size: 1.2rem; color: #ffaa00;">1,000,000</div>
+                <div id="float-pop" style="font-size: 1.2rem; color: #ffaa00; font-weight: bold;">0</div>
             </div>
 
             <!-- Floating Label tracking 3D object -->
@@ -539,6 +539,39 @@
             
         </div>
 
+        <!-- THE LIVING ARCHIVE (Phase 2 Overlay) -->
+        <div id="living-archive-ui" style="position: fixed; inset: 0; z-index: 300; background: rgba(5,0,0,0.85); backdrop-filter: blur(20px); pointer-events: none; opacity: 0; transition: opacity 0.8s cubic-bezier(0.87, 0, 0.13, 1); display: flex; align-items: center; justify-content: center;">
+            <button id="close-archive-btn" style="position: absolute; top: 5vh; right: 5vw; background: none; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px 20px; font-family: 'Space Mono', monospace; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; pointer-events: auto;">BACK TO ATLAS [X]</button>
+            
+            <div style="width: 80vw; max-width: 1200px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; color: white;">
+                <!-- Left: Massive Typography and Data -->
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <div id="archive-type" style="color: #ff1a2b; font-family: 'Space Mono', monospace; letter-spacing: 0.2em; font-size: 14px; margin-bottom: 10px;">ARCHIVE.TYPE // SPIRITUAL</div>
+                    <h2 id="archive-title" style="font-family: 'Neue Machina', sans-serif; font-size: 5vw; font-weight: 800; line-height: 0.9; text-transform: uppercase; margin: 0 0 20px 0;">KEDARNATH</h2>
+                    <p id="archive-desc" style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; line-height: 1.4; color: #aaa; margin-bottom: 40px; max-width: 90%;">An ancient shrine standing at 3,583m. It survived the 2013 floods through the protection of a massive boulder. A true testament to Devbhoomi architecture.</p>
+                    
+                    <div style="display: flex; gap: 30px;">
+                        <div>
+                            <div style="font-family: 'Space Mono', monospace; font-size: 10px; color: #666;">ESTABLISHED</div>
+                            <div id="archive-stat1" style="font-family: 'Space Mono', monospace; font-size: 18px; color: #fff;">8TH CENTURY</div>
+                        </div>
+                        <div>
+                            <div style="font-family: 'Space Mono', monospace; font-size: 10px; color: #666;">ARCHITECTURE</div>
+                            <div id="archive-stat2" style="font-family: 'Space Mono', monospace; font-size: 18px; color: #fff;">KATYURI STYLE</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Right: Visual Schematic -->
+                <div style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 40px; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="width: 100%; height: 400px; border: 1px dashed rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; position: relative;">
+                        <span style="font-family: 'Space Mono', monospace; color: rgba(255,255,255,0.2);">[ SCHEMATIC DATA STREAM ]</span>
+                        <div id="archive-schema-img" style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,26,43,0) 0%, rgba(255,26,43,0.1) 100%);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+      </section>
       <!-- Act 8: The Sacred Winter -->
       <section id="act-8" style="height: 150vh; position: relative; pointer-events: none; z-index: 10;">
         <div style="position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; padding-left: 10vw;">
