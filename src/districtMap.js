@@ -1319,7 +1319,12 @@ export function initDistrictMap() {
         lenis.stop(); // Prevent scrolling while in cinematic mode
         
         gsap.to('#floating-editorial-ui', { opacity: 0, duration: 0.5 });
-        gsap.to('#layer-toggles', { opacity: 0, duration: 0.5 });
+        gsap.to('#layer-toggles', { opacity: 0, duration: 0.5, onStart: () => {
+            document.getElementById('layer-toggles').style.pointerEvents = 'none';
+        }});
+        gsap.to('#global-search-btn', { opacity: 0, duration: 0.5, onStart: () => {
+            document.getElementById('global-search-btn').style.pointerEvents = 'none';
+        }});
         
         const targetPos = nodeMesh.position.clone();
         targetPos.applyMatrix4(mapGroup.matrixWorld);
@@ -1393,7 +1398,12 @@ export function initDistrictMap() {
             districtMeshes.forEach(m => gsap.to(m.material, { opacity: 0.9, duration: 2.5 }));
             
             gsap.to('#floating-editorial-ui', { opacity: 1, duration: 0.5 });
-            gsap.to('#layer-toggles', { opacity: 1, duration: 0.5 });
+            gsap.to('#layer-toggles', { opacity: 1, duration: 0.5, onComplete: () => {
+                document.getElementById('layer-toggles').style.pointerEvents = 'all';
+            }});
+            gsap.to('#global-search-btn', { opacity: 1, duration: 0.5, onComplete: () => {
+                document.getElementById('global-search-btn').style.pointerEvents = 'all';
+            }});
         });
     }
 
@@ -1483,6 +1493,136 @@ export function initDistrictMap() {
             }
         });
     });
+
+    // Phase 1: District DNA 2.0 (Discovery Menu Logic)
+    window.addEventListener('discoverCategory', (e) => {
+        const { category, district } = e.detail;
+        
+        // 1. Map 'river' to 'ecology', 'heritage' to 'spiritual', etc. based on our groups
+        let layerToActivate = 'terrain';
+        if (category === 'river' || category === 'wildlife') layerToActivate = 'ecology';
+        if (category === 'culture' || category === 'people') layerToActivate = 'culture';
+        if (category === 'heritage' || category === 'history' || category === 'journey') layerToActivate = 'spiritual';
+        
+        // 2. Trigger a click on the corresponding UI button so the bottom menu stays in sync
+        const btn = document.querySelector(`.layer-btn[data-layer="${layerToActivate}"]`);
+        if (btn) btn.click();
+        
+        // 3. Find the district mesh to zoom to
+        const targetMesh = districtMeshes.find(m => m.userData.name.toLowerCase() === district);
+        if (targetMesh) {
+            // Zoom the camera to the district!
+            const targetPos = targetMesh.position.clone();
+            targetPos.applyMatrix4(mapGroup.matrixWorld);
+            
+            gsap.to(camera.position, {
+                x: targetPos.x,
+                y: targetPos.y - 40,
+                z: 60, // Zoom in extremely close
+                duration: 2.0,
+                ease: 'power3.inOut'
+            });
+            
+            gsap.to(controls.target, {
+                x: targetPos.x,
+                y: targetPos.y,
+                z: targetPos.z,
+                duration: 2.0,
+                ease: 'power3.inOut'
+            });
+            
+            // Audio feedback for journey start
+            if (typeof SoundEngine !== 'undefined' && SoundEngine.isInitialized) {
+                SoundEngine.playOvertone(200, 1.0);
+            }
+        }
+    });
+
+    // Phase 1: Feature 10 (Search Uttarakhand)
+    const searchBtn = document.getElementById('global-search-btn');
+    const closeSearchBtn = document.getElementById('close-search-btn');
+    const searchOverlay = document.getElementById('search-overlay');
+    const searchInput = document.getElementById('atlas-search-input');
+    const searchResults = document.getElementById('search-results');
+
+    if (searchBtn && searchOverlay) {
+        searchBtn.addEventListener('click', () => {
+            searchOverlay.classList.add('active');
+            if (searchInput) {
+                searchInput.value = '';
+                searchResults.innerHTML = '';
+                setTimeout(() => searchInput.focus(), 100);
+            }
+        });
+    }
+
+    if (closeSearchBtn && searchOverlay) {
+        closeSearchBtn.addEventListener('click', () => {
+            searchOverlay.classList.remove('active');
+        });
+    }
+
+    if (searchInput && searchResults) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            searchResults.innerHTML = '';
+            
+            if (query.length < 2) return;
+            
+            // Search through district meshes
+            const results = districtMeshes.filter(m => {
+                const name = m.userData.name.toLowerCase();
+                const hindi = m.userData.hindi || '';
+                return name.includes(query) || hindi.includes(query);
+            });
+            
+            results.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                item.innerHTML = `
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 1.5rem; font-family: 'Neue Machina', sans-serif;">${m.userData.name}</span>
+                        <span style="font-size: 0.8rem; opacity: 0.6;">DISTRICT • ${m.userData.altitude || 'N/A'}</span>
+                    </div>
+                    <span style="font-size: 1.2rem;">→</span>
+                `;
+                
+                item.addEventListener('click', () => {
+                    searchOverlay.classList.remove('active');
+                    
+                    // Fly to district
+                    const targetPos = m.position.clone();
+                    targetPos.applyMatrix4(mapGroup.matrixWorld);
+                    
+                    gsap.to(camera.position, {
+                        x: targetPos.x,
+                        y: targetPos.y - 60,
+                        z: 80,
+                        duration: 2.5,
+                        ease: 'power3.inOut'
+                    });
+                    
+                    gsap.to(controls.target, {
+                        x: targetPos.x,
+                        y: targetPos.y,
+                        z: targetPos.z,
+                        duration: 2.5,
+                        ease: 'power3.inOut'
+                    });
+                    
+                    if (typeof SoundEngine !== 'undefined' && SoundEngine.isInitialized) {
+                        SoundEngine.playProceduralBell(400, 1.0);
+                    }
+                });
+                
+                searchResults.appendChild(item);
+            });
+            
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div style="color: var(--bauhaus-white); opacity: 0.5; text-align: center; margin-top: 20px; font-family: \'Space Mono\', monospace;">NO RESULTS FOUND IN THE ATLAS</div>';
+            }
+        });
+    }
 
     animateMap();
 

@@ -539,6 +539,11 @@
             
         </div>
         
+        <!-- GLOBAL SEARCH BUTTON -->
+        <button id="global-search-btn" class="bauhaus-btn-inverse" style="position: fixed; top: 5vh; right: 5vw; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;">
+            [ SEARCH ATLAS ]
+        </button>
+        
         <!-- Multi-Layer Devbhoomi Toggle (Visible only in map section) -->
         <div id="layer-toggles" style="position: fixed; bottom: 15vh; left: 5vw; display: flex; gap: 15px; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.5s ease;">
             <button class="layer-btn active" data-layer="terrain">TERRAIN</button>
@@ -579,6 +584,19 @@
         </div>
 
       </section>
+      
+      <!-- SEARCH UTTARAKHAND OVERLAY (Feature 10) -->
+      <div id="search-overlay" class="bauhaus-overlay" style="align-items: center; justify-content: center; background-color: var(--bauhaus-black);">
+          <button id="close-search-btn" class="bauhaus-btn-inverse" style="position: absolute; top: 40px; right: 60px; color: var(--bauhaus-white); border-color: var(--bauhaus-white);">[ X ] CLOSE</button>
+          
+          <div style="width: 100%; max-width: 800px; display: flex; flex-direction: column; align-items: center;">
+              <input type="text" id="atlas-search-input" placeholder="SEARCH HABITATS, TEMPLES, RIVERS..." autocomplete="off" spellcheck="false" style="width: 100%; background: transparent; border: none; border-bottom: 4px solid var(--bauhaus-red); font-family: 'Neue Machina', sans-serif; font-size: 3rem; font-weight: 800; color: var(--bauhaus-white); padding: 20px 0; outline: none; text-transform: uppercase; text-align: center;">
+              
+              <div id="search-results" style="width: 100%; margin-top: 40px; display: flex; flex-direction: column; gap: 10px; max-height: 40vh; overflow-y: auto;">
+                  <!-- Results dynamically populated here -->
+              </div>
+          </div>
+      </div>
       <!-- Act 8: The Sacred Winter -->
       <section id="act-8" style="height: 150vh; position: relative; pointer-events: none; z-index: 10;">
         <div style="position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; padding-left: 10vw;">

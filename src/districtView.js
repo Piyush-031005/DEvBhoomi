@@ -52,7 +52,10 @@ function spawnParticles(color) {
     renderParticles();
 }
 
+let currentDistrictKey = null;
+
 export function openDistrictView(districtKey) {
+    currentDistrictKey = districtKey;
     const data = districtData[districtKey] || districtData['default'];
     const overlay = document.getElementById('district-view');
     if (!overlay) return;
@@ -134,4 +137,22 @@ document.addEventListener('DOMContentLoaded', () => {
             discoveryMenu.classList.remove('active');
         });
     }
+    
+    // Wire up Discovery Menu Options
+    const discoveryItems = document.querySelectorAll('.bauhaus-menu-item');
+    discoveryItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            const category = item.getAttribute('data-discover');
+            
+            // Dispatch a global event that districtMap.js can listen for
+            const event = new CustomEvent('discoverCategory', { 
+                detail: { category: category, district: currentDistrictKey } 
+            });
+            window.dispatchEvent(event);
+            
+            // Close everything and return to map
+            discoveryMenu.classList.remove('active');
+            closeDistrictView();
+        });
+    });
 });

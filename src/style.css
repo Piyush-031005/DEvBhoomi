@@ -1003,6 +1003,25 @@ body {
   transition: color 0.3s;
 }
 
+.search-result-item {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 20px;
+  color: var(--bauhaus-white);
+  font-family: 'Space Mono', monospace;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-result-item:hover {
+  background: var(--bauhaus-red);
+  border-color: var(--bauhaus-red);
+}
+
 /* ============================================================
    DISTRICT DYNAMIC VIEW OVERLAY (Phase 2)
    ============================================================ */
