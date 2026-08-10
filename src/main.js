@@ -8,6 +8,9 @@ import { initSacredData } from './sacredData.js';
 import { initDistrictMap } from './districtMap.js';
 import { Ecosystem } from './Ecosystem.js';
 import { SoundEngine } from './SoundEngine.js';
+import { initAudioEngine, setupAudioInteractions } from './SoundEngine.js';
+import { initSearchSystem } from './searchSystem.js';
+import { initMuseumRoom } from './museumRoom.js';
 
 // ==========================================================
 // PRELOADER LOGIC
@@ -799,4 +802,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ── Uttarakhand 3D District Map (Section 6) ──
     initDistrictMap();
+
+    // Init Search System (Phase 1)
+    initSearchSystem();
+
+    // Init Inner Museum Rooms (Phase 2)
+    initMuseumRoom();
 });

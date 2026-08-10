@@ -597,6 +597,21 @@
               </div>
           </div>
       </div>
+      
+      <!-- PHASE 2: INNER MUSEUM ROOM (Full Screen Data Visualization) -->
+      <div id="museum-room-ui" class="bauhaus-overlay" style="background-color: var(--bauhaus-black); overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column;">
+          <div style="position: fixed; top: 0; left: 0; width: 100%; height: 10vh; display: flex; justify-content: space-between; align-items: center; padding: 0 5vw; z-index: 10; border-bottom: 2px solid rgba(255,255,255,0.1); background: var(--bauhaus-black);">
+              <div id="museum-breadcrumbs" style="font-family: 'Space Mono', monospace; color: var(--bauhaus-red); font-size: 1.2rem; font-weight: bold; letter-spacing: 0.1em;">
+                  ATLAS // CHAMOLI // RIVER
+              </div>
+              <button id="close-museum-btn" class="bauhaus-btn-inverse" style="color: var(--bauhaus-white); border-color: var(--bauhaus-white);">[ ← ] BACK TO ATLAS</button>
+          </div>
+          
+          <div id="museum-content" style="margin-top: 10vh; width: 100%; min-height: 90vh; position: relative;">
+              <!-- Modules (River, Culture, etc.) will be dynamically injected here -->
+          </div>
+      </div>
+
       <!-- Act 8: The Sacred Winter -->
       <section id="act-8" style="height: 150vh; position: relative; pointer-events: none; z-index: 10;">
         <div style="position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; padding-left: 10vw;">

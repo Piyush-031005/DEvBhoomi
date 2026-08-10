@@ -14,6 +14,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { openDistrictView } from './districtView.js';
 import { districtData } from './districtData.js';
 import { Ecosystem } from './Ecosystem.js';
+import { openMuseumRoom } from './museumRoom.js';
 
 export function initDistrictMap() {
     const container = document.getElementById('district-map-container');
@@ -802,13 +803,13 @@ export function initDistrictMap() {
     // ============================================================
     // These nodes are practically invisible unless you stumble upon them
     const easterEggs = [
-        { name: "Patal Bhuvaneshwar Cave", lat: 29.825, lon: 80.035, type: 'cave', desc: "A limestone cave containing stalagmite figures of Hindu gods." },
-        { name: "Roopkund (Skeleton Lake)", lat: 30.260, lon: 79.730, type: 'mystery', desc: "A high altitude glacial lake famous for hundreds of human skeletons." },
-        { name: "Kasar Devi Magnetic Ridge", lat: 29.635, lon: 79.635, type: 'anomaly', desc: "Positioned on the Van Allen Belt, known for intense geomagnetic fields." }
+        { name: "Patal Bhuvaneshwar Cave", x: 15, y: -10, type: 'cave', desc: "A limestone cave containing stalagmite figures of Hindu gods." },
+        { name: "Roopkund (Skeleton Lake)", x: -5, y: 12, type: 'mystery', desc: "A high altitude glacial lake famous for hundreds of human skeletons." },
+        { name: "Kasar Devi Magnetic Ridge", x: 5, y: -5, type: 'anomaly', desc: "Positioned on the Van Allen Belt, known for intense geomagnetic fields." }
     ];
 
     easterEggs.forEach(egg => {
-        const p = latLonToVector3(egg.lat, egg.lon, mapWidth, mapHeight, centerLat, centerLon);
+        const p = new THREE.Vector3(egg.x, egg.y, 0);
         const geo = new THREE.OctahedronGeometry(0.3, 0); // Very small
         const mat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 }); // Almost invisible
         const mesh = new THREE.Mesh(geo, mat);
@@ -1543,61 +1544,14 @@ export function initDistrictMap() {
     window.addEventListener('discoverCategory', (e) => {
         const { category, district } = e.detail;
         
-        // 1. Map 'river' to 'ecology', 'heritage' to 'spiritual', etc. based on our groups
-        let layerToActivate = 'terrain';
-        if (category === 'river' || category === 'wildlife') layerToActivate = 'ecology';
-        if (category === 'culture' || category === 'people') layerToActivate = 'culture';
-        if (category === 'heritage' || category === 'history' || category === 'journey') layerToActivate = 'spiritual';
-        
-        // 2. Trigger a click on the corresponding UI button so the bottom menu stays in sync
-        const btn = document.querySelector(`.layer-btn[data-layer="${layerToActivate}"]`);
-        if (btn) btn.click();
-        
-        // 2.5 Show a massive cinematic instruction card
-        const flashCard = document.createElement('div');
-        flashCard.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: var(--bauhaus-red, #FF2A2A); z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; color: white; text-align: center;
-        `;
-        flashCard.innerHTML = `
-            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 8vw; line-height: 0.9;">${category.toUpperCase()} OF ${district.toUpperCase()}</div>
-            <div style="font-family: 'Space Mono', monospace; font-size: 1.5rem; margin-top: 20px; letter-spacing: 0.1em; background: black; padding: 10px 20px;">CLICK GLOWING NODES TO EXPLORE</div>
-        `;
-        document.body.appendChild(flashCard);
-        
-        gsap.to(flashCard, { opacity: 1, duration: 0.3, onComplete: () => {
-            gsap.to(flashCard, { opacity: 0, duration: 1.0, delay: 1.5, onComplete: () => flashCard.remove() });
-        }});
-        
-        // 3. Find the district mesh to zoom to
-        const targetMesh = districtMeshes.find(m => m.userData.name.toLowerCase() === district);
-        if (targetMesh) {
-            // Zoom the camera to the district!
-            const targetPos = targetMesh.position.clone();
-            targetPos.applyMatrix4(mapGroup.matrixWorld);
-            
-            gsap.to(camera.position, {
-                x: targetPos.x,
-                y: targetPos.y - 40,
-                z: 60, // Zoom in extremely close
-                duration: 2.0,
-                ease: 'power3.inOut'
-            });
-            
-            gsap.to(controls.target, {
-                x: targetPos.x,
-                y: targetPos.y,
-                z: targetPos.z,
-                duration: 2.0,
-                ease: 'power3.inOut'
-            });
-            
-            // Audio feedback for journey start
-            if (typeof SoundEngine !== 'undefined' && SoundEngine.isInitialized) {
-                SoundEngine.playOvertone(200, 1.0);
-            }
+        // 1. Open the massive Inner Museum Room instead of just zooming the map
+        openMuseumRoom(category, district);
+
+        // 2. Hide the discovery menu overlay
+        const discoveryOverlay = document.getElementById('district-view');
+        if (discoveryOverlay) {
+            discoveryOverlay.style.opacity = '0';
+            discoveryOverlay.style.pointerEvents = 'none';
         }
     });
 
