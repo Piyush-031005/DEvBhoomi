@@ -9,6 +9,26 @@ import { initDistrictMap } from './districtMap.js';
 import { Ecosystem } from './Ecosystem.js';
 import { SoundEngine } from './SoundEngine.js';
 
+// ==========================================================
+// PRELOADER LOGIC
+// ==========================================================
+THREE.DefaultLoadingManager.onProgress = function (url, itemsLoaded, itemsTotal) {
+    const progressEl = document.getElementById('loader-progress');
+    if (progressEl) {
+        progressEl.innerText = `LOADING ASSETS ${Math.round((itemsLoaded / itemsTotal) * 100)}%`;
+    }
+};
+
+THREE.DefaultLoadingManager.onLoad = function () {
+    const loaderEl = document.getElementById('global-loader');
+    if (loaderEl) {
+        loaderEl.style.opacity = '0';
+        setTimeout(() => {
+            loaderEl.remove();
+        }, 1000);
+    }
+};
+
 // Initialize audio on first click (browser autoplay policy)
 document.addEventListener('click', () => {
     if (!SoundEngine.isInitialized) {
