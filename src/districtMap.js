@@ -337,11 +337,17 @@ export function initDistrictMap() {
     const layerGroups = {
         spiritual: new THREE.Group(),
         ecology: new THREE.Group(),
+        culture: new THREE.Group(),
+        terrain: new THREE.Group()
     };
     layerGroups.spiritual.visible = false;
     layerGroups.ecology.visible = false;
+    layerGroups.culture.visible = false;
+    layerGroups.terrain.visible = false;
     mapGroup.add(layerGroups.spiritual);
     mapGroup.add(layerGroups.ecology);
+    mapGroup.add(layerGroups.culture);
+    mapGroup.add(layerGroups.terrain);
     
     // To center the map
     const centerOffset = new THREE.Vector3();
@@ -1431,18 +1437,39 @@ export function initDistrictMap() {
             gsap.to(rimLight, { intensity: targetStyle.rimIntensity, duration: 1.5 });
 
             // 2. Toggle Node Layers
+            // 2. Toggle Node Layers
+            // Helper to fade children of a layer
+            const fadeLayer = (layerGroup, targetOpacity) => {
+                layerGroup.children.forEach(group => {
+                    group.children.forEach(mesh => {
+                        if (mesh.material) {
+                            gsap.to(mesh.material, { opacity: targetOpacity, duration: 0.5 });
+                        }
+                    });
+                });
+            };
+
             // Fade out everything
-            layerGroups.spiritual.children.forEach(c => gsap.to(c.material, { opacity: 0, duration: 0.5 }));
-            layerGroups.ecology.children.forEach(c => gsap.to(c.material, { opacity: 0, duration: 0.5 }));
+            fadeLayer(layerGroups.spiritual, 0);
+            fadeLayer(layerGroups.ecology, 0);
+            fadeLayer(layerGroups.culture, 0);
+            fadeLayer(layerGroups.terrain, 0);
             
             setTimeout(() => {
                 layerGroups.spiritual.visible = layer === 'spiritual';
                 layerGroups.ecology.visible = layer === 'ecology';
+                layerGroups.culture.visible = layer === 'culture';
+                layerGroups.terrain.visible = layer === 'terrain';
                 
-                if (layer === 'spiritual') {
-                    layerGroups.spiritual.children.forEach(c => gsap.to(c.material, { opacity: 0.8 + Math.random()*0.2, duration: 1.5, delay: Math.random()*0.5 }));
-                } else if (layer === 'ecology') {
-                    layerGroups.ecology.children.forEach(c => gsap.to(c.material, { opacity: 0.6 + Math.random()*0.4, duration: 1.5, delay: Math.random()*0.5 }));
+                if (layerGroups[layer]) {
+                    layerGroups[layer].children.forEach(group => {
+                        group.children.forEach(mesh => {
+                            if (mesh.material) {
+                                // Delay animation slightly for dramatic effect
+                                gsap.to(mesh.material, { opacity: 0.8, duration: 1.5, delay: Math.random()*0.5 });
+                            }
+                        });
+                    });
                 }
             }, 500);
             
