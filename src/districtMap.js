@@ -327,6 +327,7 @@ export function initDistrictMap() {
     });
 
     const mapGroup = new THREE.Group();
+    mapGroup.rotation.z = -Math.PI / 2;
     scene.add(mapGroup);
     
     // Multi-Layer Node Groups
@@ -747,7 +748,7 @@ export function initDistrictMap() {
         terrainModel.traverse((child) => {
             if (child.isMesh && child.material) {
                 const mat = new THREE.MeshStandardMaterial({
-                    color: 0x330505, // Dark crimson red instead of blue
+                    color: 0xaaaaaa, // Neutral icy/rock color
                     roughness: 0.9,
                     metalness: 0.1,
                     bumpMap: terrainTexture,
