@@ -1257,8 +1257,12 @@ export function initDistrictMap() {
                 }
             } else {
                 if (hoveredMesh) {
-                    gsap.to(hoveredMesh.position, { z: 0, duration: 0.3, ease: 'power2.out' });
-                    hoveredMesh.material = hoveredMesh.userData.originalMat;
+                    if (hoveredMesh.userData.isNode) {
+                        gsap.to(hoveredMesh.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
+                    } else {
+                        gsap.to(hoveredMesh.position, { z: 0, duration: 0.3, ease: 'power2.out' });
+                        hoveredMesh.material = hoveredMesh.userData.originalMat;
+                    }
                     hoveredMesh = null;
                     uiPanel.style.opacity = "0";
                     gsap.to(hoverLight, { intensity: 0, duration: 0.3 }); // Fade out spotlight
