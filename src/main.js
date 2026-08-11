@@ -11,6 +11,7 @@ import { SoundEngine } from './SoundEngine.js';
 import { initAudioEngine, setupAudioInteractions } from './SoundEngine.js';
 import { initSearchSystem } from './searchSystem.js';
 import { initMuseumRoom } from './museumRoom.js';
+import { initRiverSystem } from './riverSystem.js';
 
 // ==========================================================
 // PRELOADER LOGIC
@@ -808,4 +809,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Init Inner Museum Rooms (Phase 2)
     initMuseumRoom();
+
+    // Init River System (Phase 2 — Below Map)
+    initRiverSystem();
 });
