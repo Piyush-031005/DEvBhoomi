@@ -612,7 +612,37 @@
           </div>
       </div>
 
+      <!-- ============================================================ -->
+      <!-- RIVER SYSTEM: From Mountain to Sea (Below the Main Map) -->
+      <!-- ============================================================ -->
+      <section id="river-system-section" style="position: relative; z-index: 20; background: #000; min-height: 100vh; overflow: hidden;">
+        
+        <!-- Title Header -->
+        <div id="river-header" style="padding: 80px 8vw 40px; border-bottom: 2px solid rgba(255,255,255,0.08);">
+          <div style="font-family: 'Space Mono', monospace; color: #4aa8ff; font-size: 0.85rem; letter-spacing: 0.3em; margin-bottom: 16px;">CHAPTER // HYDROLOGY</div>
+          <h2 style="font-family: 'Neue Machina', sans-serif; font-size: clamp(3rem, 7vw, 7rem); color: #fff; font-weight: 800; text-transform: uppercase; line-height: 0.9; margin: 0;">
+            THE VEINS <br><span style="color: #4aa8ff;">OF DEVBHOOMI</span>
+          </h2>
+          <p style="font-family: 'Space Mono', monospace; color: rgba(255,255,255,0.4); font-size: 0.9rem; margin-top: 24px; max-width: 600px; line-height: 1.6;">
+            Glacier → Valley → Village → Prayag → Haridwar.<br>
+            Uttarakhand's rivers are not just water — they are time, in motion.
+          </p>
+        </div>
+
+        <!-- River Flow Canvas (Animated SVG Paths) -->
+        <div style="position: relative; width: 100%; overflow: hidden;">
+          <canvas id="river-flow-canvas" style="width: 100%; display: block;"></canvas>
+        </div>
+
+        <!-- River Name Cards (below canvas) -->
+        <div id="river-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0; border-top: 2px solid rgba(255,255,255,0.08);">
+          <!-- Cards injected by riverSystem.js -->
+        </div>
+
+      </section>
+
       <!-- Act 8: The Sacred Winter -->
+
       <section id="act-8" style="height: 150vh; position: relative; pointer-events: none; z-index: 10;">
         <div style="position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; padding-left: 10vw;">
           <h2 class="br-headline" style="opacity: 0.8; font-size: 5vw; line-height: 1;">
