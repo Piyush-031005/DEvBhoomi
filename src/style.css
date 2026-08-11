@@ -1365,3 +1365,78 @@ body.hover-active .custom-cursor-ring {
   color: var(--c-polar);
   letter-spacing: 2px;
 }
+
+/* ============================================================ */
+/* RIVER SYSTEM STYLES                                          */
+/* ============================================================ */
+
+#river-system-section {
+  position: relative;
+  z-index: 20;
+  background: #000;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+#river-flow-canvas {
+  width: 100%;
+  display: block;
+  cursor: crosshair;
+}
+
+#river-header {
+  padding: 80px 8vw 40px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.river-card {
+  padding: 40px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: background 0.4s ease, transform 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  opacity: 0; /* Animated in via GSAP */
+}
+
+.river-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.river-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Animated shimmer on hover for river cards */
+.river-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
+  transition: left 0.6s ease;
+}
+
+.river-card:hover::after {
+  left: 150%;
+}
+
+/* River canvas glow overlay gradient */
+#river-system-section .river-glow-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to top, #000 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 2;
+}
