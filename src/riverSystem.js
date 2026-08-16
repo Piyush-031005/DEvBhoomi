@@ -290,6 +290,13 @@ function drawMountainSilhouette() {
     plainGrad.addColorStop(1, 'rgba(5, 20, 10, 0.8)');
     ctx.fillStyle = plainGrad;
     ctx.fillRect(0, H * 0.65, W, H * 0.35);
+
+    // Label zones
+    ctx.font = '600 11px "Space Mono", monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillText('GREATER HIMALAYAS', W * 0.35, H * 0.04);
+    ctx.fillStyle = 'rgba(105,240,174,0.25)';
+    ctx.fillText('PLAINS OF HARIDWAR / ROORKEE', W * 0.3, H * 0.92);
 }
 
 function drawJaggedMountains(baseHeight, color, roughness, amplitude) {
@@ -342,14 +349,6 @@ function drawJaggedMountains(baseHeight, color, roughness, amplitude) {
         }
     }
     ctx.globalCompositeOperation = 'source-over';
-}
-
-    // Label zones
-    ctx.font = '600 11px "Space Mono", monospace';
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
-    ctx.fillText('GREATER HIMALAYAS', W * 0.35, H * 0.04);
-    ctx.fillStyle = 'rgba(105,240,174,0.25)';
-    ctx.fillText('PLAINS OF HARIDWAR / ROORKEE', W * 0.3, H * 0.92);
 }
 
 function animate() {
