@@ -89,30 +89,44 @@ let animFrame;
 let hoveredRiver = null;
 let isVisible = false;
 
-// A particle that flows along a bezier-like path
+// A particle that flows along a bezier-like path with trailing history
 class RiverParticle {
     constructor(river, canvasW, canvasH) {
         this.river = river;
         this.progress = Math.random(); // 0 to 1 = source to sea
-        this.speed = 0.0008 + Math.random() * 0.0012;
+        this.speed = 0.0005 + Math.random() * 0.0015;
         this.size = 1.5 + Math.random() * 2;
         this.opacity = 0;
-        this.maxOpacity = 0.4 + Math.random() * 0.5;
+        this.maxOpacity = 0.4 + Math.random() * 0.6;
         this.W = canvasW;
         this.H = canvasH;
+        this.history = [];
+        this.maxHistory = 15 + Math.floor(Math.random() * 20); // Trail length
     }
 
-    getPosition() {
+    getPosition(tValue) {
         const pts = this.river.waypoints;
-        // Simple catmull-rom style interpolation across waypoints
         const segments = (pts.length / 2) - 1;
-        const seg = Math.floor(this.progress * segments);
-        const t = (this.progress * segments) - seg;
+        const seg = Math.floor(tValue * segments);
+        const t = (tValue * segments) - seg;
         const i = Math.min(seg, segments - 1) * 2;
         const x0 = pts[i] * this.W;
         const y0 = pts[i + 1] * this.H;
         const x1 = pts[i + 2] * this.W;
         const y1 = pts[i + 3] * this.H;
+        
+        // Use quadratic curve for particles too to follow the drawn splines!
+        if (i < pts.length - 4) {
+            const xc = (pts[i+2] * this.W + pts[i+4] * this.W) / 2;
+            const yc = (pts[i+3] * this.H + pts[i+5] * this.H) / 2;
+            // Bezier interpolation
+            const mt = 1 - t;
+            return {
+                x: mt * mt * x0 + 2 * mt * t * x1 + t * t * xc,
+                y: mt * mt * y0 + 2 * mt * t * y1 + t * t * yc
+            };
+        }
+        
         return {
             x: x0 + (x1 - x0) * t,
             y: y0 + (y1 - y0) * t,
@@ -120,7 +134,18 @@ class RiverParticle {
     }
 
     update() {
+        // Save history for trail
+        const currentPos = this.getPosition(this.progress);
+        this.history.push(currentPos);
+        if (this.history.length > this.maxHistory) {
+            this.history.shift();
+        }
+
         this.progress += this.speed;
+        
+        // Fluid width variation based on sine wave
+        this.size = 1.5 + Math.sin(this.progress * Math.PI * 10) * 1.0;
+
         // Fade in at start, fade out at end
         if (this.progress < 0.1) {
             this.opacity = (this.progress / 0.1) * this.maxOpacity;
@@ -129,32 +154,63 @@ class RiverParticle {
         } else {
             this.opacity = this.maxOpacity;
         }
+        
         if (this.progress >= 1) {
             this.progress = 0;
+            this.history = [];
+            // Randomize slightly on loop
+            this.maxHistory = 15 + Math.floor(Math.random() * 20);
+            this.speed = 0.0005 + Math.random() * 0.0015;
         }
     }
 
     draw(ctx) {
-        const pos = this.getPosition();
+        if (this.history.length === 0) return;
+
         const isHovered = hoveredRiver === this.river.id;
         const alpha = isHovered ? Math.min(this.opacity * 2.5, 1) : this.opacity;
-        const size = isHovered ? this.size * 2.5 : this.size;
+        const size = isHovered ? this.size * 2 : this.size;
 
+        ctx.globalCompositeOperation = 'lighter';
+
+        // Draw trail
         ctx.beginPath();
-        ctx.arc(pos.x, pos.y, size, 0, Math.PI * 2);
-        ctx.fillStyle = this.river.color + Math.round(alpha * 255).toString(16).padStart(2, '0');
+        ctx.moveTo(this.history[0].x, this.history[0].y);
+        for (let i = 1; i < this.history.length; i++) {
+            ctx.lineTo(this.history[i].x, this.history[i].y);
+        }
+        
+        const grad = ctx.createLinearGradient(
+            this.history[0].x, this.history[0].y, 
+            this.history[this.history.length - 1].x, this.history[this.history.length - 1].y
+        );
+        grad.addColorStop(0, 'transparent');
+        grad.addColorStop(1, this.river.color + Math.round(alpha * 255).toString(16).padStart(2, '0'));
+        
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = size;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Draw comet head
+        const head = this.history[this.history.length - 1];
+        ctx.beginPath();
+        ctx.arc(head.x, head.y, size * 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff' + Math.round(alpha * 255).toString(16).padStart(2, '0');
         ctx.fill();
 
-        // Glow
+        // Extra glow on hover
         if (isHovered || alpha > 0.5) {
             ctx.beginPath();
-            ctx.arc(pos.x, pos.y, size * 3, 0, Math.PI * 2);
-            const grad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, size * 3);
-            grad.addColorStop(0, this.river.color + '44');
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
+            ctx.arc(head.x, head.y, size * 4, 0, Math.PI * 2);
+            const headGrad = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, size * 4);
+            headGrad.addColorStop(0, this.river.color + '66');
+            headGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = headGrad;
             ctx.fill();
         }
+        
+        ctx.globalCompositeOperation = 'source-over';
     }
 }
 
