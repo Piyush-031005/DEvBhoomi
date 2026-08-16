@@ -805,6 +805,21 @@ document.addEventListener("DOMContentLoaded", () => {
     // Init Inner Museum Rooms (Phase 2)
     initMuseumRoom();
 
+    // ── Hide Map HUD when scrolling into River Section ──
+    ScrollTrigger.create({
+        trigger: '#river-system-section',
+        start: 'top 80%', // When river section enters 20% from bottom
+        end: 'bottom top',
+        onEnter: () => {
+            gsap.to(['#floating-editorial-ui', '#layer-toggles'], { opacity: 0, duration: 0.3, pointerEvents: 'none' });
+        },
+        onLeaveBack: () => {
+            // Only fade back in if we are actually still in the map section
+            // (Assuming the map section sets them to opacity 1 when active)
+            gsap.to(['#floating-editorial-ui', '#layer-toggles'], { opacity: 1, duration: 0.3, pointerEvents: 'auto' });
+        }
+    });
+
     // Init River System (Phase 2 — Below Map)
     initRiverSystem();
 });
