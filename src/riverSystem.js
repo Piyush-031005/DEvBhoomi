@@ -165,31 +165,58 @@ function drawRiverPaths() {
 
         ctx.beginPath();
         ctx.moveTo(pts[0] * W, pts[1] * H);
-        for (let i = 2; i < pts.length; i += 2) {
-            ctx.lineTo(pts[i] * W, pts[i + 1] * H);
+        
+        // Draw smooth splines instead of straight lines
+        for (let i = 2; i < pts.length - 2; i += 2) {
+            const xc = (pts[i] * W + pts[i + 2] * W) / 2;
+            const yc = (pts[i + 1] * H + pts[i + 3] * H) / 2;
+            ctx.quadraticCurveTo(pts[i] * W, pts[i + 1] * H, xc, yc);
+        }
+        // curve to the last point
+        const lastX = pts[pts.length - 2] * W;
+        const lastY = pts[pts.length - 1] * H;
+        if (pts.length > 2) {
+            ctx.quadraticCurveTo(lastX, lastY, lastX, lastY);
+        } else {
+            ctx.lineTo(lastX, lastY); // fallback if only 2 points
         }
 
-        ctx.strokeStyle = river.color + (isHovered ? 'aa' : '22');
-        ctx.lineWidth = isHovered ? 3 : 1;
+        // Add subtle sine wave glow for fluid look
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.strokeStyle = river.color + (isHovered ? 'ff' : '44');
+        ctx.lineWidth = isHovered ? 4 : 1.5;
         ctx.stroke();
+        
+        // Inner core
+        ctx.strokeStyle = '#ffffff' + (isHovered ? 'cc' : '22');
+        ctx.lineWidth = isHovered ? 1.5 : 0.5;
+        ctx.stroke();
+        ctx.globalCompositeOperation = 'source-over';
 
-        // Draw source dot (mountain)
+        // Draw source dot (mountain glacier)
         const sx = pts[0] * W;
         const sy = pts[1] * H;
+        
+        // Glowing glacier effect
+        const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, isHovered ? 15 : 8);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.3, river.color);
+        grad.addColorStop(1, 'transparent');
+        
         ctx.beginPath();
-        ctx.arc(sx, sy, isHovered ? 6 : 3, 0, Math.PI * 2);
-        ctx.fillStyle = river.color;
+        ctx.arc(sx, sy, isHovered ? 15 : 8, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
         ctx.fill();
 
         // Draw source label
         if (isHovered) {
-            ctx.font = '500 11px "Space Mono", monospace';
-            ctx.fillStyle = river.color;
-            ctx.fillText('▲ ' + river.source.toUpperCase(), sx + 10, sy + 4);
+            ctx.font = '700 11px "Space Mono", monospace';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('▲ GLACIER // ' + river.source.toUpperCase(), sx + 15, sy + 4);
         } else {
-            ctx.font = 'bold 10px "Space Mono", monospace';
-            ctx.fillStyle = river.color + '88';
-            ctx.fillText(river.name, sx + 8, sy + 4);
+            ctx.font = '600 10px "Space Mono", monospace';
+            ctx.fillStyle = river.color + 'aa';
+            ctx.fillText(river.name, sx + 10, sy + 4);
         }
     });
 }
