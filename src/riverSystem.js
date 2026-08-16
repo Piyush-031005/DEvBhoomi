@@ -195,58 +195,71 @@ function drawRiverPaths() {
 }
 
 function drawMountainSilhouette() {
+    // Background layer (softer, further away)
+    drawJaggedMountains(H * 0.4, 'rgba(15, 20, 35, 1)', 0.02, 100);
+    
+    // Foreground layer (darker, sharper)
+    drawJaggedMountains(H * 0.25, 'rgba(5, 8, 15, 1)', 0.04, 150);
+
+    // Plains gradient at bottom (organic fluid base)
+    const plainGrad = ctx.createLinearGradient(0, H * 0.65, 0, H);
+    plainGrad.addColorStop(0, 'transparent');
+    plainGrad.addColorStop(1, 'rgba(5, 20, 10, 0.8)');
+    ctx.fillStyle = plainGrad;
+    ctx.fillRect(0, H * 0.65, W, H * 0.35);
+}
+
+function drawJaggedMountains(baseHeight, color, roughness, amplitude) {
     ctx.beginPath();
-    ctx.moveTo(0, H * 0.25);
-    ctx.lineTo(W * 0.05, H * 0.05);
-    ctx.lineTo(W * 0.12, H * 0.18);
-    ctx.lineTo(W * 0.2, H * 0.02);
-    ctx.lineTo(W * 0.3, H * 0.12);
-    ctx.lineTo(W * 0.38, H * 0.0);
-    ctx.lineTo(W * 0.5, H * 0.14);
-    ctx.lineTo(W * 0.6, H * 0.04);
-    ctx.lineTo(W * 0.72, H * 0.16);
-    ctx.lineTo(W * 0.82, H * 0.0);
-    ctx.lineTo(W * 0.9, H * 0.1);
-    ctx.lineTo(W, H * 0.2);
-    ctx.lineTo(W, 0);
-    ctx.lineTo(0, 0);
+    ctx.moveTo(0, H);
+    ctx.lineTo(0, baseHeight);
+    
+    // Generate seeded predictable random heights so it doesn't flicker on resize
+    let currentY = baseHeight;
+    let seed = 12345;
+    const random = () => {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280;
+    };
+
+    for (let x = 0; x <= W; x += 10) {
+        let noise = (random() - 0.5) * 2.0; // -1 to 1
+        // Smooth out the noise slightly based on roughness
+        currentY += noise * roughness * amplitude;
+        
+        // Keep it bounded
+        if (currentY > baseHeight + amplitude) currentY = baseHeight + amplitude;
+        if (currentY < baseHeight - amplitude) currentY = baseHeight - amplitude;
+
+        ctx.lineTo(x, currentY);
+    }
+    
+    ctx.lineTo(W, H);
     ctx.closePath();
     
-    const grad = ctx.createLinearGradient(0, 0, 0, H * 0.25);
-    grad.addColorStop(0, 'rgba(20, 24, 40, 1)');
+    // Add gradient to the mountains
+    const grad = ctx.createLinearGradient(0, baseHeight - amplitude, 0, H);
+    grad.addColorStop(0, color);
+    grad.addColorStop(0.5, 'rgba(0,0,0,1)');
     grad.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = grad;
     ctx.fill();
-
-    // Snow caps
-    ctx.beginPath();
-    ctx.moveTo(W * 0.18, H * 0.08);
-    ctx.lineTo(W * 0.2, H * 0.02);
-    ctx.lineTo(W * 0.22, H * 0.08);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(200,220,255,0.4)';
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(W * 0.36, H * 0.06);
-    ctx.lineTo(W * 0.38, H * 0.0);
-    ctx.lineTo(W * 0.40, H * 0.06);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(W * 0.80, H * 0.05);
-    ctx.lineTo(W * 0.82, H * 0.0);
-    ctx.lineTo(W * 0.84, H * 0.05);
-    ctx.closePath();
-    ctx.fill();
-
-    // Plains gradient at bottom
-    const plainGrad = ctx.createLinearGradient(0, H * 0.65, 0, H);
-    plainGrad.addColorStop(0, 'transparent');
-    plainGrad.addColorStop(1, 'rgba(10, 30, 15, 0.6)');
-    ctx.fillStyle = plainGrad;
-    ctx.fillRect(0, H * 0.65, W, H * 0.35);
+    
+    // Draw subtle snow caps on the highest peaks
+    ctx.globalCompositeOperation = 'lighter';
+    for (let x = 0; x <= W; x += 50) {
+        if (random() > 0.8) {
+            ctx.beginPath();
+            ctx.arc(x, baseHeight - (random() * amplitude), random() * 20, 0, Math.PI);
+            const snowGrad = ctx.createRadialGradient(x, baseHeight - amplitude, 0, x, baseHeight - amplitude, 20);
+            snowGrad.addColorStop(0, 'rgba(255,255,255,0.05)');
+            snowGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = snowGrad;
+            ctx.fill();
+        }
+    }
+    ctx.globalCompositeOperation = 'source-over';
+}
 
     // Label zones
     ctx.font = '600 11px "Space Mono", monospace';
