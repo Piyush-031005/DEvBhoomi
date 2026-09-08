@@ -10,6 +10,7 @@ import { Ecosystem } from './Ecosystem.js';
 import { SoundEngine } from './SoundEngine.js';
 import { initMuseumRoom } from './museumRoom.js';
 import { initRiverSystem } from './riverSystem.js';
+import { initDotField } from './dotField.js';
 
 // ==========================================================
 // PRELOADER LOGIC
@@ -822,4 +823,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Init River System (Phase 2 — Below Map)
     initRiverSystem();
+    initDotField();
 });
