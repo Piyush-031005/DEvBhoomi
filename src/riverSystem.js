@@ -278,24 +278,24 @@ function drawRiverPaths() {
 }
 
 function drawMountainSilhouette() {
-    // Background layer (softer, further away)
-    drawJaggedMountains(H * 0.4, 'rgba(15, 20, 35, 1)', 0.02, 100);
+    // Background layer (softer, further away) - Ethereal Light Green
+    drawJaggedMountains(H * 0.4, 'rgba(210, 240, 220, 0.7)', 0.02, 100);
     
-    // Foreground layer (darker, sharper)
-    drawJaggedMountains(H * 0.25, 'rgba(5, 8, 15, 1)', 0.04, 150);
+    // Foreground layer (darker, sharper) - Ethereal Mid Green
+    drawJaggedMountains(H * 0.25, 'rgba(160, 220, 180, 0.8)', 0.04, 150);
 
     // Plains gradient at bottom (organic fluid base)
     const plainGrad = ctx.createLinearGradient(0, H * 0.65, 0, H);
     plainGrad.addColorStop(0, 'transparent');
-    plainGrad.addColorStop(1, 'rgba(5, 20, 10, 0.8)');
+    plainGrad.addColorStop(1, 'rgba(120, 200, 150, 0.5)');
     ctx.fillStyle = plainGrad;
     ctx.fillRect(0, H * 0.65, W, H * 0.35);
 
     // Label zones
     ctx.font = '600 11px "Space Mono", monospace';
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
     ctx.fillText('GREATER HIMALAYAS', W * 0.35, H * 0.04);
-    ctx.fillStyle = 'rgba(105,240,174,0.25)';
+    ctx.fillStyle = 'rgba(30,120,80,0.5)';
     ctx.fillText('PLAINS OF HARIDWAR / ROORKEE', W * 0.3, H * 0.92);
 }
 
@@ -357,10 +357,8 @@ function animate() {
 
     ctx.clearRect(0, 0, W, H);
 
-    // Dark background
-    ctx.fillStyle = '#030608';
-    ctx.fillRect(0, 0, W, H);
-
+    // No opaque background fill so the DotField shows through!
+    
     // Mountain silhouette
     drawMountainSilhouette();
 
@@ -385,30 +383,32 @@ function buildRiverCards() {
         card.dataset.riverId = river.id;
         card.style.cssText = `
             padding: 40px;
-            border-right: 1px solid rgba(255,255,255,0.06);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            border-right: 1px solid rgba(0,0,0,0.06);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
             cursor: pointer;
             transition: background 0.3s ease;
             position: relative;
             overflow: hidden;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
         `;
         card.innerHTML = `
-            <div style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: ${river.color}; opacity: 0.5; transition: opacity 0.3s;"></div>
-            <div style="font-family: 'Space Mono', monospace; color: ${river.color}; font-size: 0.7rem; letter-spacing: 0.3em; margin-bottom: 12px;">${river.hindi}</div>
-            <h3 style="font-family: 'Neue Machina', sans-serif; font-size: clamp(1.5rem, 2.5vw, 2.5rem); color: #fff; font-weight: 800; margin: 0 0 12px; text-transform: uppercase;">${river.name}</h3>
-            <div style="font-family: 'Space Mono', monospace; color: rgba(255,255,255,0.35); font-size: 0.75rem; margin-bottom: 16px; line-height: 1.8;">
+            <div style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: ${river.color}; opacity: 0.8; transition: opacity 0.3s;"></div>
+            <div style="font-family: 'Space Mono', monospace; color: ${river.color}; font-size: 0.7rem; letter-spacing: 0.3em; margin-bottom: 12px; font-weight: bold;">${river.hindi}</div>
+            <h3 style="font-family: 'Neue Machina', sans-serif; font-size: clamp(1.5rem, 2.5vw, 2.5rem); color: #111; font-weight: 800; margin: 0 0 12px; text-transform: uppercase;">${river.name}</h3>
+            <div style="font-family: 'Space Mono', monospace; color: rgba(0,0,0,0.5); font-size: 0.75rem; margin-bottom: 16px; line-height: 1.8; font-weight: 600;">
                 ▲ ${river.source}<br>
                 ${river.districts.join(' → ')}
             </div>
-            <p style="font-family: 'Space Mono', monospace; color: rgba(255,255,255,0.5); font-size: 0.8rem; line-height: 1.7; margin-bottom: 24px;">${river.desc}</p>
+            <p style="font-family: 'Space Mono', monospace; color: rgba(0,0,0,0.7); font-size: 0.8rem; line-height: 1.7; margin-bottom: 24px; font-weight: 500;">${river.desc}</p>
             <div style="display: flex; gap: 24px;">
                 <div>
-                    <div style="font-family: 'Space Mono', monospace; font-size: 0.65rem; color: rgba(255,255,255,0.25); margin-bottom: 4px;">UTTARAKHAND</div>
-                    <div style="font-family: 'Neue Machina', sans-serif; font-size: 1.2rem; color: ${river.color}; font-weight: 800;">${river.uttarakhandKm}</div>
+                    <div style="font-family: 'Space Mono', monospace; font-size: 0.65rem; color: rgba(0,0,0,0.4); margin-bottom: 4px;">UTTARAKHAND</div>
+                    <div style="font-family: 'Space Mono', monospace; font-size: 1rem; color: #111;">${river.uttarakhandKm}</div>
                 </div>
                 <div>
-                    <div style="font-family: 'Space Mono', monospace; font-size: 0.65rem; color: rgba(255,255,255,0.25); margin-bottom: 4px;">TOTAL LENGTH</div>
-                    <div style="font-family: 'Neue Machina', sans-serif; font-size: 1.2rem; color: rgba(255,255,255,0.6); font-weight: 800;">${river.length}</div>
+                    <div style="font-family: 'Space Mono', monospace; font-size: 0.65rem; color: rgba(0,0,0,0.4); margin-bottom: 4px;">TOTAL LENGTH</div>
+                    <div style="font-family: 'Space Mono', monospace; font-size: 1rem; color: #111;">${river.length}</div>
                 </div>
             </div>
         `;
