@@ -580,8 +580,8 @@ function animate() {
         
         // Y-axis limited tracking
         let targetPosY = mouseY * 0.8;
-        // Shift mask further to the right side to prevent overlap with left text
-        let targetPosX = 12.0 + (mouseX * 0.5); 
+        // Shift mask to the right side, but not so far it goes off screen (was 12.0)
+        let targetPosX = 4.0 + (mouseX * 0.5); 
         
         maskGroup.position.x += (targetPosX - maskGroup.position.x) * 0.1;
         maskGroup.position.y += (targetPosY - maskGroup.position.y) * 0.1;
