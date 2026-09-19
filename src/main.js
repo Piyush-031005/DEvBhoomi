@@ -1,6 +1,9 @@
 import './style.css';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+
+
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
@@ -368,7 +371,12 @@ const animState = {
 
 // --- Act 2 & 3: Brutalist 3D Mask ---
 let maskModel = null;
-const loader = new GLTFLoader();
+const loader = new GLTFLoader(manager);
+
+// Setup DRACOLoader for compressed models
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/'); // Use gstatic CDN for draco decoders
+loader.setDRACOLoader(dracoLoader);
 
 // Dramatic Brutalist Lighting
 const maskLight = new THREE.DirectionalLight('#ff1a2b', 5.0); // Intense red rim light

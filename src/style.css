@@ -880,6 +880,20 @@ body {
   --bauhaus-yellow: #FFD500;
 }
 
+.br-headline {
+  margin: 0;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 12vw;
+  line-height: 1.0;
+  color: var(--br-text);
+  text-transform: uppercase;
+  letter-spacing: -0.04em;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
 .bauhaus-btn {
   background: var(--bauhaus-red);
   color: var(--bauhaus-white);
