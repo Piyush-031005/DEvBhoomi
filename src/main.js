@@ -12,6 +12,7 @@ import { initMuseumRoom } from './museumRoom.js';
 import { initRiverSystem } from './riverSystem.js';
 import { initGalaxy } from './galaxy.js';
 import { initGhostFibers } from './shaders/GhostFibers.js';
+import { initStarBurst } from './shaders/StarBurst.js';
 
 // ==========================================================
 // PRELOADER LOGIC
@@ -555,6 +556,9 @@ galaxyParticles.position.set(0, 0, -30);
 // Initialize GhostFibers System
 let ghostFibers = initGhostFibers(scene);
 
+// Initialize StarBurst System (Hero focal point)
+let starBurst = initStarBurst(scene);
+
 function animate() {
     requestAnimationFrame(animate);
     const delta = clock.getDelta();
@@ -573,6 +577,11 @@ function animate() {
     }
     if (ghostFibers) {
         ghostFibers.uniforms.uTime.value = elapsedTime;
+    }
+    if (starBurst) {
+        starBurst.uniforms.uTime.value = elapsedTime;
+        // Fade out StarBurst as we scroll down into the brutalist map section
+        starBurst.uniforms.uOpacity.value = 0.9 * (1.0 - animState.brutalistOpacity);
     }
     
     if (typeof mountainParticles !== "undefined" && mountainParticles) {
