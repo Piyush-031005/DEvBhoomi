@@ -10,7 +10,6 @@ import { Ecosystem } from './Ecosystem.js';
 import { SoundEngine } from './SoundEngine.js';
 import { initMuseumRoom } from './museumRoom.js';
 import { initRiverSystem } from './riverSystem.js';
-import { initDotField } from './dotField.js';
 import { initGalaxy } from './galaxy.js';
 
 // ==========================================================
@@ -591,8 +590,8 @@ function animate() {
         
         // Y-axis limited tracking
         let targetPosY = mouseY * 0.8;
-        // Shift mask to the right side, but not so far it goes off screen (was 12.0)
-        let targetPosX = 4.0 + (mouseX * 0.5); 
+        // Keep mask closer to center (1.0) so it doesn't vanish on mobile screens!
+        let targetPosX = 1.0 + (mouseX * 0.5); 
         
         maskGroup.position.x += (targetPosX - maskGroup.position.x) * 0.1;
         maskGroup.position.y += (targetPosY - maskGroup.position.y) * 0.1;
@@ -835,5 +834,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Init River System (Phase 2 — Below Map)
     initRiverSystem();
-    initDotField();
 });
