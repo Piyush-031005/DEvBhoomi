@@ -11,6 +11,7 @@ import { SoundEngine } from './SoundEngine.js';
 import { initMuseumRoom } from './museumRoom.js';
 import { initRiverSystem } from './riverSystem.js';
 import { initGalaxy } from './galaxy.js';
+import { initGhostFibers } from './shaders/GhostFibers.js';
 
 // ==========================================================
 // PRELOADER LOGIC
@@ -551,6 +552,9 @@ let galaxyParticles = initGalaxy(scene);
 // Move galaxy far back so it doesn't block other elements
 galaxyParticles.position.set(0, 0, -30);
 
+// Initialize GhostFibers System
+let ghostFibers = initGhostFibers(scene);
+
 function animate() {
     requestAnimationFrame(animate);
     const delta = clock.getDelta();
@@ -566,6 +570,9 @@ function animate() {
         // Interactive mouse rotation for galaxy
         galaxyParticles.rotation.x = mouseY * 0.2;
         galaxyParticles.rotation.z = mouseX * 0.1;
+    }
+    if (ghostFibers) {
+        ghostFibers.uniforms.uTime.value = elapsedTime;
     }
     
     if (typeof mountainParticles !== "undefined" && mountainParticles) {
@@ -694,13 +701,15 @@ document.addEventListener("DOMContentLoaded", () => {
             SoundEngine.playProceduralBell(440 - (idx * 50), 2.0); // Slightly different pitch per chapter
         }
 
-        // --- MASK LOGIC TIE-IN ---
+        // --- MASK & GHOST FIBERS LOGIC TIE-IN ---
         if (idx >= 2) {
-            // Chapter 3 and 4: Fade IN the mask
+            // Chapter 3 and 4: Fade IN the mask and GhostFibers
             gsap.to(animState, { maskOpacity: 0.75, maskRotY: Math.PI / 12, duration: 1.0, ease: "power2.out", overwrite: "auto" });
+            if (ghostFibers) gsap.to(ghostFibers.uniforms.uOpacity, { value: 1.0, duration: 2.0, ease: "power2.out" });
         } else {
-            // Chapter 1 and 2: Hide the mask
+            // Chapter 1 and 2: Hide the mask and GhostFibers
             gsap.to(animState, { maskOpacity: 0.0, maskRotY: 0, duration: 0.5, ease: "power2.in", overwrite: "auto" });
+            if (ghostFibers) gsap.to(ghostFibers.uniforms.uOpacity, { value: 0.0, duration: 1.0, ease: "power2.in" });
         }
         // -------------------------
         
