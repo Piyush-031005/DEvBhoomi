@@ -131,7 +131,8 @@ void main() {
 `;
 
 export function initGhostFibers(scene) {
-    const geometry = new THREE.PlaneGeometry(100, 100);
+    // Make plane massive so it fills the screen at any aspect ratio
+    const geometry = new THREE.PlaneGeometry(500, 500);
     
     // GhostFibers config
     const uniforms = {
@@ -178,9 +179,8 @@ export function initGhostFibers(scene) {
     // Position far back as a background
     mesh.position.set(0, 0, -40);
     
-    // Start hidden, will be faded in during Map Section
+    // Start hidden via uniform, will be faded in during Map Section
     mesh.material.transparent = true;
-    mesh.material.opacity = 0;
     
     scene.add(mesh);
     

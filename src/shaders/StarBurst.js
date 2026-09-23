@@ -104,7 +104,7 @@ const fragmentShader = `
 `;
 
 export function initStarBurst(scene) {
-    const geometry = new THREE.PlaneGeometry(100, 100);
+    const geometry = new THREE.PlaneGeometry(500, 500);
     
     // StarBurst config based on user's App snippet
     const uniforms = {
