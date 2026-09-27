@@ -371,7 +371,7 @@ const animState = {
 
 // --- Act 2 & 3: Brutalist 3D Mask ---
 let maskModel = null;
-const loader = new GLTFLoader(manager);
+const loader = new GLTFLoader();
 
 // Setup DRACOLoader for compressed models
 const dracoLoader = new DRACOLoader();
