@@ -13,7 +13,6 @@ import { Ecosystem } from './Ecosystem.js';
 import { SoundEngine } from './SoundEngine.js';
 import { initMuseumRoom } from './museumRoom.js';
 import { initRiverSystem } from './riverSystem.js';
-import { initGalaxy } from './galaxy.js';
 import { initGhostFibers } from './shaders/GhostFibers.js';
 import { initStarBurst } from './shaders/StarBurst.js';
 
@@ -554,13 +553,6 @@ const directionalLight = new THREE.DirectionalLight('#ffffff', 1.5);
 directionalLight.position.set(10, 20, -10); // Sunlight from behind mountains
 scene.add(directionalLight);
 
-
-
-// Initialize Galaxy Particle System
-let galaxyParticles = initGalaxy(scene);
-// Move galaxy far back so it doesn't block other elements
-galaxyParticles.position.set(0, 0, -30);
-
 // Initialize GhostFibers System
 let ghostFibers = initGhostFibers(scene);
 
@@ -577,12 +569,6 @@ function animate() {
     
     // Constant subtle motion
     starsMesh.rotation.y = elapsedTime * 0.01;
-    if (galaxyParticles) {
-        galaxyParticles.rotation.y = elapsedTime * 0.05;
-        // Interactive mouse rotation for galaxy
-        galaxyParticles.rotation.x = mouseY * 0.2;
-        galaxyParticles.rotation.z = mouseX * 0.1;
-    }
     if (ghostFibers) {
         ghostFibers.uniforms.uTime.value = elapsedTime;
     }
@@ -848,13 +834,11 @@ document.addEventListener("DOMContentLoaded", () => {
         end: 'bottom top',
         onEnter: () => {
             gsap.to(['#floating-editorial-ui', '#layer-toggles'], { opacity: 0, duration: 0.3, pointerEvents: 'none' });
-            if (galaxyParticles) gsap.to(galaxyParticles.material, { opacity: 1, duration: 2.0, ease: 'power2.inOut' });
         },
         onLeaveBack: () => {
             // Only fade back in if we are actually still in the map section
             // (Assuming the map section sets them to opacity 1 when active)
             gsap.to(['#floating-editorial-ui', '#layer-toggles'], { opacity: 1, duration: 0.3, pointerEvents: 'auto' });
-            if (galaxyParticles) gsap.to(galaxyParticles.material, { opacity: 0, duration: 1.0, ease: 'power2.inOut' });
         }
     });
 
