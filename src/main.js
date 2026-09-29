@@ -88,6 +88,14 @@ function updateCursor() {
     ringY += (cursorY - ringY) * 0.15;
     cursorRing.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
   }
+  
+  if (typeof ghostFibers !== 'undefined' && ghostFibers) {
+    // Lerp GhostFibers cursor for smooth distortion
+    ghostFibers.uniforms.uCursor.value.x += (cursorX - ghostFibers.uniforms.uCursor.value.x) * 0.1;
+    // Invert Y for WebGL screen space vs DOM screen space, actually the shader converts it, so just pass clientY
+    ghostFibers.uniforms.uCursor.value.y += ((window.innerHeight - cursorY) - ghostFibers.uniforms.uCursor.value.y) * 0.1;
+  }
+  
   requestAnimationFrame(updateCursor);
 }
 requestAnimationFrame(updateCursor);
@@ -704,16 +712,16 @@ document.addEventListener("DOMContentLoaded", () => {
             SoundEngine.playProceduralBell(440 - (idx * 50), 2.0); // Slightly different pitch per chapter
         }
 
-        // --- MASK & GHOST FIBERS LOGIC TIE-IN ---
+        // --- MASK LOGIC TIE-IN ---
         if (idx >= 2) {
-            // Chapter 3 and 4: Fade IN the mask and GhostFibers
+            // Chapter 3 and 4: Fade IN the mask
             gsap.to(animState, { maskOpacity: 0.75, maskRotY: Math.PI / 12, duration: 1.0, ease: "power2.out", overwrite: "auto" });
-            if (ghostFibers) gsap.to(ghostFibers.uniforms.uOpacity, { value: 1.0, duration: 2.0, ease: "power2.out" });
         } else {
-            // Chapter 1 and 2: Hide the mask and GhostFibers
+            // Chapter 1 and 2: Hide the mask
             gsap.to(animState, { maskOpacity: 0.0, maskRotY: 0, duration: 0.5, ease: "power2.in", overwrite: "auto" });
-            if (ghostFibers) gsap.to(ghostFibers.uniforms.uOpacity, { value: 0.0, duration: 1.0, ease: "power2.in" });
         }
+        // GhostFibers always visible, subtly pulsing based on chapter
+        if (ghostFibers) gsap.to(ghostFibers.uniforms.uOpacity, { value: 0.85 + (idx * 0.05), duration: 2.0, ease: "power2.out", overwrite: "auto" });
         // -------------------------
         
         // Target the INNER spans for animation (the br-word is the clip container)

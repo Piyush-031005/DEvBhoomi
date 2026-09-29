@@ -16,8 +16,10 @@ uniform float uScale;
 uniform float uRotation;
 uniform float uLayers;
 uniform float uWaveAmplitude;
-uniform float uWaveFrequency;
 uniform float uWaveSpeed;
+uniform vec2 uCursor;
+uniform float uCursorRadius;
+uniform float uCursorForce;
 uniform float uLayerSpeed;
 uniform float uTwist;
 uniform float uTwistFrequency;
@@ -72,6 +74,12 @@ void main() {
   vec3 centerTone = max(uLineColor * 0.85567 - uGlowColor * 0.06186, vec3(0.0));
   vec3 cloudTone = uLineColor * 0.19588 + uGlowColor * 0.2268;
   
+  // Interactive cursor distortion
+  // Convert screen space mouse to match UV space
+  vec2 screenCursor = (2.0 * uCursor - resolution) / resolution.y;
+  float distToCursor = length(uv - screenCursor);
+  float cursorEffect = smoothstep(uCursorRadius, 0.0, distToCursor) * uCursorForce;
+  
   vec2 p = uv;
   p /= max(uScale, 0.05);
   p = rotate2d(radians(uRotation) + time * uRotationSpeed) * p;
@@ -83,7 +91,9 @@ void main() {
     float fi = float(index) + 1.0;
     if (fi > uLayers) break;
 
-    p += uWaveAmplitude * sin(p.yx * fi * uWaveFrequency + time * (uWaveSpeed + fi * uLayerSpeed));
+    // Apply cursor effect to wave amplitude
+    float activeWaveAmp = uWaveAmplitude + cursorEffect;
+    p += activeWaveAmp * sin(p.yx * fi * uWaveFrequency + time * (uWaveSpeed + fi * uLayerSpeed));
 
     float radius = length(p);
     float polarAngle = atan(p.y, p.x);
@@ -142,7 +152,7 @@ export function initGhostFibers(scene) {
         uScale: { value: 2 },
         uRotation: { value: -7 },
         uRotationSpeed: { value: 0.1 },
-        uLayers: { value: 6 },
+        uLayers: { value: 4 }, // Reduced density
         uWaveAmplitude: { value: 0.085 },
         uWaveFrequency: { value: 2.05 },
         uWaveSpeed: { value: 0.6 },
@@ -150,8 +160,8 @@ export function initGhostFibers(scene) {
         uTwist: { value: 0.18 },
         uTwistFrequency: { value: 5 },
         uTwistSpeed: { value: -1.05 },
-        uLineFrequency: { value: 5 },
-        uLineSpacing: { value: 2 },
+        uLineFrequency: { value: 3 }, // Reduced density
+        uLineSpacing: { value: 3 }, // Reduced density
         uLineSharpness: { value: 16 },
         uGlowFalloff: { value: 10 },
         uGlowIntensity: { value: 1.6 },
@@ -162,7 +172,10 @@ export function initGhostFibers(scene) {
         uLightMode: { value: 0 }, // 0 for dark mode
         uLineColor: { value: new THREE.Color('#e43a3a') },
         uGlowColor: { value: new THREE.Color('#e73c3c') },
-        uOpacity: { value: 0.0 }
+        uOpacity: { value: 0.0 },
+        uCursor: { value: new THREE.Vector2(window.innerWidth/2, window.innerHeight/2) },
+        uCursorRadius: { value: 1.5 },
+        uCursorForce: { value: 0.25 }
     };
 
     const material = new THREE.ShaderMaterial({
