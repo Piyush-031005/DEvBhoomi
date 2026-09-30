@@ -16,6 +16,7 @@ uniform float uScale;
 uniform float uRotation;
 uniform float uLayers;
 uniform float uWaveAmplitude;
+uniform float uWaveFrequency;
 uniform float uWaveSpeed;
 uniform vec2 uCursor;
 uniform float uCursorRadius;
